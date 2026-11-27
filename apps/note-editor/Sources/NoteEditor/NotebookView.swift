@@ -13,8 +13,8 @@ struct NotebookWindow: View {
     let document: NoteDocument
     /// Whether the page list shows when the window opens.
     var columns: NavigationSplitViewVisibility = .automatic
-    /// The zoom the window opens at: Zoom to Width (#458).
-    var zoom: PageZoom = .fitWidth
+    /// How the window shows its pages: at Zoom to Width when it opens (#458).
+    var viewer = PageViewer()
     /// The file's name without its extension, for the files a copy or a drag makes (#323).
     var name = ""
     @Environment(\.openDocument) private var openDocument
@@ -38,7 +38,7 @@ struct NotebookWindow: View {
                 StateView(.noPages) { OpenAnotherButton() }
             case .note(let note):
                 NotebookView(
-                    pages: PageImages(note: note), columns: columns, viewer: PageViewer(zoom: zoom), live: live,
+                    pages: PageImages(note: note), columns: columns, viewer: viewer, live: live,
                     editor: editor)
             }
         }
@@ -228,6 +228,7 @@ struct NotebookView: View {
         }
         .onChange(of: displayScale, initial: true) { _, scale in viewer.scale = scale }
         .onAppear { pageFocused = true }
+        .onChange(of: pageFocused, initial: true) { _, focused in viewer.pagesFocused = focused }
     }
 
     /// «Page 2 of 4», and how many elements are selected when any are.

@@ -90,21 +90,28 @@ import Testing
 /// the test's own window, never ordered in.
 @MainActor
 @Suite(.serialized) struct SelectionKeyTests {
+    /// How long the page's elements may take to be read: a bound for a Mac whose every core is
+    /// busy, met at once when it is not.
+    static let elementsBound = Duration.seconds(120)
+
     @Test func selectAllAndEscapeWorkByKeyboard() async throws {
         let document = NoteDocument(data: try Fixtures.data("content.note"))
+        guard case .note(let note) = document.content else { throw CocoaError(.fileReadCorruptFile) }
+        let pages = PageImages(note: note)
+        let viewer = PageViewer()
         let window = KeyedOffscreenWindow(size: NotebookWindow.portrait, dark: false)
-        window.show(NotebookWindow(document: document))
+        window.show(NotebookView(pages: pages, viewer: viewer))
         defer { window.close() }
         #expect(try await window.shows(Copy.pageOf(1, 4)))
-        #expect(try await window.until { window.firstResponder is NSView })
-        // Page 1 holds a text box and a picture. In a full parallel suite on a loaded Mac the pages
-        // may take the focus after the first key (#495); Command-A selects the same each time.
-        var selected = false
-        for _ in 0..<3 where !selected {
-            window.pressKey("a", keyCode: 0, modifiers: .command)
-            selected = try await window.shows(Copy.pageOfSelected(1, 4, 2))
-        }
-        #expect(selected, "first responder: \(String(describing: window.firstResponder.map { type(of: $0) }))")
+        // Command-A selects once the page's elements are read, off the main actor, and the pages
+        // hold the focus; on a loaded Mac either may come late (#495), so the test waits for both.
+        #expect(try await window.until(within: Self.elementsBound) { pages.selectable(0) != nil })
+        #expect(try await window.until { viewer.pagesFocused })
+        // Page 1 holds a text box and a picture.
+        window.pressKey("a", keyCode: 0, modifiers: .command)
+        #expect(
+            try await window.shows(Copy.pageOfSelected(1, 4, 2)),
+            "\(viewer.selection.ids.count) selected, subtitle «\(window.subtitle)», \(window.lastWait)")
         window.pressKey("\u{1B}", keyCode: 53, modifiers: [])
         #expect(try await window.shows(Copy.pageOf(1, 4)))
     }

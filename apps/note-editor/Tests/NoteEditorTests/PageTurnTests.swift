@@ -33,11 +33,12 @@ import Testing
         let window = KeyedOffscreenWindow(size: NotebookWindow.portrait, dark: dark)
         // At Zoom to Fit every key turns a page; at Zoom to Width, where a note opens (#458), the
         // vertical keys scroll the page instead, as `PageViewerTests` checks.
-        window.show(NotebookWindow(document: document, columns: columns, zoom: .fitPage))
+        let viewer = PageViewer(zoom: .fitPage)
+        window.show(NotebookWindow(document: document, columns: columns, viewer: viewer))
         defer { window.close() }
         #expect(try await window.shows(Copy.pageOf(1, count)))
         // The page takes the focus when the window opens, so the first key already turns it.
-        #expect(try await window.until { window.firstResponder is NSView })
+        #expect(try await window.until { viewer.pagesFocused })
         let label = "\(dark ? "dark" : "light")-\(columns == .detailOnly ? "hidden" : "shown")"
         try await window.save("turn-\(label)-00-open")
         for (step, (key, page)) in Self.steps(count: count).enumerated() {
@@ -135,14 +136,25 @@ final class KeyedOffscreenWindow: NSWindow {
         return true
     }
 
-    /// Whether `condition` holds within five seconds, a bound that a full parallel suite meets.
-    func until(_ condition: () -> Bool) async throws -> Bool {
-        let deadline = ContinuousClock.now + .seconds(5)
-        while !condition(), ContinuousClock.now < deadline {
+    /// Whether `condition` holds within `limit` and at least `minimumTurns` turns of the main actor.
+    /// Five seconds is a bound a full parallel suite meets for work on the main actor; the turns are a
+    /// floor for a loaded Mac, where one turn waited minutes behind the other suites and a bound in
+    /// time alone gave the condition no turn to come true in (#495).
+    func until(
+        within limit: Duration = .seconds(5), minimumTurns: Int = 50, _ condition: () -> Bool
+    ) async throws -> Bool {
+        let start = ContinuousClock.now
+        var turns = 0
+        while !condition(), ContinuousClock.now - start < limit || turns < minimumTurns {
             try await turn()
+            turns += 1
         }
+        lastWait = "\(turns) turns in \(ContinuousClock.now - start)"
         return condition()
     }
+
+    /// How the last `until` went, for a failure's message.
+    private(set) var lastWait = ""
 
     /// One turn of the main actor for SwiftUI to lay out, focus and draw.
     private func turn() async throws {

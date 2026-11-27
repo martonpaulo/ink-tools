@@ -52,6 +52,10 @@ final class PageViewer {
     var content: CGSize = .zero
     /// How many pages one row of the grid holds, for the Up and Down arrows there.
     var gridColumns = 1
+    /// Whether the pages hold the keyboard focus, which the page keys, Select All and Escape need;
+    /// the window gives it to them when it opens. The window sets it from its own focus state, which
+    /// no other view can read, so a test waits on it before a key (#495).
+    var pagesFocused = false
 
     /// How far an arrow key scrolls, in points, as a line of text in a Mac document.
     static let line: CGFloat = 40
