@@ -80,8 +80,13 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   `../../docs/research/2026-11-digest-provider.md`. No Saved source, «Saved» collection or Settings
   switch calls it yet. Not yet run on the tablet.
 - **Sign-in secrets** ([#90](https://github.com/martonpaulo/supernote-tools/issues/90), owner D16 A): one file per provider (`secretFileName` in
-  `packages/sync-core/src/secrets.ts`) in Bridge's private plugin folder. Settings shows only the
-  last four characters and a «Sign out» per provider, confirmed once more, that deletes the file.
+  `packages/sync-core/src/secrets.ts`) in Bridge's private plugin folder. Settings shows no part of a
+  secret: a connected row names its account, «Connected as …» ([#433](https://github.com/martonpaulo/ink-tools/issues/433)), with a «Sign out» per provider,
+  confirmed once more, that deletes the file and forgets the account. A sync pass reads the account
+  with the existing sign-in (Todoist `GET /user`, Google's primary calendar id under
+  `calendar.readonly`, each ICS feed's `X-WR-CALNAME`) and keeps it only in `settings.json`'s
+  `accounts`, never in the log; iCloud's is the Apple ID of its sign-in. A read that fails keeps the
+  earlier name, or the row says «Connected», and the log says why.
   **Todoist** API token, **iCloud** app-specific password and **Google** refresh token (its
   sign-in is [#64](https://github.com/martonpaulo/supernote-tools/issues/64)) all come from the Mac with `inkctl secret set <provider>`
   ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). `adb` cannot write the private folder, so the value arrives as a one-shot drop

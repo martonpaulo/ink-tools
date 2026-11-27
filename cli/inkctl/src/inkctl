@@ -381,7 +381,6 @@ SECRET_PROVIDERS = ("todoist", "icloud", "google", "google-client")
 # the login Keychain item, never from stdin, and written as the two fields the refresh sends.
 GOOGLE_CLIENT_PROVIDER = "google-client"
 SIGN_IN_DROP_FOLDER = REGISTRY["storage.sign-in-drop-folder"]["folder"]
-SECRET_TAIL = 4  # sync-core's SHOWN_TAIL: the only characters ever shown
 # The login Keychain items of the Google sign-in on the Mac (#124, docs/security.md › Account Sync sign-in
 # secrets): service the consumer, account the secret's name, comment its description (credential naming rule, #277).
 KEYCHAIN_SERVICE = "ink-tools"
@@ -4101,8 +4100,6 @@ def parse_secret(raw: str) -> str:
     return value
 
 
-def masked(value: str) -> str:
-    return f"…{value[-SECRET_TAIL:]}"
 
 
 def google_client_secret() -> str:
@@ -4132,8 +4129,9 @@ def command_secret_set(device: Device, args: argparse.Namespace):
         device.shell(f"rm -f {partial}")
         problem = device.log.clean(done.stderr.decode(errors="replace").strip())
         raise Failure(EXIT_FAILED, "device_error", problem or f"the {args.provider} secret was not written")
-    data = {"provider": args.provider, "stored": True, "tail": masked(value)}
-    return data, f"{args.provider}: waiting for Account Sync ({data['tail']}); it moves in on its next start or Sync now"
+    # No part of the secret is ever shown, not even its last characters (#433).
+    data = {"provider": args.provider, "stored": True}
+    return data, f"{args.provider}: waiting for Account Sync; it moves in on its next start or Sync now"
 
 
 def command_secret_remove(device: Device, args: argparse.Namespace):
@@ -4155,10 +4153,9 @@ def command_secret_status(device: Device, args: argparse.Namespace):
         if not device.test(f"-f {path}"):
             rows.append({"provider": provider, "stored": False})
             continue
-        # Only the last characters cross the connection, never the whole value.
-        tail = device.shell(f"tail -c {SECRET_TAIL} {path}")
-        rows.append({"provider": provider, "stored": True, "tail": f"…{tail}"})
-    lines = [f"{row['provider']}: waiting for Account Sync ({row['tail']})" if row["stored"] else f"{row['provider']}: nothing waiting" for row in rows]
+        # No part of the value crosses the connection or is shown (#433).
+        rows.append({"provider": provider, "stored": True})
+    lines = [f"{row['provider']}: waiting for Account Sync" if row["stored"] else f"{row['provider']}: nothing waiting" for row in rows]
     return {"providers": rows}, "\n".join(lines)
 
 

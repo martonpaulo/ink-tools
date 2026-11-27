@@ -1,5 +1,5 @@
 import {CalendarEvent, CalendarInfo, CalendarProvider, TimeWindow} from './calendar';
-import {HttpFetch} from './http';
+import {bearer, HttpFetch} from './http';
 import services from './services.json';
 
 /**
@@ -71,12 +71,27 @@ export function fromGoogleEvent(calendarId: string, e: GoogleEvent): CalendarEve
   };
 }
 
+/**
+ * The account the sign-in belongs to (#433): the primary calendar's id is the account's email, and
+ * `calendar.readonly` reads it, so no new scope. A failed read throws with the HTTP status only.
+ */
+export async function fetchGoogleAccount(fetch: HttpFetch, getAccessToken: () => Promise<string>): Promise<string> {
+  const res = await fetch(`${services.googleCalendarApi}/calendars/primary`, {
+    method: 'GET',
+    headers: {Authorization: await bearer(getAccessToken)},
+  });
+  if (!res.ok) throw new Error(`Google Calendar GET /calendars/primary failed with HTTP ${res.status}`);
+  const id = ((await res.json()) as {id?: unknown} | null)?.id;
+  if (typeof id !== 'string' || !id.trim()) throw new Error('Google Calendar GET /calendars/primary answered with no id');
+  return id.trim();
+}
+
 /** `getAccessToken` is called per request so a refreshed token is always used. */
 export function createGoogleCalendarProvider(fetch: HttpFetch, getAccessToken: () => Promise<string>): CalendarProvider {
   const get = async (path: string): Promise<any> => {
     const res = await fetch(`${services.googleCalendarApi}${path}`, {
       method: 'GET',
-      headers: {Authorization: `Bearer ${await getAccessToken()}`},
+      headers: {Authorization: await bearer(getAccessToken)},
     });
     if (!res.ok) throw new Error(`Google Calendar GET ${path.split('?')[0]} failed with HTTP ${res.status}`);
     return res.json();

@@ -63,6 +63,21 @@ export function toTodoistBody(c: TaskContent): Record<string, unknown> {
   return body;
 }
 
+/**
+ * The account the token is signed in to (#433), from API v1's `GET /user` with the same token: its
+ * email, with the name before it when both are there. A failed read throws with the HTTP status only.
+ */
+export async function fetchTodoistAccount(opts: TodoistOptions): Promise<string> {
+  const base = requireHttps(opts.baseUrl ?? services.todoistApi, 'Todoist base URL');
+  const res = await opts.fetch(`${base}/user`, {method: 'GET', headers: {Authorization: `Bearer ${opts.token}`}});
+  if (!res.ok) throw new Error(`Todoist GET /user failed with HTTP ${res.status}`);
+  const user = (await res.json()) as {email?: unknown; full_name?: unknown} | null;
+  const email = typeof user?.email === 'string' ? user.email.trim() : '';
+  const name = typeof user?.full_name === 'string' ? user.full_name.trim() : '';
+  if (!email) throw new Error('Todoist GET /user answered with no email');
+  return name && name !== email ? `${name} (${email})` : email;
+}
+
 export function createTodoistProvider(opts: TodoistOptions): TaskProvider {
   const base = requireHttps(opts.baseUrl ?? services.todoistApi, 'Todoist base URL');
   const enc = encodeURIComponent; // an id is one path segment, never a path (#81)

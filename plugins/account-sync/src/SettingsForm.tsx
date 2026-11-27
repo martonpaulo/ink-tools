@@ -270,7 +270,11 @@ function AccountRow({
       return (
         <Confirmed
           title={title}
-          subtitle={format('signIn.in', {tail: signIn.tail})}
+          subtitle={
+            signIn.account
+              ? format('signIn.as', {account: signIn.account})
+              : copy['signIn.in']
+          }
           label={copy['signOut.button']}
           accessibilityLabel={format('signOut.label', {provider: provider.name})}
           question={format('signOut.confirm', {provider: provider.name})}

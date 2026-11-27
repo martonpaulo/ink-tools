@@ -1,5 +1,5 @@
 import {CalendarEvent} from './calendar';
-import {HttpFetch} from './http';
+import {bearer, HttpFetch} from './http';
 import services from './services.json';
 import {PULL_ONLY, TabletOnlyPolicy, maySend} from './tasks';
 
@@ -170,7 +170,7 @@ export function createGoogleCalendarWriter(fetch: HttpFetch, getAccessToken: () 
     const path = `/calendars/${encodeURIComponent(calendarId)}/events${eventId ? `/${encodeURIComponent(eventId)}` : ''}`;
     const res = await fetch(`${services.googleCalendarApi}${path}`, {
       method,
-      headers: {Authorization: `Bearer ${await getAccessToken()}`, 'Content-Type': 'application/json'},
+      headers: {Authorization: await bearer(getAccessToken), 'Content-Type': 'application/json'},
       ...(body === undefined ? {} : {body: JSON.stringify(body)}),
     });
     // Deleting what is already gone (404, 410) is the wanted end state.

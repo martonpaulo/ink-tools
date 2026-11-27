@@ -27,14 +27,6 @@ export function secretFileName(provider: SecretProvider): string {
   return `${provider}.secret`;
 }
 
-/** The characters Settings shows of a stored secret, so the owner can tell two apart. */
-export const SHOWN_TAIL = 4;
-
-/** What Settings shows of a secret: never the value, only its last characters. */
-export function maskSecret(value: string): string {
-  return value.length <= SHOWN_TAIL ? '…' : `…${value.slice(-SHOWN_TAIL)}`;
-}
-
 /**
  * Read a stored secret. One trailing newline (LF or CRLF) from a pipe is dropped. An empty value or
  * one with a control character throws: a broken file never becomes a secret sent to a service.
@@ -83,18 +75,37 @@ export function parseICloudSignIn(raw: string): {appleId: string; password: stri
   return {appleId, password};
 }
 
-/** A provider's sign-in, as Settings words it. */
+/**
+ * A provider's sign-in, as Settings words it. Signed in, it carries the account it is signed in to
+ * when that is known (#433), and never any part of the secret.
+ */
 export type SignIn =
   | {state: 'signedOut'}
-  | {state: 'signedIn'; tail: string}
+  | {state: 'signedIn'; account?: string}
   /** The file is there but did not read: never shown as signed out. */
   | {state: 'unreadable'; reason: string};
 
-export async function signInState(store: SecretStore, provider: SecretProvider): Promise<SignIn> {
+/**
+ * The sign-in state of one provider (#433). `account` is the name a pass read from the service and
+ * kept in Settings (`BridgeSettings.accounts`). iCloud needs none: its Apple ID is the first half of
+ * the stored sign-in itself, and only that half is ever taken from it.
+ */
+export async function signInState(store: SecretStore, provider: SecretProvider, account?: string): Promise<SignIn> {
   try {
     const value = await store.read(provider);
-    return value === null ? {state: 'signedOut'} : {state: 'signedIn', tail: maskSecret(value)};
+    if (value === null) return {state: 'signedOut'};
+    const known = provider === 'icloud' ? icloudAccount(value) : account;
+    return known ? {state: 'signedIn', account: known} : {state: 'signedIn'};
   } catch (e) {
     return {state: 'unreadable', reason: (e as Error).message};
+  }
+}
+
+/** The Apple ID of a stored iCloud sign-in, or undefined when it does not parse. */
+function icloudAccount(raw: string): string | undefined {
+  try {
+    return parseICloudSignIn(raw).appleId;
+  } catch {
+    return undefined;
   }
 }

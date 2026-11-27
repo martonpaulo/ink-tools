@@ -41,6 +41,31 @@ export interface BridgeSettings {
    * lists it (`ModuleRun.calendars`); absent, such an event stays on the tablet and is reported.
    */
   defaultCalendarId?: string;
+  /**
+   * The account each connected service is signed in to, as its row shows it (#433): read from the
+   * service at a sync pass, kept only here, never logged. iCloud's comes from its sign-in instead.
+   */
+  accounts: Accounts;
+}
+
+/** The services whose account a pass reads, with no secret part (#433). */
+export type AccountProvider = 'todoist' | 'google';
+export const ACCOUNT_PROVIDERS: AccountProvider[] = ['todoist', 'google'];
+
+export interface Accounts {
+  todoist?: string;
+  google?: string;
+  /** Each ICS feed's calendar name, by its address as `icsFeeds` keeps it. */
+  ics?: Record<string, string>;
+}
+
+/** The longest account or calendar name kept; a longer one is cut, never refused. */
+export const MAX_ACCOUNT_CHARS = 96;
+
+/** A name as Settings keeps it: one trimmed line, cut to the limit; empty is no name. */
+export function accountName(raw: string): string | undefined {
+  const line = raw.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
+  return line ? line.slice(0, MAX_ACCOUNT_CHARS) : undefined;
 }
 
 export function defaultSettings(): BridgeSettings {
@@ -51,6 +76,7 @@ export function defaultSettings(): BridgeSettings {
     sendTabletOnly: {todo: false, calendar: false},
     firstLinked: {},
     icsFeeds: [],
+    accounts: {},
   };
 }
 
@@ -72,7 +98,7 @@ export function icsFeedAddress(raw: string): string {
 export function parseSettings(raw: string): BridgeSettings {
   const value: unknown = JSON.parse(raw);
   if (typeof value !== 'object' || value === null) throw new Error('settings: not an object');
-  const v = value as {schema?: unknown; modules?: unknown; providers?: unknown; sendTabletOnly?: unknown; firstLinked?: unknown; icsFeeds?: unknown; defaultCalendarId?: unknown};
+  const v = value as {schema?: unknown; modules?: unknown; providers?: unknown; sendTabletOnly?: unknown; firstLinked?: unknown; icsFeeds?: unknown; defaultCalendarId?: unknown; accounts?: unknown};
   if (v.schema !== 1) throw new Error(`settings: unsupported schema ${String(v.schema)}`);
   const out = defaultSettings();
   for (const [key, target] of [['modules', out.modules], ['providers', out.providers]] as const) {
@@ -110,7 +136,52 @@ export function parseSettings(raw: string): BridgeSettings {
     if (typeof v.defaultCalendarId !== 'string' || v.defaultCalendarId === '') throw new Error('settings: defaultCalendarId is not a calendar id');
     out.defaultCalendarId = v.defaultCalendarId;
   }
+  if (v.accounts !== undefined) out.accounts = parseAccounts(v.accounts, out.icsFeeds);
   return out;
+}
+
+/** Came after schema 1 shipped (#433): absent is no name; a wrong type throws, never dropped. */
+function parseAccounts(raw: unknown, feeds: string[]): Accounts {
+  const text = (value: unknown, key: string) => {
+    if (typeof value !== 'string') throw new Error(`settings: accounts.${key} is not a name`);
+    return accountName(value);
+  };
+  if (typeof raw !== 'object' || raw === null) throw new Error('settings: accounts is not an object');
+  const a = raw as Record<string, unknown>;
+  const out: Accounts = {};
+  for (const p of ACCOUNT_PROVIDERS) {
+    const name = a[p] === undefined ? undefined : text(a[p], p);
+    if (name) out[p] = name;
+  }
+  if (a.ics !== undefined) {
+    if (typeof a.ics !== 'object' || a.ics === null) throw new Error('settings: accounts.ics is not an object');
+    const ics: Record<string, string> = {};
+    // A name of a feed no longer in the list is dropped with it.
+    for (const [url, value] of Object.entries(a.ics)) {
+      const name = text(value, 'ics');
+      if (name && feeds.includes(url)) ics[url] = name;
+    }
+    if (Object.keys(ics).length) out.ics = ics;
+  }
+  return out;
+}
+
+/** Keep or forget the account a service is signed in to (#433); forgetting is a sign-out's. */
+export function setAccount(s: BridgeSettings, id: AccountProvider, name: string | undefined): BridgeSettings {
+  const {[id]: _old, ...rest} = s.accounts;
+  const kept = name === undefined ? undefined : accountName(name);
+  return {...s, accounts: kept ? {...rest, [id]: kept} : rest};
+}
+
+/** Keep the calendar names read from the ICS feeds (#433), only of feeds still in the list. */
+export function setIcsNames(s: BridgeSettings, names: Record<string, string>): BridgeSettings {
+  const ics: Record<string, string> = {};
+  for (const url of s.icsFeeds) {
+    const name = names[url] === undefined ? s.accounts.ics?.[url] : accountName(names[url]);
+    if (name) ics[url] = name;
+  }
+  const {ics: _old, ...rest} = s.accounts;
+  return {...s, accounts: Object.keys(ics).length ? {...rest, ics} : rest};
 }
 
 export const serializeSettings = (s: BridgeSettings): string => JSON.stringify(s);
@@ -152,8 +223,19 @@ export function icsFeedName(url: string, index: number): string {
   return `ICS ${index + 1} (${parseUrl(url.replace(WEBCAL, 'https://'))?.host ?? 'feed'})`;
 }
 
+/**
+ * A feed's row in Settings (#433): its place and the calendar name the feed gave at the last pass,
+ * else its host, as `icsFeedName`. The tablet calendar keeps `icsFeedName`, so a renamed feed never
+ * moves its events.
+ */
+export function icsFeedLabel(s: BridgeSettings, url: string, index: number): string {
+  const name = s.accounts.ics?.[url];
+  return name ? `ICS ${index + 1} (${name})` : icsFeedName(url, index);
+}
+
 export function removeIcsFeed(s: BridgeSettings, url: string): BridgeSettings {
-  return {...s, icsFeeds: s.icsFeeds.filter(f => f !== url)};
+  const next = {...s, icsFeeds: s.icsFeeds.filter(f => f !== url)};
+  return setIcsNames(next, {});
 }
 
 export function setProvider(s: BridgeSettings, id: ProviderId, on: boolean): BridgeSettings {

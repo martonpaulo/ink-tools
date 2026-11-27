@@ -202,16 +202,16 @@ describe('SettingsShell (#93)', () => {
         id: 'todo',
         name: 'To-Do',
         status: {state: 'waiting'},
-        signIns: [{id: 'todoist', name: 'Todoist', signIn: {state: 'signedIn', tail: '…wxyz'}, onSignOut}],
+        signIns: [{id: 'todoist', name: 'Todoist', signIn: {state: 'signedIn', account: 'tester@example.com'}, onSignOut}],
       },
     ];
 
-    it('shows only the masked tail, how to sign in, and an unreadable sign-in apart', () => {
+    it('names the connected account, how to sign in, and an unreadable sign-in apart (#433)', () => {
       const tree = render(READY, () => {}, withSignIns(() => {}), settings);
       expect(texts(tree)).toEqual(
         expect.arrayContaining([
           'Todoist account',
-          'Signed in (…wxyz)',
+          'Connected as tester@example.com',
           'iCloud account',
           'Not connected',
           'The sign-in did not read: read failed',
