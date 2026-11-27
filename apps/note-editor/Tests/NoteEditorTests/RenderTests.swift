@@ -143,7 +143,9 @@ final class RenderTests {
         try await render("page-failed", Self.sizes) { StateView(.pageFailed("page 2: the layer bitmap ends early")) }
     }
 
-    /// A tablet that never answers in a render's time, so an edit stays on its way.
+    /// A tablet that never answers in a render's time, so an edit stays on its way. A sending state
+    /// passes `pullWaits`: the first send reads the tablet's note first (#317), and a pull that fails
+    /// at once takes the edit back before the render, which then shows the refusal (#476).
     final class SlowTablet: TabletWriting {
         /// A pull that waits too, so an edit stays on its way while a render waits for its drawing.
         let pullWaits: Bool
@@ -318,7 +320,7 @@ final class RenderTests {
     /// Insert › Shape (#350): the bar while a shape waits for its drag, and every shape on its way to
     /// the tablet, drawn at once in black over the page.
     @Test func shapeStates() async throws {
-        let (live, editor, drawn) = try await tabletNote("Shapes")
+        let (live, editor, drawn) = try await tabletNote("Shapes", pullWaits: true)
         await drawn.loadPage(0)
         let viewer = PageViewer()
         viewer.shapeTool = .rectangle
@@ -346,7 +348,7 @@ final class RenderTests {
     /// A selection moved on a note from the tablet (#325): drawn at once at its new place from its
     /// lifted ink, its frame with it, and the template where it was, while the move is on its way.
     @Test func moveStates() async throws {
-        let (live, editor, drawn) = try await tabletNote("Moved")
+        let (live, editor, drawn) = try await tabletNote("Moved", pullWaits: true)
         let note = drawn.note
         let copy = editor.copy
         await drawn.loadPage(0)
@@ -368,7 +370,7 @@ final class RenderTests {
         }
         // A deleted selection on its way (#327): the template where it was, nothing selected.
         let deleting = NoteEditor(
-            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
+            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(pullWaits: true),
             backups: NoteBackups(folder: scratch.appending(path: "DeleteBackups")))
         deleting.deleteElements(page: 0, elements: items.map(MovedElement.init))
         for _ in 0..<500 where deleting.deletions(on: 0).isEmpty {
@@ -381,7 +383,7 @@ final class RenderTests {
         // A picture turned right on its way (#326): drawn turned at once, framed with its resize
         // handles and the rotation knob.
         let turning = NoteEditor(
-            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
+            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(pullWaits: true),
             backups: NoteBackups(folder: scratch.appending(path: "TurnBackups")))
         turning.pictureFolder = { self.scratch }
         let pictures = items.filter(\.isPicture)
@@ -400,7 +402,7 @@ final class RenderTests {
     /// Inserting a picture and a text box (#264): each sheet over the window it opens from, as a
     /// sheet is a window of its own, and both inserts drawn at once while on their way.
     @Test func insertStates() async throws {
-        let (live, editor, drawn) = try await tabletNote("Inserted")
+        let (live, editor, drawn) = try await tabletNote("Inserted", pullWaits: true)
         await drawn.loadPage(1)
         // A colour gradient, shown in the tablet's greys.
         let context = try #require(

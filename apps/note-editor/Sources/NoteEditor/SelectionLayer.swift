@@ -61,25 +61,11 @@ struct SelectionLayer: View {
         let turnable = editable && SelectionChange.turns(items)
         Canvas { context, _ in
             let accent = GraphicsContext.Shading.color(.accentColor)
-            // Each selection's changes on their way, the one under the pointer last: the template
-            // where the selection was, and its ink where the changes put it.
-            for change in changes(items) {
-                context.draw(Image(decorative: change.lifted.hole, scale: 1), in: points(change.lifted.frame))
-                var mapped = context
-                mapped.scaleBy(x: 1 / pixels, y: 1 / pixels)
-                mapped.concatenate(change.matrix.affine)
-                mapped.draw(Image(decorative: change.lifted.ink, scale: 1), in: change.lifted.frame)
-            }
-            // Each delete on its way: the template where its elements were (#327).
-            for lifted in editor?.deletions(on: index) ?? [] {
-                context.draw(Image(decorative: lifted.hole, scale: 1), in: points(lifted.frame))
-            }
-            // Each picture or text box on its way, at its box (#264).
-            for (rect, image) in editor?.insertions(on: index) ?? [] {
-                let box = CGRect(
-                    x: rect.left, y: rect.top, width: rect.right - rect.left, height: rect.bottom - rect.top)
-                context.draw(Image(decorative: image, scale: 1), in: points(box))
-            }
+            // The edits on their way, the selection's change under the pointer last (#325, #327,
+            // #264); the page list's thumbnails draw the same (#476).
+            PendingEdits.draw(
+                changes: changes(items), deletions: editor?.deletions(on: index) ?? [],
+                insertions: editor?.insertions(on: index) ?? [], pixels: pixels, in: &context)
             context.translateBy(x: shift.width, y: shift.height)
             // A picture or a text box shows its own frame; a stroke shows only in the frame around
             // the selection, so no box covers the ink.

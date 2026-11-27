@@ -675,6 +675,7 @@ private struct GridCell: View {
         Button(action: open) {
             VStack(spacing: Self.inset) {
                 Thumbnail(state: pages.thumbnail(index, .grid), size: fitted)
+                    .pendingEdits(index, pixelSize: page.pixels, size: fitted, drawn: pages.thumbnail(index, .grid))
                     .padding(Self.inset)
                     .background {
                         // The current page carries the selection, as in Preview's Contact Sheet.
@@ -808,6 +809,7 @@ struct ThumbnailRow: View {
         let fitted = PageFit.fitted(page: page.pixels, in: box)
         VStack(spacing: 4) {
             Thumbnail(state: pages.thumbnail(index), size: fitted)
+                .pendingEdits(index, pixelSize: page.pixels, size: fitted, drawn: pages.thumbnail(index))
                 .frame(width: box.width, height: fitted.height)
             Text("\(index + 1)")
                 .font(.caption)
