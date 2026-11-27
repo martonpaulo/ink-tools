@@ -62,6 +62,8 @@ const native = {
 
 beforeEach(() => {
   jest.resetAllMocks();
+  // The insert saves the open note first (#524).
+  (PluginNoteAPI.saveCurrentNote as jest.Mock).mockResolvedValue({success: true, result: true});
   jest.spyOn(console, 'log').mockImplementation(() => {});
   NativeModules.TestFiles = native;
   NativeModules.TestImage = image;

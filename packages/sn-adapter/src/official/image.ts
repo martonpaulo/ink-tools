@@ -1,4 +1,5 @@
 import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
+import {onSavedPage} from './openPage';
 import {
   attempt,
   EMPTY_LASSO_CODE,
@@ -72,23 +73,25 @@ export function lassoImage(pngPath: string): Promise<Result<string>> {
  * Changes elements already on a page of the current file, in place (official docs,
  * «modifyPageElements»): a lassoed picture with a new `picture.picturePath` shows the new PNG at
  * once [measured, #130]. Answers the changed elements' in-page indices; a `false` or missing
- * answer is a failure, never a success.
+ * answer is a failure, never a success. It runs once the note saved (`onSavedPage`, #524).
  */
 export function modifyPageElements(
   elements: object[],
   page: number,
   layer: number | null = null,
 ): Promise<Result<number[]>> {
-  return attempt(
-    () => PluginCommAPI.modifyPageElements(elements, page, layer),
-    raw => {
-      const answer = fromResponse<unknown>(raw);
-      if (!answer.ok) {
-        return answer;
-      }
-      return Array.isArray(answer.value)
-        ? ok(answer.value as number[])
-        : fail(THROWN_CODE, 'modifyPageElements changed no element');
-    },
+  return onSavedPage(() =>
+    attempt(
+      () => PluginCommAPI.modifyPageElements(elements, page, layer),
+      raw => {
+        const answer = fromResponse<unknown>(raw);
+        if (!answer.ok) {
+          return answer;
+        }
+        return Array.isArray(answer.value)
+          ? ok(answer.value as number[])
+          : fail(THROWN_CODE, 'modifyPageElements changed no element');
+      },
+    ),
   );
 }

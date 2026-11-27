@@ -9,6 +9,7 @@ import type {TextBoxInput} from './note';
 import {createElement, type Size} from './page';
 import type {PenPoint} from './pen';
 import {REGISTRY} from '../registry.generated';
+import {onSavedPage} from './openPage';
 import {attempt, fail, fromResponse, ok, Result, THROWN_CODE} from './result';
 
 /** A native accessor of an element's per-point data (sn-plugin-lib 0.2.3, ElementDataAccessor). */
@@ -104,6 +105,7 @@ export const TEXT_TYPE = 500;
 /**
  * Deletes the elements numbered `deleteNums` on `page`, then inserts `elements`, in one host call
  * (sn-plugin-lib 0.2.3; a picture replaced in place, #130). `layer` null lets the host choose.
+ * It runs once the note saved (`onSavedPage`, #524).
  */
 export function batchUpdatePageElements(
   deleteNums: number[],
@@ -111,8 +113,10 @@ export function batchUpdatePageElements(
   page: number,
   layer: number | null = null,
 ): Promise<Result<boolean>> {
-  return attempt(() =>
-    PluginCommAPI.batchUpdatePageElements(deleteNums, elements, page, layer),
+  return onSavedPage(() =>
+    attempt(() =>
+      PluginCommAPI.batchUpdatePageElements(deleteNums, elements, page, layer),
+    ),
   );
 }
 

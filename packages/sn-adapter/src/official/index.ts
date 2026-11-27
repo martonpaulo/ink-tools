@@ -16,6 +16,7 @@ export * from './image';
 export * from './lasso';
 export * from './note';
 export * from './noteEdit';
+export * from './openPage';
 export * from './page';
 export * from './pen';
 export * from './penTape';

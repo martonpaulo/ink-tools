@@ -548,6 +548,24 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   first, then writing, kept all of it [measured, Manta, device round 5, 2026-11-26,
   [#263](https://github.com/martonpaulo/ink-tools/issues/263)]. So Probe's `insertPage` saves the
   note first (`saveCurrentNote`) and inserts nothing when the save fails.
+- A plugin's `insertPageElements` on the open page writes and draws the page from the page data
+  the plugin side holds, not from what the screen shows, so it undoes the person's own edits made
+  since that data was read [measured, Manta, firmware `Chauvet.E103.2610191001.2559_release`,
+  Lasso Actions 0.2.0 beta 33 and Probe 0.0.2 beta 14, 2026-11-27,
+  [#524](https://github.com/martonpaulo/ink-tools/issues/524)]:
+  - an element removed with the lasso toolbar's Delete comes back at the next insert, from Lasso
+    Actions' «Insert Image» or from Probe's `inkctl ink write` alone;
+  - an export with `saveCurrentNote` first still holds the deleted element, so that save does not
+    write a lasso Delete to the file;
+  - closing the note saves the Delete, yet the next plugin insert after reopening brings the
+    element back, and from then on it stays, also after a close and a reopen;
+  - in the owner's round an erase and a paste the Note app had not placed came back the same way.
+  The official docs ask for `saveCurrentNote` before a write on the open note, and it does lay a
+  pasted piece on the page (Lasso Actions' paste above), so sn-adapter's four open-page writes
+  (`insertPageElements`, `modifyPageElements`, `deletePageElements`, `batchUpdatePageElements`)
+  save first and change nothing when the save fails (`official/openPage.ts`). Whether that save
+  keeps an erase and a lasso Delete through the insert is [unverified]; the tablet queue holds the
+  check for each inserting plugin.
 - Right after a plugin's `PluginCommAPI.jumpToPage`, the next press of the plugins button is lost;
   a wait of about 4 s before it works, and 1.5 s was too short on a page with a picture [measured,
   Probe, 2026-11-17, [#214](https://github.com/martonpaulo/ink-tools/issues/214)].

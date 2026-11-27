@@ -27,6 +27,7 @@ import {
   Result,
   TextBoxInput,
   THROWN_CODE,
+  whyNot,
 } from '@ink-tools/sn-adapter/official';
 import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
@@ -42,9 +43,8 @@ const CHAR_WIDTH = 0.55;
  */
 export const BOX_WIDTH = 640;
 
-/** Why a host call that answers true on success did not: its failure, or a plain false. */
-export const whyNot = (result: Result<boolean>): string =>
-  result.ok ? 'answered false' : `${result.code} ${result.message}`;
+/** Why a host call did not answer true; sn-adapter owns it, the runs import it from here. */
+export {whyNot};
 
 /** One line of Lookup's log. */
 export const lookupLog = (line: string) => console.log(`Lookup: ${line}`);

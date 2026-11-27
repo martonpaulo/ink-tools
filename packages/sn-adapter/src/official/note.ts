@@ -1,6 +1,7 @@
 import {PluginNoteAPI} from 'sn-plugin-lib';
 import {textBoxFields} from './elements';
-import {attempt, Result} from './result';
+import {saveCurrentNote} from './openPage';
+import {attempt, Result, whyNot} from './result';
 
 /** png, jpg or jpeg only; the host chooses placement and size (brief section 4.4). */
 export function insertImage(path: string): Promise<Result<boolean>> {
@@ -24,11 +25,6 @@ export function insertText(box: TextBoxInput): Promise<Result<boolean>> {
 }
 
 
-/** Writes the open note to its file, so a read of the file sees the newest strokes (#296). */
-export function saveCurrentNote(): Promise<Result<boolean>> {
-  return attempt(() => PluginNoteAPI.saveCurrentNote());
-}
-
 /**
  * Saves the open note before a page export (#296): `generateNotePng` reads the file, so without it
  * the strokes drawn just before a send are not in the image. A failed or `false` save is logged and
@@ -46,6 +42,6 @@ export async function saveBeforeExport(
     log(`save: the note saved in ${ms} ms`);
     return;
   }
-  const why = saved.ok ? 'answered false' : `failed: ${saved.code} ${saved.message}`;
+  const why = saved.ok ? whyNot(saved) : `failed: ${whyNot(saved)}`;
   log(`save: ${why} in ${ms} ms: the page is exported as the file holds it`);
 }

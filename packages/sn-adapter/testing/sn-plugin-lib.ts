@@ -43,6 +43,7 @@ export const PluginCommAPI = mocks(
   'resizeLassoRect',
   'reloadFile',
   'batchUpdatePageElements',
+  'modifyPageElements',
   'saveStickerByLasso',
   'getNoteSystemTemplates',
 );

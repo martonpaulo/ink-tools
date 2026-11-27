@@ -27,6 +27,8 @@ export const TIMEOUT_CODE = -3;
 export const EMPTY_LASSO_CODE = -4;
 /** A wrapper refused its argument before any SDK call. */
 export const BAD_ARGUMENT_CODE = -5;
+/** The open note did not save, so a write on its page was refused before any change (#524). */
+export const UNSAVED_CODE = -6;
 
 type SdkResponse = {
   success?: boolean;
@@ -62,6 +64,10 @@ export function fromResponse<T>(response: unknown): Result<T> {
     r.error?.message ?? 'the call failed with no error message',
   );
 }
+
+/** Why a host call that answers true on success did not: its failure, or a plain false. */
+export const whyNot = (result: Result<boolean>): string =>
+  result.ok ? 'answered false' : `${result.code} ${result.message}`;
 
 /** Runs an SDK call and turns a thrown error into a CallFailure. */
 export async function attempt<T>(

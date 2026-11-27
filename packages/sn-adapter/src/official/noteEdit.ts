@@ -3,7 +3,8 @@
  * path, one element by its number, page removal, and the element building and placing for a move or
  * a resize. The open-note calls it routes to live beside their other callers: `insertPageElements`
  * (page.ts), `modifyPageElements` (image.ts), `deletePageElements` (shapes.ts), `insertNotePage`
- * (file.ts) and `saveCurrentNote` (note.ts). A keyword goes in and out by path, the open note too (#346).
+ * (file.ts) and `saveCurrentNote` (openPage.ts, which every open-page write runs first, #524). A
+ * keyword goes in and out by path, the open note too (#346).
  */
 import {PluginFileAPI} from 'sn-plugin-lib';
 import {createTextBox, readAll, rebuildStroke, STROKE_TYPE, TEXT_TYPE} from './elements';

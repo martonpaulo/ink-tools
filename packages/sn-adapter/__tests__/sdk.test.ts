@@ -14,7 +14,11 @@ const sdkFailure = {success: false, error: {code: 904, message: 'no lasso'}};
 const success = (result: unknown) => ({success: true, result});
 const mocked = (fn: unknown) => fn as jest.Mock;
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  // A write on the open page saves the note first (#524); openPage.test.ts covers a failed save.
+  mocked(PluginNoteAPI.saveCurrentNote).mockResolvedValue(success(true));
+});
 
 /** Wrappers over calls that answer with the SDK's {success, result, error} shape. */
 const responseCalls: [string, jest.Mock, () => Promise<unknown>, unknown][] = [

@@ -12,7 +12,7 @@
  */
 import {REGISTRY} from '../registry.generated';
 import {insertPageElements, createElement, getCurrentPageNum} from './page';
-import {saveCurrentNote} from './note';
+import {saveCurrentNote} from './openPage';
 import {rebuildStroke, type SavedStroke} from './elements';
 import type {Motion, StrokeTimes} from './pen';
 import {fail, ok, Result, THROWN_CODE} from './result';

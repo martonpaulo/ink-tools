@@ -1,4 +1,5 @@
 import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
+import {onSavedPage} from './openPage';
 import {attempt, Result} from './result';
 
 /** The page size, owned by the adapter's model (#491). */
@@ -32,13 +33,16 @@ export function createElement(
   return attempt(() => PluginCommAPI.createElement(type));
 }
 
-/** Inserts elements into a page of the current file, in pixel coordinates from getPageSize. */
+/**
+ * Inserts elements into a page of the current file, in pixel coordinates from getPageSize, once
+ * the note saved (`onSavedPage`, #524).
+ */
 export function insertPageElements(
   elements: object[],
   page: number,
   layer = 0,
 ): Promise<Result<boolean>> {
-  return attempt(() => PluginCommAPI.insertPageElements(elements, page, layer));
+  return onSavedPage(() => attempt(() => PluginCommAPI.insertPageElements(elements, page, layer)));
 }
 
 

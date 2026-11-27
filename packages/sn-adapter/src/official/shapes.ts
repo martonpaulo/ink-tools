@@ -4,6 +4,7 @@
  * sdk-boundary test), as elements.ts is for Real-Time Text.
  */
 import {PluginCommAPI} from 'sn-plugin-lib';
+import {onSavedPage} from './openPage';
 import {attempt, Result} from './result';
 
 /** The lasso box's three states (official docs, «setLassoBoxState»). */
@@ -25,7 +26,8 @@ export function insertGeometry(geometry: object): Promise<Result<boolean>> {
 /**
  * Deletes elements of the current page by number (official docs, «deletePageElements»). It clears
  * the note's undo history [community, Snap], so a caller uses it only when nothing else can (#253).
+ * It runs once the note saved (`onSavedPage`, #524).
  */
 export function deletePageElements(numsInPage: number[], page: number, layer?: number): Promise<Result<boolean>> {
-  return attempt(() => PluginCommAPI.deletePageElements(numsInPage, page, layer ?? null));
+  return onSavedPage(() => attempt(() => PluginCommAPI.deletePageElements(numsInPage, page, layer ?? null)));
 }
