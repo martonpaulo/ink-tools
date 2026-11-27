@@ -5,3 +5,4 @@ export { encodePng } from './png';
 export { drawText, drawCentredText, measureText, capHeight, FONT_WEIGHTS, type FontWeight, type TextAlign, type TextStyle } from './font';
 export * from './grid';
 export * from './layout';
+export * from './boards';
