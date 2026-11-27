@@ -1791,7 +1791,10 @@ check "a picture that is not a PNG or JPEG is a usage error before any push" "$(
 check "note edit on a note outside Note/Tests/ is refused" "$(exit_and_pushes note edit Note/Diary.note "$work/local/ops.json")" "120"
 check "note edit of a missing note is not found" "$(exit_and_pushes note edit Note/Tests/Absent.note "$work/local/ops.json")" "40"
 check "read-only refuses note edit" "$(exit_and_pushes --read-only note edit Note/Tests/Edit.note "$work/local/ops.json")" "110"
-rm -f "$files/action-answer" "$files/picture-paths" "$work/local/edit.png" "$work/local/ops.json" "$work/local/move-ops.json" "$work/local/bad-ops.json"
+python3 -c "import json; json.dump([{'op':'insertElements','page':0,'elements':[{'kind':'stroke','points':[[1,1]]*2000,'penColor':0,'thickness':400}]*8}], open('$work/local/big-ops.json','w'))"
+run note edit Note/Tests/Edit.note "$work/local/big-ops.json" >/dev/null 2>"$work/err"
+check "a request over Device Link's 64 KB is a usage error that says to split it, before any push (#337)" "$?$(called ' push ')$(grep -c 'reads at most 65536: split it' "$work/err")" "201"
+rm -f "$files/action-answer" "$files/picture-paths" "$work/local/edit.png" "$work/local/ops.json" "$work/local/move-ops.json" "$work/local/bad-ops.json" "$work/local/big-ops.json"
 
 # The tablet's page templates through Device Link's action templates, read-only (#451).
 action_line "device-link ACTION_ID 1/1 {\"ok\":true,\"action\":\"templates\",\"line\":\"DeviceLink: templates: 2 system, 1 custom\",\"system\":[{\"name\":\"style_white\"},{\"name\":\"style_8mm_lines\"}],\"custom\":[{\"name\":\"week\",\"path\":\"$root/MyStyle/week.png\"}]}" > "$files/action-answer"

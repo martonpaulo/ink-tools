@@ -501,9 +501,13 @@ ACTION_PLUGINS = {
     "ink-tools-probe": {"folder": HELPER_FOLDER, "actions": ("run-probe",)},
     # Device Link's folder in the hidden .data/plugin/, where the editor helper reads its request and
     # the pictures an edit inserts (plugins/device-link/src/editor/operations.ts EDITOR_FOLDER, #312).
+    # Its native reader refuses a request file over 64 KB (plugins/device-link/native TextFiles.MAX_BYTES)
+    # and the channel then reads it again at every tick, so a larger request is refused here, never sent
+    # to time out (#337: 540 strokes in one request made 440 KB and no answer).
     "device-link": {
         "folder": f"{SHARED_ROOT}/{REGISTRY['pluginhost.file-sandbox']['hiddenFolder']}/inktools-device-link",
         "actions": ("edit", "save-note", "templates"),
+        "max_request_bytes": 64 * 1024,
     },
     # Smart Pen's folder in the hidden .data/plugin/ (its src/actions.ts ACTION_HOME, #298).
     "smart-pen": {
@@ -3608,10 +3612,15 @@ def run_action(device: Device, name: str, action: str, request_args: dict, timeo
         raise Failure(EXIT_FAILED, "device_error", f"the tablet's time did not read: {now!r}")
     request_id = uuid.uuid4().hex
     request = {"id": request_id, "action": action, "args": request_args, "at": int(now) * MILLISECONDS}
+    text = json.dumps(request)
+    size = len(text.encode("utf-8"))
+    if size > plugin.get("max_request_bytes", size):
+        raise bad_usage(f"the {name} {action} request is {size} bytes and {name} reads at most "
+                        f"{plugin['max_request_bytes']}: split it into several requests")
     since = device.shell(f"date {shlex.quote(HELPER_DATE_FORMAT)}").strip()
     with tempfile.TemporaryDirectory() as folder:
         local = os.path.join(folder, ACTION_FILE)
-        Path(local).write_text(json.dumps(request), encoding="utf-8")
+        Path(local).write_text(text, encoding="utf-8")
         device.shell(f"mkdir -p {shlex.quote(plugin['folder'])}")
         push_file(device, local, f"{plugin['folder']}/{ACTION_FILE}", overwrite=True)
     started = time.monotonic()
