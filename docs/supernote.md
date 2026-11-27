@@ -563,6 +563,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   inserted into a portrait note shows upright but scaled to the page's width: 10 mm cells measure
   about 7.5 mm, with white bands above and below [measured, Manta, device round 11, 2026-11-26,
   [#379](https://github.com/martonpaulo/ink-tools/issues/379)].
+- After a turn with the note's page bar (› or ‹), `getCurrentPageNum` read at the next press
+  answers the page on screen, from 0: Puzzles turned from page 1 to page 2 logged `adding … after
+  page 1` and put the new page after page 2, and turned back to page 1 said that page had no puzzle
+  [measured, Puzzles 0.1.0 beta 1, Manta, 2026-11-27,
+  [#542](https://github.com/martonpaulo/ink-tools/issues/542)]. A page read kept from before the
+  turn is what went wrong there, not the call.
 - A successful `insertNotePage` from a plugin's full view reloads the note and ends the plugin's
   JavaScript: the view closed, the code after the call never ran (its PNG stayed), and the next
   press of the plugin's button showed the last frame, «Loading…», with
