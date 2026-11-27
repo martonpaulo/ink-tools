@@ -147,7 +147,7 @@ final class NoteEditor {
                 case .movePage(let from, let to):
                     return Data(
                         try NoteWriter.movePage(try NoteFile(data: try Data(contentsOf: url)), from: from, to: to))
-                case .restoreBackup(let backup):
+                case .restoreBackup(let backup, _):
                     // A backup the reader cannot read is never pushed.
                     let bytes = try Data(contentsOf: backup)
                     _ = try NoteFile(data: bytes)

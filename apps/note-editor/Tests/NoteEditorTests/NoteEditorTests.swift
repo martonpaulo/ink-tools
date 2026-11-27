@@ -515,6 +515,29 @@ import Testing
         #expect(editor.conflictNote == nil)
     }
 
+    /// The tablet's edit changes the page's bytes, as on the Manta, so the undo's restore changes
+    /// that page back: the check after the pull counts it as edited, never as an untouched page
+    /// that changed (device round of #264).
+    @Test(arguments: [false, true])
+    func anUndoByBackupOfAPageThatChangedIsAccepted(deletes: Bool) async throws {
+        let editor = try editor()
+        tabletApplies { @Sendable note in
+            try NoteFile(
+                bytes: NoteWriter.drawText(
+                    note, page: 0, text: "Edited", in: PageRect(x: 100, y: 100, width: 600, height: 120),
+                    fontSize: 80))
+        }
+        if deletes {
+            #expect(editor.deleteElements(page: 0, elements: try selection()))
+        } else {
+            #expect(editor.editText(page: 0, element: MovedElement(try textBox().item), text: "New", fontSize: 40))
+        }
+        await settle(editor)
+        #expect(editor.refusal == nil && tablet.bytes != original)
+        await expectUndoneByBackup(editor)
+        #expect(editor.refusal == nil && editor.history.redoKind != nil)
+    }
+
     @Test func aBlankTextBoxIsNeverSent() throws {
         let editor = try editor()
         let element = MovedElement(try textBox().item)

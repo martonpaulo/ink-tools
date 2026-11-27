@@ -78,8 +78,10 @@ public struct TabletOperation: Sendable, Equatable {
         /// Removes the pages at these places, each from 0; `page` is the lowest.
         case removePages([Int])
         /// Puts the note back as the backup kept before an edit: Revert to Backup's route, for
-        /// the undo of a removal (#329).
-        case restoreBackup(URL)
+        /// the undo of a removal (#329). `restoresPage` when it puts back the content of page
+        /// `page`, still in the note: the undo of an insert, a delete, a transform or a text box
+        /// edit, whose page changes back (#264).
+        case restoreBackup(URL, restoresPage: Bool = false)
     }
 
     /// The note on the tablet, by its full path.
@@ -136,7 +138,8 @@ public struct TabletOperation: Sendable, Equatable {
             self.init(note: note, baseHash: baseHash, page: lowest, change: .restoreBackup(backup))
         case .revertInsert(let page), .restoreElements(let page):
             guard let backup else { return nil }
-            self.init(note: note, baseHash: baseHash, page: page, change: .restoreBackup(backup))
+            self.init(
+                note: note, baseHash: baseHash, page: page, change: .restoreBackup(backup, restoresPage: true))
         }
     }
 
@@ -151,7 +154,9 @@ public struct TabletOperation: Sendable, Equatable {
     /// must keep its bytes. A page move changes none: each page keeps its bytes at a new place.
     public var editedPages: Set<Int> {
         switch change {
-        case .movePage, .insertPage, .restoreBackup: []
+        // A page put back in place is edited; pages put back after a removal are new to the copy.
+        case .restoreBackup(_, let restoresPage): restoresPage ? [page] : []
+        case .movePage, .insertPage: []
         case .removePages(let pages): Set(pages)
         default: [page]
         }

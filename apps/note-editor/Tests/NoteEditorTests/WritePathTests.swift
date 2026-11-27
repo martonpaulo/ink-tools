@@ -177,6 +177,10 @@ import Testing
             TabletOperation(.restorePages(at: [1]), note: Self.note, baseHash: "h", backup: backup))
         #expect(restore.route == .mac && restore.change == .restoreBackup(backup))
         #expect(restore.editedPages.isEmpty && restore.helperOperations.isEmpty)
+        // An undo that puts one page's content back edits that page (#264).
+        let back = try #require(
+            TabletOperation(.restoreElements(page: 2), note: Self.note, baseHash: "h", backup: backup))
+        #expect(back.change == .restoreBackup(backup, restoresPage: true) && back.editedPages == [2])
     }
 
     @Test func theHelperOperationsAreTheJSONTheHelperReads() throws {
