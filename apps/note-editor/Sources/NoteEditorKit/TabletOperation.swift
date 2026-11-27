@@ -113,6 +113,10 @@ public struct TabletOperation: Sendable, Equatable {
         case .insertText(let page, let text, let rect, let fontSize):
             self.init(
                 note: note, baseHash: baseHash, page: page, change: .insertText(text, rect: rect, fontSize: fontSize))
+        case .insertShape(let page, let shape, let penColor, let penWidth):
+            self.init(
+                note: note, baseHash: baseHash, page: page,
+                change: .insertElements([.geometry(shape, penColor: penColor, penWidth: penWidth)]))
         case .transformElements(let transform):
             guard transform.refusal == nil else { return nil }
             self.init(
@@ -272,7 +276,7 @@ public enum GeometryShape: Sendable, Equatable {
     /// `GEO_polygon`: the corners in order; the closing point is added when sent.
     case polygon([CGPoint])
     /// `GEO_circle` when the two radii are equal, else `GEO_ellipse`; never turned, as the helper
-    /// takes angle 0 only until the device round settles the angle's unit.
+    /// takes angle 0 only (#463).
     case ellipse(center: CGPoint, horizontal: Int, vertical: Int)
 
     /// The most points the helper takes for a polygon, the closing one included.

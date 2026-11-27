@@ -171,6 +171,16 @@
         }
       }
     },
+    "Arrow" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrow"
+          }
+        }
+      }
+    },
     "Before Page %lld" : {
       "localizations" : {
         "en" : {
@@ -361,6 +371,16 @@
         }
       }
     },
+    "Diamond" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diamond"
+          }
+        }
+      }
+    },
     "Dismiss" : {
       "localizations" : {
         "en" : {
@@ -377,6 +397,76 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Done"
+          }
+        }
+      }
+    },
+    "Drag on the page to draw a diamond; hold Shift to keep its box square. Return puts one in the middle." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag on the page to draw a diamond; hold Shift to keep its box square. Return puts one in the middle."
+          }
+        }
+      }
+    },
+    "Drag on the page to draw a line; hold Shift for 45° steps. Return puts one in the middle." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag on the page to draw a line; hold Shift for 45° steps. Return puts one in the middle."
+          }
+        }
+      }
+    },
+    "Drag on the page to draw a rectangle; hold Shift for a square. Return puts one in the middle." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag on the page to draw a rectangle; hold Shift for a square. Return puts one in the middle."
+          }
+        }
+      }
+    },
+    "Drag on the page to draw a rounded rectangle; hold Shift for a square. Return puts one in the middle." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag on the page to draw a rounded rectangle; hold Shift for a square. Return puts one in the middle."
+          }
+        }
+      }
+    },
+    "Drag on the page to draw a triangle; hold Shift to keep its box square. Return puts one in the middle." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag on the page to draw a triangle; hold Shift to keep its box square. Return puts one in the middle."
+          }
+        }
+      }
+    },
+    "Drag on the page to draw an arrow; hold Shift for 45° steps. Return puts one in the middle." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag on the page to draw an arrow; hold Shift for 45° steps. Return puts one in the middle."
+          }
+        }
+      }
+    },
+    "Drag on the page to draw an ellipse; hold Shift for a circle. Return puts one in the middle." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag on the page to draw an ellipse; hold Shift for a circle. Return puts one in the middle."
           }
         }
       }
@@ -407,6 +497,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elements selected: %lld"
+          }
+        }
+      }
+    },
+    "Ellipse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ellipse"
           }
         }
       }
@@ -621,6 +721,16 @@
         }
       }
     },
+    "Insert Shape" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insert Shape"
+          }
+        }
+      }
+    },
     "Insert Text Box" : {
       "localizations" : {
         "en" : {
@@ -657,6 +767,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Last Page"
+          }
+        }
+      }
+    },
+    "Line" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Line"
           }
         }
       }
@@ -1051,6 +1171,16 @@
         }
       }
     },
+    "Rectangle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rectangle"
+          }
+        }
+      }
+    },
     "Rectangular Selection" : {
       "localizations" : {
         "en" : {
@@ -1221,6 +1351,16 @@
         }
       }
     },
+    "Rounded Rectangle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rounded Rectangle"
+          }
+        }
+      }
+    },
     "Screenshot" : {
       "localizations" : {
         "en" : {
@@ -1237,6 +1377,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selection Tool"
+          }
+        }
+      }
+    },
+    "Shape" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shape"
           }
         }
       }
@@ -1677,6 +1827,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tools"
+          }
+        }
+      }
+    },
+    "Triangle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Triangle"
           }
         }
       }

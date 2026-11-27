@@ -16,8 +16,10 @@ struct InsertRequest: Identifiable {
     var centre: CGPoint?
 }
 
-/// The Insert menu, as Pages holds one: a picture from a file or the screen, and a text box (#264).
+/// The Insert menu, as Pages holds one: a picture from a file or the screen, a text box (#264) and
+/// a shape drawn by a drag on the page (#350).
 struct InsertCommands: View {
+    @FocusedValue(\.pageViewer) private var viewer: PageViewer?
     @FocusedValue(\.noteEditor) private var editor
     @FocusedValue(\.pageNavigator) private var navigator
 
@@ -40,9 +42,48 @@ struct InsertCommands: View {
                 editor?.insertRequest = InsertRequest(page: page, content: .text(""))
             }
             .keyboardShortcut("t", modifiers: [.command, .option])
+            Menu(Copy.insertShape) {
+                ForEach(ShapeKind.allCases, id: \.self) { kind in
+                    Button(Copy.shapeName(kind), systemImage: kind.symbol) {
+                        viewer?.layout = .scroll
+                        viewer?.shapeTool = kind
+                    }
+                }
+            }
         }
         .disabled(!ready)
         .help(editor == nil ? Copy.editOnlyFromTablet : "")
+    }
+}
+
+extension ShapeKind {
+    /// The shape's symbol in Insert › Shape and its hint bar.
+    var symbol: String {
+        switch self {
+        case .line: "line.diagonal"
+        case .arrow: "arrow.up.right"
+        case .rectangle: "rectangle"
+        case .roundedRectangle: "app"
+        case .ellipse: "oval"
+        case .triangle: "triangle"
+        case .diamond: "diamond"
+        }
+    }
+}
+
+extension View {
+    /// Return puts the shape Insert › Shape waits with in the middle of `page`, with no drag (#350).
+    func shapeReturn(viewer: PageViewer, editor: NoteEditor?, page index: Int?) -> some View {
+        onKeyPress(.return) {
+            guard let kind = viewer.shapeTool, let editor, editor.canEdit, let index else { return .ignored }
+            let size = editor.pageSize(index)
+            let page = CGSize(width: size.width, height: size.height)
+            editor.insertShape(
+                page: index,
+                shape: ShapeDrawing.shape(kind, centredOn: CGPoint(x: page.width / 2, y: page.height / 2), page: page))
+            viewer.shapeTool = nil
+            return .handled
+        }
     }
 }
 

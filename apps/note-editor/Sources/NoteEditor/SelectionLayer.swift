@@ -33,6 +33,8 @@ struct SelectionLayer: View {
     let size: CGSize
     /// The drag in progress, in points.
     @State private var path: [CGPoint] = []
+    /// Shift, held during a drag of Insert › Shape, so the outline follows it at once (#350).
+    @State private var shiftHeld = false
     /// The selection's move under the pointer, and its ink lifted off the page.
     @State private var dragged: ElementMove?
     /// The resize or rotation under the pointer (#326).
@@ -111,7 +113,15 @@ struct SelectionLayer: View {
                 }
             }
             context.translateBy(x: -shift.width, y: -shift.height)
-            if path.count > 1 {
+            // The shape Insert › Shape draws, under the pointer (#350).
+            if let shape = drawnShape {
+                // As the tablet will draw it: black, at the shape's width.
+                var mapped = context
+                mapped.scaleBy(x: 1 / pixels, y: 1 / pixels)
+                mapped.stroke(
+                    Path(ShapeDrawing.path(shape)), with: .color(.black),
+                    style: StrokeStyle(lineWidth: ShapeDrawing.lineWidth, lineCap: .round, lineJoin: .round))
+            } else if path.count > 1 {
                 var drag = Path()
                 if viewer.tool == .lasso {
                     drag.addLines(path)
@@ -122,6 +132,8 @@ struct SelectionLayer: View {
             }
         }
         .contentShape(.rect)
+        .pointerStyle(shaping ? .rectSelection : nil)
+        .onModifierKeysChanged(mask: .shift) { _, keys in shiftHeld = keys.contains(.shift) }
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
@@ -327,6 +339,10 @@ struct SelectionLayer: View {
     /// it. A drag that starts on a selected element never gets here: it takes the selection out
     /// to another app (#323). A click on a page whose elements are still being read applies once they are.
     private func finish(_ value: DragGesture.Value) {
+        if let kind = viewer.shapeTool, let editor, editor.canEdit {
+            insert(kind, value, editor: editor)
+            return
+        }
         let adding = NSEvent.modifierFlags.contains(.shift)
         let moved = hypot(value.translation.width, value.translation.height) >= Self.reach
         let selected = viewer.selection.page == index ? viewer.selection.ids : []
@@ -359,6 +375,33 @@ struct SelectionLayer: View {
                 if let items = pages.selectable(index) { apply(items) }
             }
         }
+    }
+
+    /// Whether a drag here draws Insert › Shape's waiting shape (#350).
+    private var shaping: Bool {
+        viewer.shapeTool != nil && editor?.canEdit == true
+    }
+
+    /// The waiting shape the drag in progress draws, in page pixels.
+    private var drawnShape: GeometryShape? {
+        guard shaping, let kind = viewer.shapeTool, let start = path.first, let end = path.last, path.count > 1
+        else { return nil }
+        return ShapeDrawing.shape(
+            kind, from: page(start), to: page(end), constrained: shiftHeld, page: pixelSize)
+    }
+
+    /// Ends a drag of Insert › Shape (#350): the shape it drew, or at a click the shape's default
+    /// size around it, inserted, and the selection tool back.
+    private func insert(_ kind: ShapeKind, _ value: DragGesture.Value, editor: NoteEditor) {
+        let moved = hypot(value.translation.width, value.translation.height) >= Self.reach
+        let shape =
+            moved
+            ? ShapeDrawing.shape(
+                kind, from: page(value.startLocation), to: page(value.location),
+                constrained: NSEvent.modifierFlags.contains(.shift), page: pixelSize)
+            : ShapeDrawing.shape(kind, centredOn: page(value.location), page: pixelSize)
+        editor.insertShape(page: index, shape: shape)
+        viewer.shapeTool = nil
     }
 
     /// A point on screen in the page's pixels.

@@ -210,7 +210,7 @@ private struct ToolCommands: View {
         Toggle(
             title,
             isOn: Binding(
-                get: { viewer?.tool == tool },
+                get: { viewer?.shownTool == tool },
                 set: { if $0 { viewer?.tool = tool } })
         )
         .disabled(viewer?.layout != .scroll)

@@ -326,6 +326,59 @@ nonisolated enum Copy {
     static let insertTextBoxTitle = String(localized: "Insert Text Box")
     static let pictureWidth = String(localized: "Width")
 
+    // MARK: Insert › Shape (#350)
+
+    /// A shape's name in Insert › Shape, as Pages and Keynote name theirs.
+    static func shapeName(_ kind: ShapeKind) -> String {
+        switch kind {
+        case .line: String(localized: "Line")
+        case .arrow: String(localized: "Arrow")
+        case .rectangle: String(localized: "Rectangle")
+        case .roundedRectangle: String(localized: "Rounded Rectangle")
+        case .ellipse: String(localized: "Ellipse")
+        case .triangle: String(localized: "Triangle")
+        case .diamond: String(localized: "Diamond")
+        }
+    }
+
+    static let insertShape = String(localized: "Shape")
+
+    /// The bar over the pages while a shape waits for its drag.
+    static func shapeHint(_ kind: ShapeKind) -> String {
+        switch kind {
+        case .line:
+            String(
+                localized: "Drag on the page to draw a line; hold Shift for 45° steps. Return puts one in the middle.")
+        case .arrow:
+            String(
+                localized: "Drag on the page to draw an arrow; hold Shift for 45° steps. Return puts one in the middle."
+            )
+        case .rectangle:
+            String(
+                localized:
+                    "Drag on the page to draw a rectangle; hold Shift for a square. Return puts one in the middle.")
+        case .roundedRectangle:
+            String(
+                localized:
+                    "Drag on the page to draw a rounded rectangle; hold Shift for a square. Return puts one in the middle."
+            )
+        case .ellipse:
+            String(
+                localized:
+                    "Drag on the page to draw an ellipse; hold Shift for a circle. Return puts one in the middle.")
+        case .triangle:
+            String(
+                localized:
+                    "Drag on the page to draw a triangle; hold Shift to keep its box square. Return puts one in the middle."
+            )
+        case .diamond:
+            String(
+                localized:
+                    "Drag on the page to draw a diamond; hold Shift to keep its box square. Return puts one in the middle."
+            )
+        }
+    }
+
     static func cannotInsert(_ reason: String) -> String {
         String(localized: "The picture could not be inserted: \(reason)")
     }
@@ -350,6 +403,7 @@ nonisolated enum Copy {
         case .moveElements: String(localized: "Move")
         case .insertPicture: String(localized: "Insert Picture")
         case .insertText: String(localized: "Insert Text Box")
+        case .insertShape: String(localized: "Insert Shape")
         case .revertInsert: String(localized: "Remove Insert")
         case .transformElements(let transform):
             switch transform.kind {

@@ -18,9 +18,24 @@ final class PageViewer {
         case rectangle, lasso
     }
 
-    var layout: Layout
+    var layout: Layout {
+        didSet { if layout != .scroll { shapeTool = nil } }
+    }
     var zoom: PageZoom
-    var tool: SelectionTool = .rectangle
+    /// Picking a selection tool puts away a shape that waits for its drag (#350).
+    var tool: SelectionTool = .rectangle {
+        didSet { shapeTool = nil }
+    }
+    /// The selection tool the toolbar and the Tools menu show as on: none while a shape waits.
+    var shownTool: SelectionTool? {
+        get { shapeTool == nil ? tool : nil }
+        set { if let newValue { tool = newValue } }
+    }
+    /// The shape Insert › Shape waits to draw by a drag on the page, until it is drawn or Escape
+    /// (#350); only in Continuous Scroll, where a page takes a drag.
+    var shapeTool: ShapeKind? {
+        didSet { if shapeTool != nil { selection.clear() } }
+    }
     /// The elements selected on one page: read-only, the base the edits build on (#324).
     var selection = PageSelection()
     /// The space a page is fitted in, in points, without the margin around it.

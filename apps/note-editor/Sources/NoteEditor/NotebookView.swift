@@ -160,6 +160,12 @@ struct NotebookView: View {
                         if let editor, let refusal = editor.refusal {
                             RefusalBar(message: refusal) { editor.refusal = nil }
                         }
+                        // Insert › Shape waits for its drag, and says how (#350).
+                        if let kind = viewer.shapeTool {
+                            RefusalBar(message: Copy.shapeHint(kind), systemImage: kind.symbol, button: Copy.cancel) {
+                                viewer.shapeTool = nil
+                            }
+                        }
                     }
                 }
         }
@@ -167,12 +173,20 @@ struct NotebookView: View {
         .navigationSubtitle(subtitle)
         // Edit › Select All and Escape, by the menu or by the keys when no menu holds them (#324).
         .onCommand(#selector(NSResponder.selectAll(_:))) { selectAll() }
-        .onExitCommand { viewer.selection.clear() }
+        .onExitCommand {
+            viewer.shapeTool = nil
+            viewer.selection.clear()
+        }
         .onKeyPress(.escape) {
+            if viewer.shapeTool != nil {
+                viewer.shapeTool = nil
+                return .handled
+            }
             guard !viewer.selection.isEmpty else { return .ignored }
             viewer.selection.clear()
             return .handled
         }
+        .shapeReturn(viewer: viewer, editor: editor, page: navigator.index)
         .onKeyPress(characters: ["a"]) { press in
             guard press.modifiers == .command else { return .ignored }
             selectAll()
@@ -703,12 +717,12 @@ private struct ViewerToolbar: ToolbarContent {
             .labelStyle(.iconOnly)
         }
         ToolbarItem {
-            Picker(Copy.selectionTool, selection: $viewer.tool) {
+            Picker(Copy.selectionTool, selection: $viewer.shownTool) {
                 Label(Copy.rectangularSelection, systemImage: "rectangle.dashed").tag(
-                    PageViewer.SelectionTool.rectangle
+                    PageViewer.SelectionTool?.some(.rectangle)
                 )
                 .help(Copy.rectangularSelection)
-                Label(Copy.lassoSelection, systemImage: "lasso").tag(PageViewer.SelectionTool.lasso)
+                Label(Copy.lassoSelection, systemImage: "lasso").tag(PageViewer.SelectionTool?.some(.lasso))
                     .help(Copy.lassoSelection)
             }
             .pickerStyle(.segmented)

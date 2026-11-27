@@ -63,9 +63,14 @@ by the write path of [`AGENTS.md`](AGENTS.md#the-write-path).
 - Insert › Picture…, Screenshot and Text Box…, a picture dropped on a page and Paste send a picture
   or a typed text box as tablet elements ([#264](https://github.com/martonpaulo/ink-tools/issues/264)). A picture is rounded to the 16 screen greys
   (`MantaGreys`) before the Mac draws or sends it; an insert's undo is the backup kept before it.
-- A shape goes as the tablet's own geometry element (`HelperElement.geometry`, `GeometryShape`: a line, a
-  polygon, a circle or an ellipse at angle 0), which the helper inserts as type 700
-  ([#463](https://github.com/martonpaulo/ink-tools/issues/463)); Insert › Shape is [#350](https://github.com/martonpaulo/ink-tools/issues/350).
+- Insert › Shape draws a line, an arrow, a rectangle, a rounded rectangle, an ellipse, a triangle or
+  a diamond by a drag on the page, Shift keeping it square or straight; a click puts it at its
+  default size there and Return in the middle of the page, and Escape cancels
+  ([#350](https://github.com/martonpaulo/ink-tools/issues/350)). `ShapeDrawing` makes each one the
+  tablet's own geometry element (`HelperElement.geometry`, `GeometryShape`: a line, a polygon, a
+  circle or an ellipse at angle 0), which the helper inserts as type 700
+  ([#463](https://github.com/martonpaulo/ink-tools/issues/463)), in black at one width; the Mac draws
+  it at once, and its undo is the backup kept before its send.
 - Delete removes a selection by the helper's `deleteElements` ([#327](https://github.com/martonpaulo/ink-tools/issues/327)), drawn at once as the template
   where it was; its undo is the backup kept before its send.
 - Cut, Copy and Paste ([#327](https://github.com/martonpaulo/ink-tools/issues/327)): `PageElement.content` reads what each element holds; `ElementClipping`,

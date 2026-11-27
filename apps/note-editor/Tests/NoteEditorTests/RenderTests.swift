@@ -254,23 +254,60 @@ final class RenderTests {
         }
     }
 
-    /// A selection moved on a note from the tablet (#325): drawn at once at its new place from its
-    /// lifted ink, its frame with it, and the template where it was, while the move is on its way.
-    @Test func moveStates() async throws {
+    /// A copy of `content.note` opened as if from the tablet, named `name`: its edits never reach a
+    /// tablet, as the watch never starts and the tablet never answers; every thumbnail drawn.
+    private func tabletNote(_ name: String) async throws -> (LiveNote, NoteEditor, PageImages) {
         try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
-        let copy = scratch.appending(path: "Moved.note")
+        let copy = scratch.appending(path: "\(name).note")
         try Fixtures.data("content.note").write(to: copy)
         let note = try Fixtures.note("content.note")
         let live = LiveNote(
-            tabletPath: "Note/Moved.note", local: copy, inkctl: Inkctl(executable: nil, environment: [:]))
+            tabletPath: "Note/\(name).note", local: copy, inkctl: Inkctl(executable: nil, environment: [:]))
         live.watches = false
         let editor = NoteEditor(
             tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
-            backups: NoteBackups(folder: scratch.appending(path: "MovedBackups")))
+            backups: NoteBackups(folder: scratch.appending(path: "\(name)Backups")))
         let drawn = PageImages(note: note)
         for index in note.pages.indices {
             await drawn.loadThumbnail(index, scale: 1)
         }
+        return (live, editor, drawn)
+    }
+
+    /// Insert › Shape (#350): the bar while a shape waits for its drag, and every shape on its way to
+    /// the tablet, drawn at once in black over the page.
+    @Test func shapeStates() async throws {
+        let (live, editor, drawn) = try await tabletNote("Shapes")
+        await drawn.loadPage(0)
+        let viewer = PageViewer()
+        viewer.shapeTool = .rectangle
+        try await render("insert-shape-armed", Self.sizes) {
+            NotebookView(pages: drawn, page: 0, viewer: viewer, live: live, editor: editor)
+        }
+        viewer.shapeTool = nil
+        let size = editor.pageSize(0)
+        let page = CGSize(width: size.width, height: size.height)
+        // Four to a row above the fixture's ink, so each shape shows whole.
+        for (step, kind) in ShapeKind.allCases.enumerated() {
+            let left = CGFloat(80 + step % 4 * 320)
+            let top = CGFloat(280 + step / 4 * 280)
+            editor.insertShape(
+                page: 0,
+                shape: ShapeDrawing.shape(
+                    kind, from: CGPoint(x: left, y: top), to: CGPoint(x: left + 260, y: top + 220), constrained: false,
+                    page: page))
+        }
+        try await render("insert-shape-sending", Self.sizes) {
+            NotebookView(pages: drawn, page: 0, viewer: viewer, live: live, editor: editor)
+        }
+    }
+
+    /// A selection moved on a note from the tablet (#325): drawn at once at its new place from its
+    /// lifted ink, its frame with it, and the template where it was, while the move is on its way.
+    @Test func moveStates() async throws {
+        let (live, editor, drawn) = try await tabletNote("Moved")
+        let note = drawn.note
+        let copy = editor.copy
         await drawn.loadPage(0)
         await drawn.loadElements(0)
         let items = drawn.selectable(0) ?? []
@@ -322,20 +359,7 @@ final class RenderTests {
     /// Inserting a picture and a text box (#264): each sheet over the window it opens from, as a
     /// sheet is a window of its own, and both inserts drawn at once while on their way.
     @Test func insertStates() async throws {
-        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
-        let copy = scratch.appending(path: "Inserted.note")
-        try Fixtures.data("content.note").write(to: copy)
-        let note = try Fixtures.note("content.note")
-        let live = LiveNote(
-            tabletPath: "Note/Inserted.note", local: copy, inkctl: Inkctl(executable: nil, environment: [:]))
-        live.watches = false
-        let editor = NoteEditor(
-            tabletPath: live.tabletPath, copy: copy, base: note, tablet: SlowTablet(),
-            backups: NoteBackups(folder: scratch.appending(path: "InsertBackups")))
-        let drawn = PageImages(note: note)
-        for index in note.pages.indices {
-            await drawn.loadThumbnail(index, scale: 1)
-        }
+        let (live, editor, drawn) = try await tabletNote("Inserted")
         await drawn.loadPage(1)
         // A colour gradient, shown in the tablet's greys.
         let context = try #require(

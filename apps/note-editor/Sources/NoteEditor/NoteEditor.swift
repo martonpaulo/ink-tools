@@ -322,6 +322,15 @@ final class NoteEditor {
         return insert(.insertText(page: page, text: text, rect: rect, fontSize: fontSize), image: image)
     }
 
+    /// Inserts `shape` on `page` as the tablet's geometry element, in black at Insert › Shape's
+    /// one width, drawn at once from its outline (#350).
+    @discardableResult
+    func insertShape(page: Int, shape: GeometryShape) -> Bool {
+        insert(
+            .insertShape(page: page, shape: shape, penColor: .black, penWidth: ShapeDrawing.penWidth),
+            image: ShapeDrawing.preview(shape)?.image)
+    }
+
     private func insert(_ edit: NoteEdit, image: CGImage?) -> Bool {
         guard record(edit) else { return false }
         if let image, let ticket = pending.last?.ticket { insertImages[ticket] = image }
@@ -335,6 +344,8 @@ final class NoteEditor {
             switch waiting.edit {
             case .insertPicture(let page, _, let rect) where page == index: return (rect, image)
             case .insertText(let page, _, let rect, _) where page == index: return (rect, image)
+            case .insertShape(let page, let shape, _, _) where page == index:
+                return ShapeDrawing.preview(shape).map { ($0.rect, image) }
             default: return nil
             }
         }
@@ -702,7 +713,7 @@ final class NoteEditor {
         case .restorePages, .revertInsert, .restoreElements:
             guard let backup = waiting.backup else { return note }
             return try NoteFile(data: try Data(contentsOf: backup))
-        case .moveElements, .transformElements, .insertPicture, .insertText, .deleteElements:
+        case .moveElements, .transformElements, .insertPicture, .insertText, .insertShape, .deleteElements:
             // Drawn over the page: a move or a transform from its lifted ink, an insert from its
             // picture or its text (`insertions(on:)`).
             return note
@@ -729,16 +740,21 @@ extension FocusedValues {
 /// one sentence and Dismiss, said aloud when it shows.
 struct RefusalBar: View {
     let message: String
+    /// The bar's symbol: a warning for a refusal, the shape for Insert › Shape's hint (#350).
+    var systemImage = "exclamationmark.triangle.fill"
+    var button = Copy.dismiss
     let dismiss: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
-            Label(message, systemImage: "exclamationmark.triangle.fill")
+            Label(message, systemImage: systemImage)
                 .symbolRenderingMode(.multicolor)
                 .lineLimit(2)
                 .help(message)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button(Copy.dismiss, action: dismiss)
+                // A narrow window cuts the sentence: the whole of it shows under the pointer.
+                .help(message)
+            Button(button, action: dismiss)
         }
         .controlSize(.small)
         .padding(FindBar.inset)
