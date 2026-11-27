@@ -1,0 +1,4009 @@
+{
+ "language": "es",
+ "sources": [
+  "ink-tools-clues"
+ ],
+ "reviewed": false,
+ "entries": [
+  {
+   "word": "DE",
+   "clue": "Letra D"
+  },
+  {
+   "word": "QUE",
+   "clue": "Nexo"
+  },
+  {
+   "word": "EL",
+   "clue": "Artículo"
+  },
+  {
+   "word": "LA",
+   "clue": "Sexta nota"
+  },
+  {
+   "word": "NO",
+   "clue": "Negación"
+  },
+  {
+   "word": "EN",
+   "clue": "Dentro de"
+  },
+  {
+   "word": "ES",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "UN",
+   "clue": "Artículo"
+  },
+  {
+   "word": "SE",
+   "clue": "Conozco"
+  },
+  {
+   "word": "ME",
+   "clue": "A mí"
+  },
+  {
+   "word": "LOS",
+   "clue": "Artículo plural"
+  },
+  {
+   "word": "UNA",
+   "clue": "Artículo femenino"
+  },
+  {
+   "word": "POR",
+   "clue": "Mediante"
+  },
+  {
+   "word": "ESTA",
+   "clue": "Se halla"
+  },
+  {
+   "word": "LO",
+   "clue": "Artículo neutro"
+  },
+  {
+   "word": "CON",
+   "clue": "Junto a"
+  },
+  {
+   "word": "LAS",
+   "clue": "Artículo plural"
+  },
+  {
+   "word": "MI",
+   "clue": "Tercera nota"
+  },
+  {
+   "word": "SU",
+   "clue": "De él"
+  },
+  {
+   "word": "PARA",
+   "clue": "Detiene"
+  },
+  {
+   "word": "TE",
+   "clue": "Infusión"
+  },
+  {
+   "word": "MAS",
+   "clue": "Signo de suma"
+  },
+  {
+   "word": "AL",
+   "clue": "A + el"
+  },
+  {
+   "word": "LE",
+   "clue": "A él"
+  },
+  {
+   "word": "DEL",
+   "clue": "De + el"
+  },
+  {
+   "word": "COMO",
+   "clue": "De qué modo"
+  },
+  {
+   "word": "ELLA",
+   "clue": "Esa mujer"
+  },
+  {
+   "word": "TU",
+   "clue": "Vos"
+  },
+  {
+   "word": "SI",
+   "clue": "Séptima nota"
+  },
+  {
+   "word": "ESTE",
+   "clue": "Punto cardinal"
+  },
+  {
+   "word": "YO",
+   "clue": "Primera persona"
+  },
+  {
+   "word": "TIENE",
+   "clue": "Posee"
+  },
+  {
+   "word": "MUY",
+   "clue": "Bastante"
+  },
+  {
+   "word": "SON",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "CUANDO",
+   "clue": "En qué momento"
+  },
+  {
+   "word": "PERO",
+   "clue": "Sin embargo"
+  },
+  {
+   "word": "HAY",
+   "clue": "Existe"
+  },
+  {
+   "word": "HA",
+   "clue": "Del verbo haber"
+  },
+  {
+   "word": "TODO",
+   "clue": "Entero"
+  },
+  {
+   "word": "ESO",
+   "clue": "Aquello"
+  },
+  {
+   "word": "ESTOY",
+   "clue": "Del verbo estar"
+  },
+  {
+   "word": "FUE",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "TENGO",
+   "clue": "Poseo"
+  },
+  {
+   "word": "YA",
+   "clue": "Ahora mismo"
+  },
+  {
+   "word": "SOLO",
+   "clue": "Sin compañía"
+  },
+  {
+   "word": "CASA",
+   "clue": "Hogar"
+  },
+  {
+   "word": "ESTABA",
+   "clue": "Se hallaba"
+  },
+  {
+   "word": "HACER",
+   "clue": "Fabricar"
+  },
+  {
+   "word": "TODOS",
+   "clue": "Cada uno"
+  },
+  {
+   "word": "AQUI",
+   "clue": "En este lugar"
+  },
+  {
+   "word": "NOS",
+   "clue": "A nosotros"
+  },
+  {
+   "word": "PUEDE",
+   "clue": "Es capaz"
+  },
+  {
+   "word": "QUIERO",
+   "clue": "Deseo"
+  },
+  {
+   "word": "SUS",
+   "clue": "De ellos"
+  },
+  {
+   "word": "MUCHO",
+   "clue": "Un montón"
+  },
+  {
+   "word": "TIEMPO",
+   "clue": "Clima"
+  },
+  {
+   "word": "TAN",
+   "clue": "Tanto"
+  },
+  {
+   "word": "NADA",
+   "clue": "Ninguna cosa"
+  },
+  {
+   "word": "BIEN",
+   "clue": "Correcto"
+  },
+  {
+   "word": "SER",
+   "clue": "Existir"
+  },
+  {
+   "word": "HE",
+   "clue": "Del verbo haber"
+  },
+  {
+   "word": "VEZ",
+   "clue": "Turno"
+  },
+  {
+   "word": "ERA",
+   "clue": "Época"
+  },
+  {
+   "word": "PUEDO",
+   "clue": "Soy capaz"
+  },
+  {
+   "word": "DONDE",
+   "clue": "En qué lugar"
+  },
+  {
+   "word": "ESTO",
+   "clue": "Lo de aquí"
+  },
+  {
+   "word": "ALGO",
+   "clue": "Una cosa"
+  },
+  {
+   "word": "QUIEN",
+   "clue": "Qué persona"
+  },
+  {
+   "word": "GUSTA",
+   "clue": "Agrada"
+  },
+  {
+   "word": "DOS",
+   "clue": "Par"
+  },
+  {
+   "word": "ESTAS",
+   "clue": "Te hallas"
+  },
+  {
+   "word": "AHORA",
+   "clue": "En este momento"
+  },
+  {
+   "word": "HACE",
+   "clue": "Realiza"
+  },
+  {
+   "word": "ESE",
+   "clue": "Letra S"
+  },
+  {
+   "word": "NUNCA",
+   "clue": "Jamás"
+  },
+  {
+   "word": "SIN",
+   "clue": "Falto de"
+  },
+  {
+   "word": "SOY",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "DIA",
+   "clue": "Jornada"
+  },
+  {
+   "word": "ESTAN",
+   "clue": "Se hallan"
+  },
+  {
+   "word": "FAVOR",
+   "clue": "Ayuda"
+  },
+  {
+   "word": "IR",
+   "clue": "Marchar"
+  },
+  {
+   "word": "HOY",
+   "clue": "Este día"
+  },
+  {
+   "word": "MAÑANA",
+   "clue": "Día siguiente"
+  },
+  {
+   "word": "MEJOR",
+   "clue": "Superior"
+  },
+  {
+   "word": "ELLOS",
+   "clue": "Esa gente"
+  },
+  {
+   "word": "CREO",
+   "clue": "Opino"
+  },
+  {
+   "word": "VA",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "VIDA",
+   "clue": "Lo vital"
+  },
+  {
+   "word": "ESA",
+   "clue": "Aquella"
+  },
+  {
+   "word": "AÑOS",
+   "clue": "Edad"
+  },
+  {
+   "word": "DIJO",
+   "clue": "Habló"
+  },
+  {
+   "word": "VOY",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "HABIA",
+   "clue": "Existía"
+  },
+  {
+   "word": "TIENES",
+   "clue": "Posees"
+  },
+  {
+   "word": "VERDAD",
+   "clue": "Lo cierto"
+  },
+  {
+   "word": "HAS",
+   "clue": "Del verbo haber"
+  },
+  {
+   "word": "ANTES",
+   "clue": "Primero"
+  },
+  {
+   "word": "NADIE",
+   "clue": "Ninguna persona"
+  },
+  {
+   "word": "DINERO",
+   "clue": "Plata"
+  },
+  {
+   "word": "SOBRE",
+   "clue": "Encima de"
+  },
+  {
+   "word": "MIS",
+   "clue": "Posesivo plural"
+  },
+  {
+   "word": "POCO",
+   "clue": "Escaso"
+  },
+  {
+   "word": "HABLAR",
+   "clue": "Charlar"
+  },
+  {
+   "word": "HASTA",
+   "clue": "Incluso"
+  },
+  {
+   "word": "ASI",
+   "clue": "De este modo"
+  },
+  {
+   "word": "LIBRO",
+   "clue": "Tomo"
+  },
+  {
+   "word": "PORQUE",
+   "clue": "Por la razón de"
+  },
+  {
+   "word": "MUNDO",
+   "clue": "Planeta"
+  },
+  {
+   "word": "PUEDES",
+   "clue": "Eres capaz"
+  },
+  {
+   "word": "VER",
+   "clue": "Mirar"
+  },
+  {
+   "word": "PARECE",
+   "clue": "Semeja"
+  },
+  {
+   "word": "TRES",
+   "clue": "Trío"
+  },
+  {
+   "word": "USTED",
+   "clue": "Trato formal"
+  },
+  {
+   "word": "ERES",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "QUIERE",
+   "clue": "Desea"
+  },
+  {
+   "word": "HOMBRE",
+   "clue": "Varón"
+  },
+  {
+   "word": "GENTE",
+   "clue": "Personas"
+  },
+  {
+   "word": "UNO",
+   "clue": "Primer número"
+  },
+  {
+   "word": "NOCHE",
+   "clue": "Tras el día"
+  },
+  {
+   "word": "SABE",
+   "clue": "Conoce"
+  },
+  {
+   "word": "MISMO",
+   "clue": "Idéntico"
+  },
+  {
+   "word": "ESTAR",
+   "clue": "Hallarse"
+  },
+  {
+   "word": "TENIA",
+   "clue": "Poseía"
+  },
+  {
+   "word": "PADRE",
+   "clue": "Papá"
+  },
+  {
+   "word": "TARDE",
+   "clue": "Tras el mediodía"
+  },
+  {
+   "word": "CADA",
+   "clue": "Todos y uno"
+  },
+  {
+   "word": "HAN",
+   "clue": "Del verbo haber"
+  },
+  {
+   "word": "NI",
+   "clue": "Tampoco"
+  },
+  {
+   "word": "CUANTO",
+   "clue": "Qué cantidad"
+  },
+  {
+   "word": "HECHO",
+   "clue": "Suceso"
+  },
+  {
+   "word": "HIZO",
+   "clue": "Realizó"
+  },
+  {
+   "word": "LES",
+   "clue": "A ellos"
+  },
+  {
+   "word": "DESDE",
+   "clue": "A partir de"
+  },
+  {
+   "word": "DIAS",
+   "clue": "Jornadas"
+  },
+  {
+   "word": "DECIR",
+   "clue": "Expresar"
+  },
+  {
+   "word": "AYER",
+   "clue": "Día anterior"
+  },
+  {
+   "word": "ENTRE",
+   "clue": "En medio de"
+  },
+  {
+   "word": "TODAS",
+   "clue": "Cada una"
+  },
+  {
+   "word": "AGUA",
+   "clue": "Líquido vital"
+  },
+  {
+   "word": "COSAS",
+   "clue": "Objetos"
+  },
+  {
+   "word": "MENOS",
+   "clue": "Signo de resta"
+  },
+  {
+   "word": "MADRE",
+   "clue": "Mamá"
+  },
+  {
+   "word": "TIENEN",
+   "clue": "Poseen"
+  },
+  {
+   "word": "COMER",
+   "clue": "Cenar"
+  },
+  {
+   "word": "NUEVO",
+   "clue": "Reciente"
+  },
+  {
+   "word": "MUCHOS",
+   "clue": "Varios"
+  },
+  {
+   "word": "CUAL",
+   "clue": "Qué cosa"
+  },
+  {
+   "word": "HABER",
+   "clue": "Verbo auxiliar"
+  },
+  {
+   "word": "COCHE",
+   "clue": "Carro"
+  },
+  {
+   "word": "HORA",
+   "clue": "Sesenta minutos"
+  },
+  {
+   "word": "INGLES",
+   "clue": "De Inglaterra"
+  },
+  {
+   "word": "OTRA",
+   "clue": "Distinta"
+  },
+  {
+   "word": "TANTO",
+   "clue": "Tal cantidad"
+  },
+  {
+   "word": "TUS",
+   "clue": "Posesivo plural"
+  },
+  {
+   "word": "QUERIA",
+   "clue": "Deseaba"
+  },
+  {
+   "word": "PERRO",
+   "clue": "Can"
+  },
+  {
+   "word": "TI",
+   "clue": "Para vos"
+  },
+  {
+   "word": "NIÑOS",
+   "clue": "Chiquillos"
+  },
+  {
+   "word": "CIUDAD",
+   "clue": "Urbe"
+  },
+  {
+   "word": "VECES",
+   "clue": "Turnos"
+  },
+  {
+   "word": "TODA",
+   "clue": "Entera"
+  },
+  {
+   "word": "GRAN",
+   "clue": "Enorme"
+  },
+  {
+   "word": "VAS",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "AÑO",
+   "clue": "Doce meses"
+  },
+  {
+   "word": "AUN",
+   "clue": "Todavía"
+  },
+  {
+   "word": "OTRO",
+   "clue": "Diferente"
+  },
+  {
+   "word": "MUJER",
+   "clue": "Dama"
+  },
+  {
+   "word": "TENER",
+   "clue": "Poseer"
+  },
+  {
+   "word": "SEMANA",
+   "clue": "Siete días"
+  },
+  {
+   "word": "PAIS",
+   "clue": "Nación"
+  },
+  {
+   "word": "PASADO",
+   "clue": "Ayer y antes"
+  },
+  {
+   "word": "ESTADO",
+   "clue": "Situación"
+  },
+  {
+   "word": "SABES",
+   "clue": "Conoces"
+  },
+  {
+   "word": "BUEN",
+   "clue": "Amable"
+  },
+  {
+   "word": "MUCHAS",
+   "clue": "Varias"
+  },
+  {
+   "word": "AMIGOS",
+   "clue": "Colegas"
+  },
+  {
+   "word": "OS",
+   "clue": "A vosotros"
+  },
+  {
+   "word": "MAL",
+   "clue": "Daño"
+  },
+  {
+   "word": "BUENA",
+   "clue": "Válida"
+  },
+  {
+   "word": "DICE",
+   "clue": "Afirma"
+  },
+  {
+   "word": "AMIGO",
+   "clue": "Colega"
+  },
+  {
+   "word": "ALGUNA",
+   "clue": "Cierta"
+  },
+  {
+   "word": "CASI",
+   "clue": "Por poco"
+  },
+  {
+   "word": "LUGAR",
+   "clue": "Sitio"
+  },
+  {
+   "word": "FUERA",
+   "clue": "Afuera"
+  },
+  {
+   "word": "NIÑO",
+   "clue": "Chiquillo"
+  },
+  {
+   "word": "PODRIA",
+   "clue": "Sería capaz"
+  },
+  {
+   "word": "ALLI",
+   "clue": "En aquel lugar"
+  },
+  {
+   "word": "SEA",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "NOMBRE",
+   "clue": "Cómo se llama"
+  },
+  {
+   "word": "PUERTA",
+   "clue": "Entrada"
+  },
+  {
+   "word": "VISTO",
+   "clue": "Mirado"
+  },
+  {
+   "word": "ESTOS",
+   "clue": "Los de aquí"
+  },
+  {
+   "word": "HABLA",
+   "clue": "Conversa"
+  },
+  {
+   "word": "VAMOS",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "CUENTA",
+   "clue": "Factura"
+  },
+  {
+   "word": "PRONTO",
+   "clue": "En breve"
+  },
+  {
+   "word": "DIO",
+   "clue": "Entregó"
+  },
+  {
+   "word": "BUENO",
+   "clue": "Vale"
+  },
+  {
+   "word": "PASO",
+   "clue": "Zancada"
+  },
+  {
+   "word": "SABER",
+   "clue": "Conocer"
+  },
+  {
+   "word": "PARTE",
+   "clue": "Porción"
+  },
+  {
+   "word": "SEGURO",
+   "clue": "Cierto"
+  },
+  {
+   "word": "COMIDA",
+   "clue": "Alimento"
+  },
+  {
+   "word": "SABIA",
+   "clue": "Conocía"
+  },
+  {
+   "word": "HACIA",
+   "clue": "Rumbo a"
+  },
+  {
+   "word": "AHI",
+   "clue": "En ese lugar"
+  },
+  {
+   "word": "SIDO",
+   "clue": "Participio de ser"
+  },
+  {
+   "word": "PUEDEN",
+   "clue": "Son capaces"
+  },
+  {
+   "word": "GRANDE",
+   "clue": "Enorme"
+  },
+  {
+   "word": "FELIZ",
+   "clue": "Contento"
+  },
+  {
+   "word": "VINO",
+   "clue": "Bebida de uva"
+  },
+  {
+   "word": "DA",
+   "clue": "Entrega"
+  },
+  {
+   "word": "CAFE",
+   "clue": "Bebida negra"
+  },
+  {
+   "word": "LIBROS",
+   "clue": "Tomos"
+  },
+  {
+   "word": "HIJO",
+   "clue": "Vástago"
+  },
+  {
+   "word": "DEBE",
+   "clue": "Tiene que"
+  },
+  {
+   "word": "IDEA",
+   "clue": "Noción"
+  },
+  {
+   "word": "SERA",
+   "clue": "Futuro de ser"
+  },
+  {
+   "word": "UNOS",
+   "clue": "Algunos"
+  },
+  {
+   "word": "DICHO",
+   "clue": "Refrán"
+  },
+  {
+   "word": "LEER",
+   "clue": "Ojear un texto"
+  },
+  {
+   "word": "MIEDO",
+   "clue": "Temor"
+  },
+  {
+   "word": "AMOR",
+   "clue": "Cariño"
+  },
+  {
+   "word": "PADRES",
+   "clue": "Papá y mamá"
+  },
+  {
+   "word": "CINCO",
+   "clue": "Número"
+  },
+  {
+   "word": "NUEVA",
+   "clue": "Reciente"
+  },
+  {
+   "word": "CLASE",
+   "clue": "Lección"
+  },
+  {
+   "word": "OJOS",
+   "clue": "Órganos de ver"
+  },
+  {
+   "word": "COSA",
+   "clue": "Objeto"
+  },
+  {
+   "word": "GATO",
+   "clue": "Felino casero"
+  },
+  {
+   "word": "DIEZ",
+   "clue": "Decena"
+  },
+  {
+   "word": "GUSTAN",
+   "clue": "Agradan"
+  },
+  {
+   "word": "SALIR",
+   "clue": "Irse"
+  },
+  {
+   "word": "HORAS",
+   "clue": "Del reloj"
+  },
+  {
+   "word": "AYUDA",
+   "clue": "Auxilio"
+  },
+  {
+   "word": "VI",
+   "clue": "Seis romano"
+  },
+  {
+   "word": "MANO",
+   "clue": "Cinco dedos"
+  },
+  {
+   "word": "VIVE",
+   "clue": "Habita"
+  },
+  {
+   "word": "CONTRA",
+   "clue": "Opuesto a"
+  },
+  {
+   "word": "FACIL",
+   "clue": "Sencillo"
+  },
+  {
+   "word": "FIESTA",
+   "clue": "Juerga"
+  },
+  {
+   "word": "SIENTO",
+   "clue": "Percibo"
+  },
+  {
+   "word": "RAPIDO",
+   "clue": "Veloz"
+  },
+  {
+   "word": "VIENE",
+   "clue": "Llega"
+  },
+  {
+   "word": "TREN",
+   "clue": "Va por vías"
+  },
+  {
+   "word": "MAYOR",
+   "clue": "Más viejo"
+  },
+  {
+   "word": "ESPERO",
+   "clue": "Aguardo"
+  },
+  {
+   "word": "CAMINO",
+   "clue": "Senda"
+  },
+  {
+   "word": "LLEGAR",
+   "clue": "Arribar"
+  },
+  {
+   "word": "VIVIR",
+   "clue": "Existir"
+  },
+  {
+   "word": "FORMA",
+   "clue": "Figura"
+  },
+  {
+   "word": "MUSICA",
+   "clue": "Melodía"
+  },
+  {
+   "word": "CARTA",
+   "clue": "Misiva"
+  },
+  {
+   "word": "TIPO",
+   "clue": "Clase"
+  },
+  {
+   "word": "VAN",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "MUCHA",
+   "clue": "Harta"
+  },
+  {
+   "word": "FUERON",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "NINGUN",
+   "clue": "Ni uno"
+  },
+  {
+   "word": "TAL",
+   "clue": "Igual"
+  },
+  {
+   "word": "JOVEN",
+   "clue": "Mozo"
+  },
+  {
+   "word": "HEMOS",
+   "clue": "Del verbo haber"
+  },
+  {
+   "word": "HIJOS",
+   "clue": "Prole"
+  },
+  {
+   "word": "SINO",
+   "clue": "Destino"
+  },
+  {
+   "word": "TOMAR",
+   "clue": "Agarrar"
+  },
+  {
+   "word": "CABEZA",
+   "clue": "Testa"
+  },
+  {
+   "word": "PODER",
+   "clue": "Ser capaz"
+  },
+  {
+   "word": "CAMA",
+   "clue": "Lecho"
+  },
+  {
+   "word": "RAZON",
+   "clue": "Motivo"
+  },
+  {
+   "word": "TIERRA",
+   "clue": "Suelo"
+  },
+  {
+   "word": "CREES",
+   "clue": "Opinas"
+  },
+  {
+   "word": "DEJA",
+   "clue": "Suelta"
+  },
+  {
+   "word": "FALTA",
+   "clue": "Carencia"
+  },
+  {
+   "word": "CERCA",
+   "clue": "Próximo"
+  },
+  {
+   "word": "MENUDO",
+   "clue": "Pequeño"
+  },
+  {
+   "word": "SOL",
+   "clue": "Astro rey"
+  },
+  {
+   "word": "FIN",
+   "clue": "Término"
+  },
+  {
+   "word": "FUI",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "BAJO",
+   "clue": "Poco alto"
+  },
+  {
+   "word": "ELLAS",
+   "clue": "Esas mujeres"
+  },
+  {
+   "word": "LENGUA",
+   "clue": "Idioma"
+  },
+  {
+   "word": "DAR",
+   "clue": "Entregar"
+  },
+  {
+   "word": "SOMOS",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "DORMIR",
+   "clue": "Reposar"
+  },
+  {
+   "word": "DEJO",
+   "clue": "Acento"
+  },
+  {
+   "word": "ALGUN",
+   "clue": "Cierto"
+  },
+  {
+   "word": "PODIA",
+   "clue": "Era capaz"
+  },
+  {
+   "word": "OTROS",
+   "clue": "Los demás"
+  },
+  {
+   "word": "AQUEL",
+   "clue": "Ese lejano"
+  },
+  {
+   "word": "LADO",
+   "clue": "Costado"
+  },
+  {
+   "word": "VENIR",
+   "clue": "Acudir"
+  },
+  {
+   "word": "PASAR",
+   "clue": "Atravesar"
+  },
+  {
+   "word": "RIO",
+   "clue": "Corriente de agua"
+  },
+  {
+   "word": "IDIOMA",
+   "clue": "Lengua"
+  },
+  {
+   "word": "CASO",
+   "clue": "Asunto"
+  },
+  {
+   "word": "LLEGO",
+   "clue": "Arribó"
+  },
+  {
+   "word": "LLEVA",
+   "clue": "Porta"
+  },
+  {
+   "word": "MESA",
+   "clue": "Mueble"
+  },
+  {
+   "word": "CUATRO",
+   "clue": "Número"
+  },
+  {
+   "word": "VE",
+   "clue": "Mira"
+  },
+  {
+   "word": "QUEDA",
+   "clue": "Resta"
+  },
+  {
+   "word": "FRIO",
+   "clue": "Helado"
+  },
+  {
+   "word": "JUGAR",
+   "clue": "Divertirse"
+  },
+  {
+   "word": "SERIA",
+   "clue": "Formal"
+  },
+  {
+   "word": "PUSO",
+   "clue": "Colocó"
+  },
+  {
+   "word": "TUVO",
+   "clue": "Poseyó"
+  },
+  {
+   "word": "MUERTE",
+   "clue": "Deceso"
+  },
+  {
+   "word": "VEO",
+   "clue": "Miro"
+  },
+  {
+   "word": "DEBES",
+   "clue": "Tienes que"
+  },
+  {
+   "word": "PENSE",
+   "clue": "Medité"
+  },
+  {
+   "word": "VOLVER",
+   "clue": "Regresar"
+  },
+  {
+   "word": "PUNTO",
+   "clue": "Signo final"
+  },
+  {
+   "word": "PUEBLO",
+   "clue": "Aldea"
+  },
+  {
+   "word": "GUERRA",
+   "clue": "Conflicto armado"
+  },
+  {
+   "word": "NUMERO",
+   "clue": "Cifra"
+  },
+  {
+   "word": "MISMA",
+   "clue": "Idéntica"
+  },
+  {
+   "word": "IDO",
+   "clue": "Participio de ir"
+  },
+  {
+   "word": "MANERA",
+   "clue": "Modo"
+  },
+  {
+   "word": "DEJAR",
+   "clue": "Soltar"
+  },
+  {
+   "word": "LUZ",
+   "clue": "Claridad"
+  },
+  {
+   "word": "AUTO",
+   "clue": "Coche"
+  },
+  {
+   "word": "QUEDO",
+   "clue": "En voz baja"
+  },
+  {
+   "word": "FUERTE",
+   "clue": "Robusto"
+  },
+  {
+   "word": "AUNQUE",
+   "clue": "Si bien"
+  },
+  {
+   "word": "FINAL",
+   "clue": "Cierre"
+  },
+  {
+   "word": "UNICO",
+   "clue": "Singular"
+  },
+  {
+   "word": "MURIO",
+   "clue": "Falleció"
+  },
+  {
+   "word": "DIJE",
+   "clue": "Hablé"
+  },
+  {
+   "word": "MANOS",
+   "clue": "Palmas"
+  },
+  {
+   "word": "CALLE",
+   "clue": "Vía urbana"
+  },
+  {
+   "word": "LLAMA",
+   "clue": "Fuego"
+  },
+  {
+   "word": "MES",
+   "clue": "Treinta días"
+  },
+  {
+   "word": "BEBE",
+   "clue": "Recién nacido"
+  },
+  {
+   "word": "PELO",
+   "clue": "Cabello"
+  },
+  {
+   "word": "PASA",
+   "clue": "Uva seca"
+  },
+  {
+   "word": "CARA",
+   "clue": "Rostro"
+  },
+  {
+   "word": "SUEÑO",
+   "clue": "Ganas de dormir"
+  },
+  {
+   "word": "ALTO",
+   "clue": "Elevado"
+  },
+  {
+   "word": "LECHE",
+   "clue": "Bebida blanca"
+  },
+  {
+   "word": "VERANO",
+   "clue": "Estación cálida"
+  },
+  {
+   "word": "ERAN",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "JUEGO",
+   "clue": "Partida"
+  },
+  {
+   "word": "ULTIMA",
+   "clue": "Final"
+  },
+  {
+   "word": "ESPOSA",
+   "clue": "Cónyuge"
+  },
+  {
+   "word": "VIVO",
+   "clue": "Con vida"
+  },
+  {
+   "word": "PAN",
+   "clue": "Barra"
+  },
+  {
+   "word": "ACABO",
+   "clue": "Terminó"
+  },
+  {
+   "word": "PRIMER",
+   "clue": "Inicial"
+  },
+  {
+   "word": "CIERTO",
+   "clue": "Real"
+  },
+  {
+   "word": "UNAS",
+   "clue": "Algunas"
+  },
+  {
+   "word": "EDAD",
+   "clue": "Años vividos"
+  },
+  {
+   "word": "EXAMEN",
+   "clue": "Prueba"
+  },
+  {
+   "word": "HABLO",
+   "clue": "Converso"
+  },
+  {
+   "word": "HAYA",
+   "clue": "Árbol"
+  },
+  {
+   "word": "HICE",
+   "clue": "Realicé"
+  },
+  {
+   "word": "LLEVO",
+   "clue": "Porto"
+  },
+  {
+   "word": "MEDICO",
+   "clue": "Doctor"
+  },
+  {
+   "word": "HIJA",
+   "clue": "Niña de papá"
+  },
+  {
+   "word": "ANOCHE",
+   "clue": "Ayer de noche"
+  },
+  {
+   "word": "AYUDAR",
+   "clue": "Auxiliar"
+  },
+  {
+   "word": "ROPA",
+   "clue": "Vestido"
+  },
+  {
+   "word": "CHICA",
+   "clue": "Moza"
+  },
+  {
+   "word": "VIO",
+   "clue": "Miró"
+  },
+  {
+   "word": "HABEIS",
+   "clue": "Del verbo haber"
+  },
+  {
+   "word": "JUNTOS",
+   "clue": "Unidos"
+  },
+  {
+   "word": "MEDIO",
+   "clue": "Mitad"
+  },
+  {
+   "word": "VIEJO",
+   "clue": "Anciano"
+  },
+  {
+   "word": "COMPRO",
+   "clue": "Adquirió"
+  },
+  {
+   "word": "ESTUVO",
+   "clue": "Se halló"
+  },
+  {
+   "word": "ERROR",
+   "clue": "Fallo"
+  },
+  {
+   "word": "TOMO",
+   "clue": "Volumen"
+  },
+  {
+   "word": "PIENSO",
+   "clue": "Comida animal"
+  },
+  {
+   "word": "PUDO",
+   "clue": "Fue capaz"
+  },
+  {
+   "word": "PENSAR",
+   "clue": "Razonar"
+  },
+  {
+   "word": "USAR",
+   "clue": "Emplear"
+  },
+  {
+   "word": "SEIS",
+   "clue": "Media docena"
+  },
+  {
+   "word": "CARNE",
+   "clue": "Bistec"
+  },
+  {
+   "word": "VIAJE",
+   "clue": "Recorrido"
+  },
+  {
+   "word": "SOLA",
+   "clue": "Sin compañía"
+  },
+  {
+   "word": "MEDIA",
+   "clue": "Calcetín"
+  },
+  {
+   "word": "ESOS",
+   "clue": "Aquellos"
+  },
+  {
+   "word": "NADAR",
+   "clue": "Bracear"
+  },
+  {
+   "word": "LARGO",
+   "clue": "Extenso"
+  },
+  {
+   "word": "ACERCA",
+   "clue": "Aproxima"
+  },
+  {
+   "word": "JAMAS",
+   "clue": "Nunca"
+  },
+  {
+   "word": "CUARTO",
+   "clue": "Alcoba"
+  },
+  {
+   "word": "FRASE",
+   "clue": "Oración"
+  },
+  {
+   "word": "TIENDA",
+   "clue": "Comercio"
+  },
+  {
+   "word": "CALOR",
+   "clue": "Sofoco"
+  },
+  {
+   "word": "SALIO",
+   "clue": "Se fue"
+  },
+  {
+   "word": "TUVE",
+   "clue": "Poseí"
+  },
+  {
+   "word": "GANAS",
+   "clue": "Deseo"
+  },
+  {
+   "word": "IBA",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "MAR",
+   "clue": "Océano"
+  },
+  {
+   "word": "MIO",
+   "clue": "De mí"
+  },
+  {
+   "word": "LEJOS",
+   "clue": "A distancia"
+  },
+  {
+   "word": "RELOJ",
+   "clue": "Da la hora"
+  },
+  {
+   "word": "PLAN",
+   "clue": "Proyecto"
+  },
+  {
+   "word": "CIELO",
+   "clue": "Bóveda azul"
+  },
+  {
+   "word": "JARDIN",
+   "clue": "Con flores"
+  },
+  {
+   "word": "DURO",
+   "clue": "Rígido"
+  },
+  {
+   "word": "DENTRO",
+   "clue": "En el interior"
+  },
+  {
+   "word": "DICEN",
+   "clue": "Afirman"
+  },
+  {
+   "word": "VAYA",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "ARBOL",
+   "clue": "Tiene tronco"
+  },
+  {
+   "word": "DEBO",
+   "clue": "Tengo que"
+  },
+  {
+   "word": "PERDER",
+   "clue": "Extraviar"
+  },
+  {
+   "word": "LLAMO",
+   "clue": "Nombro"
+  },
+  {
+   "word": "CREE",
+   "clue": "Opina"
+  },
+  {
+   "word": "ESAS",
+   "clue": "Aquellas"
+  },
+  {
+   "word": "DOLOR",
+   "clue": "Sufrir"
+  },
+  {
+   "word": "FRASES",
+   "clue": "Dichos"
+  },
+  {
+   "word": "PIDIO",
+   "clue": "Solicitó"
+  },
+  {
+   "word": "SUERTE",
+   "clue": "Fortuna"
+  },
+  {
+   "word": "LIBRE",
+   "clue": "Sin ataduras"
+  },
+  {
+   "word": "FLORES",
+   "clue": "Rosas y lirios"
+  },
+  {
+   "word": "LUNES",
+   "clue": "Primer día"
+  },
+  {
+   "word": "MAMA",
+   "clue": "Madre"
+  },
+  {
+   "word": "TRAS",
+   "clue": "Detrás de"
+  },
+  {
+   "word": "ALLA",
+   "clue": "Por allí"
+  },
+  {
+   "word": "COMPRE",
+   "clue": "Adquirí"
+  },
+  {
+   "word": "SUELO",
+   "clue": "Piso"
+  },
+  {
+   "word": "PUEDA",
+   "clue": "Logre"
+  },
+  {
+   "word": "CAPAZ",
+   "clue": "Apto"
+  },
+  {
+   "word": "SIGUE",
+   "clue": "Continúa"
+  },
+  {
+   "word": "NIÑA",
+   "clue": "Chiquilla"
+  },
+  {
+   "word": "CHICO",
+   "clue": "Chaval"
+  },
+  {
+   "word": "DEMAS",
+   "clue": "El resto"
+  },
+  {
+   "word": "MIRA",
+   "clue": "Observa"
+  },
+  {
+   "word": "CAJA",
+   "clue": "Estuche"
+  },
+  {
+   "word": "CAMBIO",
+   "clue": "Mudanza"
+  },
+  {
+   "word": "COCINA",
+   "clue": "Fogón"
+  },
+  {
+   "word": "GUSTO",
+   "clue": "Sentido"
+  },
+  {
+   "word": "SALUD",
+   "clue": "Bienestar"
+  },
+  {
+   "word": "MESES",
+   "clue": "Enero y julio"
+  },
+  {
+   "word": "PUESTO",
+   "clue": "Cargo"
+  },
+  {
+   "word": "VALE",
+   "clue": "De acuerdo"
+  },
+  {
+   "word": "OIDO",
+   "clue": "Oreja"
+  },
+  {
+   "word": "PIE",
+   "clue": "Base"
+  },
+  {
+   "word": "AIRE",
+   "clue": "Viento"
+  },
+  {
+   "word": "PERDIO",
+   "clue": "Extravió"
+  },
+  {
+   "word": "PESAR",
+   "clue": "Tristeza"
+  },
+  {
+   "word": "LLEGUE",
+   "clue": "Arribé"
+  },
+  {
+   "word": "VOZ",
+   "clue": "Sonido humano"
+  },
+  {
+   "word": "VOS",
+   "clue": "Tú"
+  },
+  {
+   "word": "CREER",
+   "clue": "Tener fe"
+  },
+  {
+   "word": "VOLVIO",
+   "clue": "Regresó"
+  },
+  {
+   "word": "ESPERA",
+   "clue": "Aguarda"
+  },
+  {
+   "word": "EMPEZO",
+   "clue": "Comenzó"
+  },
+  {
+   "word": "VISTA",
+   "clue": "Paisaje"
+  },
+  {
+   "word": "HAGA",
+   "clue": "Realice"
+  },
+  {
+   "word": "PARQUE",
+   "clue": "Zona verde"
+  },
+  {
+   "word": "APENAS",
+   "clue": "Casi no"
+  },
+  {
+   "word": "IGUAL",
+   "clue": "Idéntico"
+  },
+  {
+   "word": "NIEVE",
+   "clue": "Copos blancos"
+  },
+  {
+   "word": "REGALO",
+   "clue": "Obsequio"
+  },
+  {
+   "word": "MALA",
+   "clue": "Perversa"
+  },
+  {
+   "word": "NOVIA",
+   "clue": "Amada"
+  },
+  {
+   "word": "PIENSA",
+   "clue": "Medita"
+  },
+  {
+   "word": "HAMBRE",
+   "clue": "Apetito"
+  },
+  {
+   "word": "LLUVIA",
+   "clue": "Agua del cielo"
+  },
+  {
+   "word": "COLOR",
+   "clue": "Tono"
+  },
+  {
+   "word": "SIETE",
+   "clue": "Número"
+  },
+  {
+   "word": "SEÑOR",
+   "clue": "Caballero"
+  },
+  {
+   "word": "DI",
+   "clue": "Habla"
+  },
+  {
+   "word": "ENTRAR",
+   "clue": "Pasar dentro"
+  },
+  {
+   "word": "EQUIPO",
+   "clue": "Conjunto"
+  },
+  {
+   "word": "EXITO",
+   "clue": "Triunfo"
+  },
+  {
+   "word": "ESTAIS",
+   "clue": "Os halláis"
+  },
+  {
+   "word": "CLARO",
+   "clue": "Evidente"
+  },
+  {
+   "word": "HABRIA",
+   "clue": "Existiría"
+  },
+  {
+   "word": "LLEVAR",
+   "clue": "Portar"
+  },
+  {
+   "word": "BLANCO",
+   "clue": "Color níveo"
+  },
+  {
+   "word": "COME",
+   "clue": "Se alimenta"
+  },
+  {
+   "word": "VEN",
+   "clue": "Acude"
+  },
+  {
+   "word": "ODIO",
+   "clue": "Rencor"
+  },
+  {
+   "word": "LLENO",
+   "clue": "Repleto"
+  },
+  {
+   "word": "DAN",
+   "clue": "Entregan"
+  },
+  {
+   "word": "HACEN",
+   "clue": "Realizan"
+  },
+  {
+   "word": "LUEGO",
+   "clue": "Después"
+  },
+  {
+   "word": "BEBER",
+   "clue": "Tomar"
+  },
+  {
+   "word": "PAR",
+   "clue": "Dos"
+  },
+  {
+   "word": "HOTEL",
+   "clue": "Hostal"
+  },
+  {
+   "word": "TIO",
+   "clue": "Pariente"
+  },
+  {
+   "word": "PAZ",
+   "clue": "Calma"
+  },
+  {
+   "word": "RICO",
+   "clue": "Sabroso"
+  },
+  {
+   "word": "TENIDO",
+   "clue": "Poseído"
+  },
+  {
+   "word": "PENA",
+   "clue": "Tristeza"
+  },
+  {
+   "word": "CONOCE",
+   "clue": "Sabe"
+  },
+  {
+   "word": "PERROS",
+   "clue": "Canes"
+  },
+  {
+   "word": "SABEN",
+   "clue": "Conocen"
+  },
+  {
+   "word": "ALEMAN",
+   "clue": "Germano"
+  },
+  {
+   "word": "AVION",
+   "clue": "Aeronave"
+  },
+  {
+   "word": "FUEGO",
+   "clue": "Lumbre"
+  },
+  {
+   "word": "MIL",
+   "clue": "Diez cientos"
+  },
+  {
+   "word": "PAPEL",
+   "clue": "Hoja"
+  },
+  {
+   "word": "FUMAR",
+   "clue": "Echar humo"
+  },
+  {
+   "word": "CAYO",
+   "clue": "Islote"
+  },
+  {
+   "word": "FUTBOL",
+   "clue": "Deporte de balón"
+  },
+  {
+   "word": "SEGUIR",
+   "clue": "Ir detrás"
+  },
+  {
+   "word": "DADO",
+   "clue": "Cubo de juego"
+  },
+  {
+   "word": "ASUNTO",
+   "clue": "Tema"
+  },
+  {
+   "word": "MUERTO",
+   "clue": "Difunto"
+  },
+  {
+   "word": "BUENOS",
+   "clue": "Amables"
+  },
+  {
+   "word": "ACABA",
+   "clue": "Termina"
+  },
+  {
+   "word": "ABUELA",
+   "clue": "Yaya"
+  },
+  {
+   "word": "PAISES",
+   "clue": "Naciones"
+  },
+  {
+   "word": "ULTIMO",
+   "clue": "Postrero"
+  },
+  {
+   "word": "BOCA",
+   "clue": "Labios"
+  },
+  {
+   "word": "MALO",
+   "clue": "Malvado"
+  },
+  {
+   "word": "FRENTE",
+   "clue": "Delante"
+  },
+  {
+   "word": "LLAVE",
+   "clue": "Abre puertas"
+  },
+  {
+   "word": "SITIO",
+   "clue": "Lugar"
+  },
+  {
+   "word": "ELLO",
+   "clue": "Eso"
+  },
+  {
+   "word": "TENIS",
+   "clue": "Raqueta"
+  },
+  {
+   "word": "CUERPO",
+   "clue": "Tronco"
+  },
+  {
+   "word": "FUTURO",
+   "clue": "Porvenir"
+  },
+  {
+   "word": "TOCAR",
+   "clue": "Palpar"
+  },
+  {
+   "word": "PEOR",
+   "clue": "Inferior"
+  },
+  {
+   "word": "PAPA",
+   "clue": "Patata"
+  },
+  {
+   "word": "SEGUN",
+   "clue": "Como dice"
+  },
+  {
+   "word": "AMO",
+   "clue": "Dueño"
+  },
+  {
+   "word": "PUDE",
+   "clue": "Logré"
+  },
+  {
+   "word": "SIENDO",
+   "clue": "Gerundio de ser"
+  },
+  {
+   "word": "VARIAS",
+   "clue": "Unas cuantas"
+  },
+  {
+   "word": "PROPIA",
+   "clue": "Personal"
+  },
+  {
+   "word": "HUEVOS",
+   "clue": "De gallina"
+  },
+  {
+   "word": "VARIOS",
+   "clue": "Unos cuantos"
+  },
+  {
+   "word": "LISTA",
+   "clue": "Nómina"
+  },
+  {
+   "word": "CUESTA",
+   "clue": "Subida"
+  },
+  {
+   "word": "RUIDO",
+   "clue": "Estrépito"
+  },
+  {
+   "word": "PASE",
+   "clue": "Entrada"
+  },
+  {
+   "word": "CAMPO",
+   "clue": "Prado"
+  },
+  {
+   "word": "OTRAS",
+   "clue": "Distintas"
+  },
+  {
+   "word": "FOTO",
+   "clue": "Imagen"
+  },
+  {
+   "word": "BAÑO",
+   "clue": "Aseo"
+  },
+  {
+   "word": "GATOS",
+   "clue": "Felinos"
+  },
+  {
+   "word": "HAGAS",
+   "clue": "Realices"
+  },
+  {
+   "word": "ALTA",
+   "clue": "Elevada"
+  },
+  {
+   "word": "CULPA",
+   "clue": "Falta"
+  },
+  {
+   "word": "PAGAR",
+   "clue": "Abonar"
+  },
+  {
+   "word": "BUENAS",
+   "clue": "Saludo"
+  },
+  {
+   "word": "UNICA",
+   "clue": "Sola"
+  },
+  {
+   "word": "GANAR",
+   "clue": "Vencer"
+  },
+  {
+   "word": "OIR",
+   "clue": "Escuchar"
+  },
+  {
+   "word": "MORIR",
+   "clue": "Fallecer"
+  },
+  {
+   "word": "PONER",
+   "clue": "Colocar"
+  },
+  {
+   "word": "TAREA",
+   "clue": "Deber"
+  },
+  {
+   "word": "VIENTO",
+   "clue": "Brisa"
+  },
+  {
+   "word": "VUELTA",
+   "clue": "Giro"
+  },
+  {
+   "word": "CAUSA",
+   "clue": "Motivo"
+  },
+  {
+   "word": "SOLIA",
+   "clue": "Usaba"
+  },
+  {
+   "word": "LISTO",
+   "clue": "Despierto"
+  },
+  {
+   "word": "HABRA",
+   "clue": "Existirá"
+  },
+  {
+   "word": "HACES",
+   "clue": "Realizas"
+  },
+  {
+   "word": "REY",
+   "clue": "Monarca"
+  },
+  {
+   "word": "VERTE",
+   "clue": "Mirarte"
+  },
+  {
+   "word": "PLAYA",
+   "clue": "Costa de arena"
+  },
+  {
+   "word": "AZUL",
+   "clue": "Color del mar"
+  },
+  {
+   "word": "CENA",
+   "clue": "Comida nocturna"
+  },
+  {
+   "word": "VES",
+   "clue": "Miras"
+  },
+  {
+   "word": "POBRE",
+   "clue": "Sin dinero"
+  },
+  {
+   "word": "VIVEN",
+   "clue": "Habitan"
+  },
+  {
+   "word": "TRISTE",
+   "clue": "Apenado"
+  },
+  {
+   "word": "LLAMAR",
+   "clue": "Nombrar"
+  },
+  {
+   "word": "NEGRO",
+   "clue": "Oscuro"
+  },
+  {
+   "word": "VENGA",
+   "clue": "Acuda"
+  },
+  {
+   "word": "ACASO",
+   "clue": "Quizá"
+  },
+  {
+   "word": "DOCTOR",
+   "clue": "Médico"
+  },
+  {
+   "word": "JUSTO",
+   "clue": "Exacto"
+  },
+  {
+   "word": "LLORAR",
+   "clue": "Sollozar"
+  },
+  {
+   "word": "TRATA",
+   "clue": "Pacto"
+  },
+  {
+   "word": "BANCO",
+   "clue": "Asiento"
+  },
+  {
+   "word": "TOMA",
+   "clue": "Agarra"
+  },
+  {
+   "word": "SANGRE",
+   "clue": "Fluido rojo"
+  },
+  {
+   "word": "VENIDO",
+   "clue": "Llegado"
+  },
+  {
+   "word": "DEJE",
+   "clue": "Solté"
+  },
+  {
+   "word": "RATO",
+   "clue": "Momento"
+  },
+  {
+   "word": "AMIGA",
+   "clue": "Colega"
+  },
+  {
+   "word": "MODO",
+   "clue": "Forma"
+  },
+  {
+   "word": "BARCO",
+   "clue": "Nave"
+  },
+  {
+   "word": "DEJADO",
+   "clue": "Soltado"
+  },
+  {
+   "word": "HAGO",
+   "clue": "Realizo"
+  },
+  {
+   "word": "HUBO",
+   "clue": "Existió"
+  },
+  {
+   "word": "OCHO",
+   "clue": "Número"
+  },
+  {
+   "word": "ESTARA",
+   "clue": "Se hallará"
+  },
+  {
+   "word": "LUNA",
+   "clue": "Satélite"
+  },
+  {
+   "word": "COMIDO",
+   "clue": "Ingerido"
+  },
+  {
+   "word": "ROJO",
+   "clue": "Color"
+  },
+  {
+   "word": "CLASES",
+   "clue": "Cursos"
+  },
+  {
+   "word": "ENCIMA",
+   "clue": "Sobre"
+  },
+  {
+   "word": "USO",
+   "clue": "Empleo"
+  },
+  {
+   "word": "DETRAS",
+   "clue": "Atrás"
+  },
+  {
+   "word": "EXISTE",
+   "clue": "Hay"
+  },
+  {
+   "word": "SALE",
+   "clue": "Se va"
+  },
+  {
+   "word": "CAMARA",
+   "clue": "Hace fotos"
+  },
+  {
+   "word": "CANTAR",
+   "clue": "Entonar"
+  },
+  {
+   "word": "DEJAME",
+   "clue": "Suéltame"
+  },
+  {
+   "word": "HARE",
+   "clue": "Realizaré"
+  },
+  {
+   "word": "SEAS",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "NACIO",
+   "clue": "Vio la luz"
+  },
+  {
+   "word": "PUES",
+   "clue": "Entonces"
+  },
+  {
+   "word": "SAL",
+   "clue": "Sazona"
+  },
+  {
+   "word": "AMBOS",
+   "clue": "Los dos"
+  },
+  {
+   "word": "DAME",
+   "clue": "Pásame"
+  },
+  {
+   "word": "CINE",
+   "clue": "Séptimo arte"
+  },
+  {
+   "word": "TENGA",
+   "clue": "Posea"
+  },
+  {
+   "word": "LOCO",
+   "clue": "Chiflado"
+  },
+  {
+   "word": "MARIDO",
+   "clue": "Esposo"
+  },
+  {
+   "word": "VIAJAR",
+   "clue": "Recorrer"
+  },
+  {
+   "word": "ABUELO",
+   "clue": "Yayo"
+  },
+  {
+   "word": "DEBIDO",
+   "clue": "Preciso"
+  },
+  {
+   "word": "QUEDE",
+   "clue": "Me paré"
+  },
+  {
+   "word": "CENAR",
+   "clue": "Comer de noche"
+  },
+  {
+   "word": "SERIO",
+   "clue": "Formal"
+  },
+  {
+   "word": "BOSQUE",
+   "clue": "Arboleda"
+  },
+  {
+   "word": "JEFE",
+   "clue": "Patrón"
+  },
+  {
+   "word": "ROMPIO",
+   "clue": "Quebró"
+  },
+  {
+   "word": "COMIO",
+   "clue": "Almorzó"
+  },
+  {
+   "word": "DESEO",
+   "clue": "Anhelo"
+  },
+  {
+   "word": "NOVELA",
+   "clue": "Relato largo"
+  },
+  {
+   "word": "PROPIO",
+   "clue": "Personal"
+  },
+  {
+   "word": "ACA",
+   "clue": "Aquí"
+  },
+  {
+   "word": "CENTRO",
+   "clue": "Medio"
+  },
+  {
+   "word": "USA",
+   "clue": "Emplea"
+  },
+  {
+   "word": "VERDE",
+   "clue": "Color de hierba"
+  },
+  {
+   "word": "TENEIS",
+   "clue": "Poseéis"
+  },
+  {
+   "word": "LARGA",
+   "clue": "Extensa"
+  },
+  {
+   "word": "AMA",
+   "clue": "Quiere"
+  },
+  {
+   "word": "DIGAS",
+   "clue": "Hables"
+  },
+  {
+   "word": "LEY",
+   "clue": "Norma"
+  },
+  {
+   "word": "LLENA",
+   "clue": "Colmada"
+  },
+  {
+   "word": "HAZ",
+   "clue": "Realiza"
+  },
+  {
+   "word": "PISO",
+   "clue": "Planta"
+  },
+  {
+   "word": "SOS",
+   "clue": "Auxilio"
+  },
+  {
+   "word": "ESTUVE",
+   "clue": "Me hallé"
+  },
+  {
+   "word": "SUELE",
+   "clue": "Tiende a"
+  },
+  {
+   "word": "ARTE",
+   "clue": "Pintura"
+  },
+  {
+   "word": "ANTE",
+   "clue": "Delante de"
+  },
+  {
+   "word": "POCOS",
+   "clue": "Escasos"
+  },
+  {
+   "word": "DUDA",
+   "clue": "Recelo"
+  },
+  {
+   "word": "LLEGA",
+   "clue": "Arriba"
+  },
+  {
+   "word": "COMUN",
+   "clue": "Corriente"
+  },
+  {
+   "word": "DICES",
+   "clue": "Afirmas"
+  },
+  {
+   "word": "ENTRO",
+   "clue": "Pasó dentro"
+  },
+  {
+   "word": "IRE",
+   "clue": "Futuro de ir"
+  },
+  {
+   "word": "TENES",
+   "clue": "Tienes"
+  },
+  {
+   "word": "VEINTE",
+   "clue": "Dos decenas"
+  },
+  {
+   "word": "FOTOS",
+   "clue": "Imágenes"
+  },
+  {
+   "word": "ORO",
+   "clue": "Metal dorado"
+  },
+  {
+   "word": "SALA",
+   "clue": "Salón"
+  },
+  {
+   "word": "DUELE",
+   "clue": "Hace daño"
+  },
+  {
+   "word": "MONTON",
+   "clue": "Pila"
+  },
+  {
+   "word": "VASO",
+   "clue": "Para beber"
+  },
+  {
+   "word": "JUNTO",
+   "clue": "Unido"
+  },
+  {
+   "word": "MIRO",
+   "clue": "Observo"
+  },
+  {
+   "word": "CHINO",
+   "clue": "De China"
+  },
+  {
+   "word": "DEJES",
+   "clue": "Sueltes"
+  },
+  {
+   "word": "CARRO",
+   "clue": "Coche"
+  },
+  {
+   "word": "IDEAS",
+   "clue": "Nociones"
+  },
+  {
+   "word": "MIA",
+   "clue": "De mí"
+  },
+  {
+   "word": "TEMA",
+   "clue": "Asunto"
+  },
+  {
+   "word": "ANIMAL",
+   "clue": "Bestia"
+  },
+  {
+   "word": "CARO",
+   "clue": "Costoso"
+  },
+  {
+   "word": "PIANO",
+   "clue": "Teclado"
+  },
+  {
+   "word": "AZUCAR",
+   "clue": "Endulza"
+  },
+  {
+   "word": "PRUEBA",
+   "clue": "Ensayo"
+  },
+  {
+   "word": "VUELTO",
+   "clue": "Cambio"
+  },
+  {
+   "word": "FUIMOS",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "PRISA",
+   "clue": "Urgencia"
+  },
+  {
+   "word": "FUERZA",
+   "clue": "Vigor"
+  },
+  {
+   "word": "HARIA",
+   "clue": "Realizaría"
+  },
+  {
+   "word": "PESO",
+   "clue": "Kilos"
+  },
+  {
+   "word": "PONE",
+   "clue": "Coloca"
+  },
+  {
+   "word": "ABRIR",
+   "clue": "Destapar"
+  },
+  {
+   "word": "ALMA",
+   "clue": "Espíritu"
+  },
+  {
+   "word": "DEBEN",
+   "clue": "Tienen que"
+  },
+  {
+   "word": "CARTAS",
+   "clue": "Misivas"
+  },
+  {
+   "word": "HABLAN",
+   "clue": "Charlan"
+  },
+  {
+   "word": "HUMANO",
+   "clue": "Persona"
+  },
+  {
+   "word": "SACO",
+   "clue": "Bolsa grande"
+  },
+  {
+   "word": "TAZA",
+   "clue": "Para el café"
+  },
+  {
+   "word": "TRATO",
+   "clue": "Acuerdo"
+  },
+  {
+   "word": "OLVIDE",
+   "clue": "No recordé"
+  },
+  {
+   "word": "HABLAS",
+   "clue": "Charlas"
+  },
+  {
+   "word": "PASADA",
+   "clue": "Anterior"
+  },
+  {
+   "word": "VENDRA",
+   "clue": "Llegará"
+  },
+  {
+   "word": "DIGO",
+   "clue": "Afirmo"
+  },
+  {
+   "word": "SOIS",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "VAIS",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "VAYAS",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "CORTO",
+   "clue": "Breve"
+  },
+  {
+   "word": "EVITAR",
+   "clue": "Eludir"
+  },
+  {
+   "word": "LLOVER",
+   "clue": "Caer agua"
+  },
+  {
+   "word": "ADONDE",
+   "clue": "A qué lugar"
+  },
+  {
+   "word": "GRUPO",
+   "clue": "Conjunto"
+  },
+  {
+   "word": "CONTAR",
+   "clue": "Narrar"
+  },
+  {
+   "word": "MENTE",
+   "clue": "Intelecto"
+  },
+  {
+   "word": "NOVIO",
+   "clue": "Amado"
+  },
+  {
+   "word": "PRECIO",
+   "clue": "Coste"
+  },
+  {
+   "word": "CAMISA",
+   "clue": "Prenda"
+  },
+  {
+   "word": "HABIAN",
+   "clue": "Del verbo haber"
+  },
+  {
+   "word": "VIENDO",
+   "clue": "Mirando"
+  },
+  {
+   "word": "ATRAS",
+   "clue": "Detrás"
+  },
+  {
+   "word": "DAÑO",
+   "clue": "Perjuicio"
+  },
+  {
+   "word": "ESTARE",
+   "clue": "Me hallaré"
+  },
+  {
+   "word": "OLVIDO",
+   "clue": "Descuido"
+  },
+  {
+   "word": "DEBAJO",
+   "clue": "Bajo"
+  },
+  {
+   "word": "QUERES",
+   "clue": "Quieres"
+  },
+  {
+   "word": "AMABLE",
+   "clue": "Cordial"
+  },
+  {
+   "word": "DIME",
+   "clue": "Cuenta"
+  },
+  {
+   "word": "OBRA",
+   "clue": "Creación"
+  },
+  {
+   "word": "PASEO",
+   "clue": "Caminata"
+  },
+  {
+   "word": "AFUERA",
+   "clue": "Exterior"
+  },
+  {
+   "word": "PARTES",
+   "clue": "Trozos"
+  },
+  {
+   "word": "BONITA",
+   "clue": "Linda"
+  },
+  {
+   "word": "FRUTA",
+   "clue": "Manzana o pera"
+  },
+  {
+   "word": "CORRER",
+   "clue": "Trotar"
+  },
+  {
+   "word": "MENOR",
+   "clue": "Más joven"
+  },
+  {
+   "word": "LEIDO",
+   "clue": "Culto"
+  },
+  {
+   "word": "LOGRO",
+   "clue": "Éxito"
+  },
+  {
+   "word": "PERDI",
+   "clue": "Extravié"
+  },
+  {
+   "word": "VUELVE",
+   "clue": "Regresa"
+  },
+  {
+   "word": "ARROZ",
+   "clue": "Grano"
+  },
+  {
+   "word": "HARA",
+   "clue": "Realizará"
+  },
+  {
+   "word": "NUEVE",
+   "clue": "Número"
+  },
+  {
+   "word": "PIES",
+   "clue": "Base del cuerpo"
+  },
+  {
+   "word": "GAFAS",
+   "clue": "Anteojos"
+  },
+  {
+   "word": "MITAD",
+   "clue": "Medio"
+  },
+  {
+   "word": "CIEN",
+   "clue": "Centena"
+  },
+  {
+   "word": "IRSE",
+   "clue": "Partir"
+  },
+  {
+   "word": "GANO",
+   "clue": "Venció"
+  },
+  {
+   "word": "BONITO",
+   "clue": "Lindo"
+  },
+  {
+   "word": "TRAVES",
+   "clue": "Revés"
+  },
+  {
+   "word": "SILLA",
+   "clue": "Asiento"
+  },
+  {
+   "word": "SOPA",
+   "clue": "Caldo"
+  },
+  {
+   "word": "LAGO",
+   "clue": "Agua quieta"
+  },
+  {
+   "word": "PAJARO",
+   "clue": "Ave"
+  },
+  {
+   "word": "TOCA",
+   "clue": "Palpa"
+  },
+  {
+   "word": "VALOR",
+   "clue": "Coraje"
+  },
+  {
+   "word": "RADIO",
+   "clue": "Emisora"
+  },
+  {
+   "word": "HABLE",
+   "clue": "Charle"
+  },
+  {
+   "word": "ISLA",
+   "clue": "Rodeada de mar"
+  },
+  {
+   "word": "NUEVOS",
+   "clue": "Frescos"
+  },
+  {
+   "word": "QUEDAN",
+   "clue": "Restan"
+  },
+  {
+   "word": "PARED",
+   "clue": "Muro"
+  },
+  {
+   "word": "PARTIR",
+   "clue": "Marchar"
+  },
+  {
+   "word": "VISTE",
+   "clue": "Miraste"
+  },
+  {
+   "word": "TONTO",
+   "clue": "Bobo"
+  },
+  {
+   "word": "MISMOS",
+   "clue": "Idénticos"
+  },
+  {
+   "word": "BESO",
+   "clue": "Ósculo"
+  },
+  {
+   "word": "BAILAR",
+   "clue": "Danzar"
+  },
+  {
+   "word": "SUEÑOS",
+   "clue": "Ilusiones"
+  },
+  {
+   "word": "SUENA",
+   "clue": "Hace ruido"
+  },
+  {
+   "word": "CHICOS",
+   "clue": "Chavales"
+  },
+  {
+   "word": "HOLA",
+   "clue": "Saludo"
+  },
+  {
+   "word": "HELADO",
+   "clue": "Muy frío"
+  },
+  {
+   "word": "IRME",
+   "clue": "Partir yo"
+  },
+  {
+   "word": "LLAVES",
+   "clue": "Abren puertas"
+  },
+  {
+   "word": "CREIA",
+   "clue": "Opinaba"
+  },
+  {
+   "word": "DULCE",
+   "clue": "Golosina"
+  },
+  {
+   "word": "CLIMA",
+   "clue": "Tiempo"
+  },
+  {
+   "word": "TOME",
+   "clue": "Agarré"
+  },
+  {
+   "word": "HOJAS",
+   "clue": "Del árbol"
+  },
+  {
+   "word": "NOCHES",
+   "clue": "Sin sol"
+  },
+  {
+   "word": "REGLAS",
+   "clue": "Normas"
+  },
+  {
+   "word": "VIEJA",
+   "clue": "Anciana"
+  },
+  {
+   "word": "BUSCAR",
+   "clue": "Rastrear"
+  },
+  {
+   "word": "OJO",
+   "clue": "Órgano de ver"
+  },
+  {
+   "word": "QUIERA",
+   "clue": "Desee"
+  },
+  {
+   "word": "ECHO",
+   "clue": "Lanzo"
+  },
+  {
+   "word": "PIEDRA",
+   "clue": "Roca"
+  },
+  {
+   "word": "QUEDAR",
+   "clue": "Citarse"
+  },
+  {
+   "word": "SIENTE",
+   "clue": "Percibe"
+  },
+  {
+   "word": "ABRIO",
+   "clue": "Destapó"
+  },
+  {
+   "word": "CASADO",
+   "clue": "Con esposa"
+  },
+  {
+   "word": "CUALES",
+   "clue": "Qué cosas"
+  },
+  {
+   "word": "DILE",
+   "clue": "Cuéntale"
+  },
+  {
+   "word": "ENORME",
+   "clue": "Inmenso"
+  },
+  {
+   "word": "ESTES",
+   "clue": "Te halles"
+  },
+  {
+   "word": "LLUEVE",
+   "clue": "Cae agua"
+  },
+  {
+   "word": "PEDI",
+   "clue": "Solicité"
+  },
+  {
+   "word": "LEE",
+   "clue": "Ojea un texto"
+  },
+  {
+   "word": "POCAS",
+   "clue": "Escasas"
+  },
+  {
+   "word": "TANTA",
+   "clue": "Tal cantidad"
+  },
+  {
+   "word": "TAXI",
+   "clue": "Coche de alquiler"
+  },
+  {
+   "word": "FAMOSO",
+   "clue": "Célebre"
+  },
+  {
+   "word": "ABRIGO",
+   "clue": "Gabán"
+  },
+  {
+   "word": "DIGA",
+   "clue": "Hable"
+  },
+  {
+   "word": "SEGURA",
+   "clue": "Cierta"
+  },
+  {
+   "word": "ANDA",
+   "clue": "Camina"
+  },
+  {
+   "word": "PODEIS",
+   "clue": "Sois capaces"
+  },
+  {
+   "word": "REAL",
+   "clue": "Regio"
+  },
+  {
+   "word": "FUISTE",
+   "clue": "Del verbo ir"
+  },
+  {
+   "word": "PUENTE",
+   "clue": "Cruza el río"
+  },
+  {
+   "word": "CASAS",
+   "clue": "Viviendas"
+  },
+  {
+   "word": "ROBO",
+   "clue": "Hurto"
+  },
+  {
+   "word": "SIRVE",
+   "clue": "Es útil"
+  },
+  {
+   "word": "JUEGA",
+   "clue": "Se divierte"
+  },
+  {
+   "word": "MINUTO",
+   "clue": "Sesenta segundos"
+  },
+  {
+   "word": "GANA",
+   "clue": "Vence"
+  },
+  {
+   "word": "MADERA",
+   "clue": "Leño"
+  },
+  {
+   "word": "RARO",
+   "clue": "Extraño"
+  },
+  {
+   "word": "ROJA",
+   "clue": "Carmesí"
+  },
+  {
+   "word": "PERDON",
+   "clue": "Disculpa"
+  },
+  {
+   "word": "FLOR",
+   "clue": "Rosa"
+  },
+  {
+   "word": "AYUDO",
+   "clue": "Auxilió"
+  },
+  {
+   "word": "HECHOS",
+   "clue": "Sucesos"
+  },
+  {
+   "word": "LADRON",
+   "clue": "Ratero"
+  },
+  {
+   "word": "LINDA",
+   "clue": "Bonita"
+  },
+  {
+   "word": "NORTE",
+   "clue": "Punto cardinal"
+  },
+  {
+   "word": "PIEZA",
+   "clue": "Trozo"
+  },
+  {
+   "word": "BRAZO",
+   "clue": "Miembro"
+  },
+  {
+   "word": "CHICAS",
+   "clue": "Chavalas"
+  },
+  {
+   "word": "TRAJE",
+   "clue": "Vestido"
+  },
+  {
+   "word": "QUIZA",
+   "clue": "Acaso"
+  },
+  {
+   "word": "TELE",
+   "clue": "Televisor"
+  },
+  {
+   "word": "TEN",
+   "clue": "Toma"
+  },
+  {
+   "word": "IRA",
+   "clue": "Enojo"
+  },
+  {
+   "word": "TENGAS",
+   "clue": "Poseas"
+  },
+  {
+   "word": "CONTO",
+   "clue": "Narró"
+  },
+  {
+   "word": "NORMAL",
+   "clue": "Habitual"
+  },
+  {
+   "word": "PIEL",
+   "clue": "Cutis"
+  },
+  {
+   "word": "SENTIA",
+   "clue": "Percibía"
+  },
+  {
+   "word": "BUSCA",
+   "clue": "Rastrea"
+  },
+  {
+   "word": "HUMOR",
+   "clue": "Gracia"
+  },
+  {
+   "word": "QUESO",
+   "clue": "Lácteo"
+  },
+  {
+   "word": "BAJA",
+   "clue": "Poco alta"
+  },
+  {
+   "word": "UTIL",
+   "clue": "Práctico"
+  },
+  {
+   "word": "ADEMAS",
+   "clue": "También"
+  },
+  {
+   "word": "BOLSA",
+   "clue": "Saco"
+  },
+  {
+   "word": "PARAR",
+   "clue": "Detener"
+  },
+  {
+   "word": "BUS",
+   "clue": "Autobús"
+  },
+  {
+   "word": "ENSEÑO",
+   "clue": "Instruyó"
+  },
+  {
+   "word": "TENIAN",
+   "clue": "Poseían"
+  },
+  {
+   "word": "NUEVAS",
+   "clue": "Frescas"
+  },
+  {
+   "word": "OI",
+   "clue": "Escuché"
+  },
+  {
+   "word": "PEDIR",
+   "clue": "Solicitar"
+  },
+  {
+   "word": "SEPA",
+   "clue": "Conozca"
+  },
+  {
+   "word": "SIGLO",
+   "clue": "Cien años"
+  },
+  {
+   "word": "ACABAR",
+   "clue": "Terminar"
+  },
+  {
+   "word": "BASURA",
+   "clue": "Desechos"
+  },
+  {
+   "word": "CORREO",
+   "clue": "Cartas"
+  },
+  {
+   "word": "DIARIO",
+   "clue": "Periódico"
+  },
+  {
+   "word": "HIELO",
+   "clue": "Agua sólida"
+  },
+  {
+   "word": "VIVIA",
+   "clue": "Habitaba"
+  },
+  {
+   "word": "MATAR",
+   "clue": "Liquidar"
+  },
+  {
+   "word": "RUSO",
+   "clue": "De Rusia"
+  },
+  {
+   "word": "TUYO",
+   "clue": "De ti"
+  },
+  {
+   "word": "ARRIBA",
+   "clue": "En lo alto"
+  },
+  {
+   "word": "SENTO",
+   "clue": "Tomo asiento"
+  },
+  {
+   "word": "COCHES",
+   "clue": "Carros"
+  },
+  {
+   "word": "DIERON",
+   "clue": "Donaron"
+  },
+  {
+   "word": "ABAJO",
+   "clue": "En lo bajo"
+  },
+  {
+   "word": "CABO",
+   "clue": "Extremo"
+  },
+  {
+   "word": "CREEN",
+   "clue": "Opinan"
+  },
+  {
+   "word": "SEAN",
+   "clue": "Del verbo ser"
+  },
+  {
+   "word": "TEXTO",
+   "clue": "Escrito"
+  },
+  {
+   "word": "BELLA",
+   "clue": "Hermosa"
+  },
+  {
+   "word": "NARIZ",
+   "clue": "Para oler"
+  },
+  {
+   "word": "TUYA",
+   "clue": "De ti"
+  },
+  {
+   "word": "CIERRA",
+   "clue": "Tapa"
+  },
+  {
+   "word": "RESTO",
+   "clue": "Sobrante"
+  },
+  {
+   "word": "ROTO",
+   "clue": "Partido"
+  },
+  {
+   "word": "SIMPLE",
+   "clue": "Sencillo"
+  },
+  {
+   "word": "VERLO",
+   "clue": "Mirarlo"
+  },
+  {
+   "word": "CORRE",
+   "clue": "Trota"
+  },
+  {
+   "word": "COMI",
+   "clue": "Almorcé"
+  },
+  {
+   "word": "PODES",
+   "clue": "Puedes"
+  },
+  {
+   "word": "VIMOS",
+   "clue": "Miramos"
+  },
+  {
+   "word": "HUMANA",
+   "clue": "Persona"
+  },
+  {
+   "word": "VECINO",
+   "clue": "De al lado"
+  },
+  {
+   "word": "AYUDE",
+   "clue": "Auxilié"
+  },
+  {
+   "word": "SONIDO",
+   "clue": "Ruido"
+  },
+  {
+   "word": "TRAE",
+   "clue": "Acerca"
+  },
+  {
+   "word": "DECIA",
+   "clue": "Afirmaba"
+  },
+  {
+   "word": "ABRE",
+   "clue": "Destapa"
+  },
+  {
+   "word": "BLANCA",
+   "clue": "Nívea"
+  },
+  {
+   "word": "DOCE",
+   "clue": "Docena"
+  },
+  {
+   "word": "PUEDAS",
+   "clue": "Logres"
+  },
+  {
+   "word": "CAER",
+   "clue": "Bajar"
+  },
+  {
+   "word": "COMEN",
+   "clue": "Se alimentan"
+  },
+  {
+   "word": "MIRAR",
+   "clue": "Observar"
+  },
+  {
+   "word": "ORDEN",
+   "clue": "Mandato"
+  },
+  {
+   "word": "SACAR",
+   "clue": "Extraer"
+  },
+  {
+   "word": "COLA",
+   "clue": "Rabo"
+  },
+  {
+   "word": "FONDO",
+   "clue": "Final"
+  },
+  {
+   "word": "SUR",
+   "clue": "Punto cardinal"
+  },
+  {
+   "word": "HUEVO",
+   "clue": "Lo pone la gallina"
+  },
+  {
+   "word": "SALVO",
+   "clue": "Excepto"
+  },
+  {
+   "word": "COSTO",
+   "clue": "Precio"
+  },
+  {
+   "word": "PLATO",
+   "clue": "Vajilla"
+  },
+  {
+   "word": "PLATOS",
+   "clue": "Vajillas"
+  },
+  {
+   "word": "MERECE",
+   "clue": "Es digno"
+  },
+  {
+   "word": "QUISO",
+   "clue": "Deseó"
+  },
+  {
+   "word": "PECES",
+   "clue": "Nadan en el mar"
+  },
+  {
+   "word": "TECHO",
+   "clue": "Cubierta"
+  },
+  {
+   "word": "PODIDO",
+   "clue": "Logrado"
+  },
+  {
+   "word": "SUELEN",
+   "clue": "Tienden a"
+  },
+  {
+   "word": "TIA",
+   "clue": "Pariente"
+  },
+  {
+   "word": "PARO",
+   "clue": "Huelga"
+  },
+  {
+   "word": "VEMOS",
+   "clue": "Miramos"
+  },
+  {
+   "word": "ENTERO",
+   "clue": "Íntegro"
+  },
+  {
+   "word": "GANADO",
+   "clue": "Reses"
+  },
+  {
+   "word": "MATO",
+   "clue": "Liquido"
+  },
+  {
+   "word": "TEMO",
+   "clue": "Recelo de"
+  },
+  {
+   "word": "DARLE",
+   "clue": "Pasarle"
+  },
+  {
+   "word": "FRIA",
+   "clue": "Helada"
+  },
+  {
+   "word": "SEÑORA",
+   "clue": "Dama"
+  },
+  {
+   "word": "VERME",
+   "clue": "Mirarme"
+  },
+  {
+   "word": "LEI",
+   "clue": "Ojeé"
+  },
+  {
+   "word": "TOMADO",
+   "clue": "Agarrado"
+  },
+  {
+   "word": "HUELE",
+   "clue": "Olfatea"
+  },
+  {
+   "word": "PAGINA",
+   "clue": "Hoja de libro"
+  },
+  {
+   "word": "VERAS",
+   "clue": "Mirarás"
+  },
+  {
+   "word": "ANDAR",
+   "clue": "Caminar"
+  },
+  {
+   "word": "TANTAS",
+   "clue": "Tal cantidad"
+  },
+  {
+   "word": "CITA",
+   "clue": "Reunión"
+  },
+  {
+   "word": "GUAPA",
+   "clue": "Hermosa"
+  },
+  {
+   "word": "LATIN",
+   "clue": "Lengua antigua"
+  },
+  {
+   "word": "CERRAR",
+   "clue": "Tapar"
+  },
+  {
+   "word": "TARTA",
+   "clue": "Pastel"
+  },
+  {
+   "word": "CORTA",
+   "clue": "Breve"
+  },
+  {
+   "word": "LLEVAS",
+   "clue": "Portas"
+  },
+  {
+   "word": "SENTI",
+   "clue": "Percibí"
+  },
+  {
+   "word": "COGER",
+   "clue": "Agarrar"
+  },
+  {
+   "word": "LLAME",
+   "clue": "Nombré"
+  },
+  {
+   "word": "NIVEL",
+   "clue": "Altura"
+  },
+  {
+   "word": "VEIA",
+   "clue": "Miraba"
+  },
+  {
+   "word": "MEDIOS",
+   "clue": "Recursos"
+  },
+  {
+   "word": "MUSEO",
+   "clue": "Galería"
+  },
+  {
+   "word": "ODIA",
+   "clue": "Detesta"
+  },
+  {
+   "word": "PIERNA",
+   "clue": "Muslo"
+  },
+  {
+   "word": "ROSA",
+   "clue": "Flor"
+  },
+  {
+   "word": "SENTIR",
+   "clue": "Percibir"
+  },
+  {
+   "word": "ALEGRO",
+   "clue": "Celebro"
+  },
+  {
+   "word": "OTOÑO",
+   "clue": "Caen las hojas"
+  },
+  {
+   "word": "SIGUIO",
+   "clue": "Continuó"
+  },
+  {
+   "word": "TENDRA",
+   "clue": "Poseerá"
+  },
+  {
+   "word": "VETE",
+   "clue": "Lárgate"
+  },
+  {
+   "word": "COMPRA",
+   "clue": "Adquiere"
+  },
+  {
+   "word": "EMPLEO",
+   "clue": "Trabajo"
+  },
+  {
+   "word": "MOVIL",
+   "clue": "Celular"
+  },
+  {
+   "word": "PLACER",
+   "clue": "Deleite"
+  },
+  {
+   "word": "RICA",
+   "clue": "Sabrosa"
+  },
+  {
+   "word": "RARA",
+   "clue": "Extraña"
+  },
+  {
+   "word": "DUERME",
+   "clue": "Reposa"
+  },
+  {
+   "word": "LINEA",
+   "clue": "Raya"
+  },
+  {
+   "word": "PESCAR",
+   "clue": "Usar la caña"
+  },
+  {
+   "word": "POLLO",
+   "clue": "Ave de corral"
+  },
+  {
+   "word": "DOY",
+   "clue": "Entrego"
+  },
+  {
+   "word": "LLEVAN",
+   "clue": "Portan"
+  },
+  {
+   "word": "PENSO",
+   "clue": "Meditó"
+  },
+  {
+   "word": "PREMIO",
+   "clue": "Galardón"
+  },
+  {
+   "word": "QUISE",
+   "clue": "Deseé"
+  },
+  {
+   "word": "QUITO",
+   "clue": "Retiró"
+  },
+  {
+   "word": "SALIDO",
+   "clue": "Ido"
+  },
+  {
+   "word": "TANTOS",
+   "clue": "Tal número"
+  },
+  {
+   "word": "VIENEN",
+   "clue": "Llegan"
+  },
+  {
+   "word": "EPOCA",
+   "clue": "Era"
+  },
+  {
+   "word": "LAPIZ",
+   "clue": "Para dibujar"
+  },
+  {
+   "word": "MAPA",
+   "clue": "Plano"
+  },
+  {
+   "word": "TEATRO",
+   "clue": "Escena"
+  },
+  {
+   "word": "CAMION",
+   "clue": "Vehículo pesado"
+  },
+  {
+   "word": "SABADO",
+   "clue": "Fin de semana"
+  },
+  {
+   "word": "BARATO",
+   "clue": "Asequible"
+  },
+  {
+   "word": "PASTEL",
+   "clue": "Tarta"
+  },
+  {
+   "word": "TRAJO",
+   "clue": "Acercó"
+  },
+  {
+   "word": "BROMA",
+   "clue": "Chanza"
+  },
+  {
+   "word": "CALLES",
+   "clue": "Vías urbanas"
+  },
+  {
+   "word": "CARCEL",
+   "clue": "Prisión"
+  },
+  {
+   "word": "JUGO",
+   "clue": "Zumo"
+  },
+  {
+   "word": "NACI",
+   "clue": "Vi la luz"
+  },
+  {
+   "word": "QUIZAS",
+   "clue": "Tal vez"
+  },
+  {
+   "word": "TURCO",
+   "clue": "De Turquía"
+  },
+  {
+   "word": "ARENA",
+   "clue": "Playa"
+  },
+  {
+   "word": "CAE",
+   "clue": "Se desploma"
+  },
+  {
+   "word": "CONOCI",
+   "clue": "Supe"
+  },
+  {
+   "word": "DAS",
+   "clue": "Entregas"
+  },
+  {
+   "word": "HAYAS",
+   "clue": "Árboles"
+  },
+  {
+   "word": "CURSO",
+   "clue": "Año escolar"
+  },
+  {
+   "word": "HARTO",
+   "clue": "Cansado"
+  },
+  {
+   "word": "METRO",
+   "clue": "Cien cm"
+  },
+  {
+   "word": "CANTO",
+   "clue": "Canción"
+  },
+  {
+   "word": "DEDO",
+   "clue": "De la mano"
+  },
+  {
+   "word": "DIRIA",
+   "clue": "Afirmaría"
+  },
+  {
+   "word": "NOTA",
+   "clue": "Apunte"
+  },
+  {
+   "word": "POEMA",
+   "clue": "Versos"
+  },
+  {
+   "word": "REINA",
+   "clue": "Monarca"
+  },
+  {
+   "word": "MALAS",
+   "clue": "Perversas"
+  },
+  {
+   "word": "MIRADA",
+   "clue": "Ojeada"
+  },
+  {
+   "word": "TIRO",
+   "clue": "Disparo"
+  },
+  {
+   "word": "ACTUAL",
+   "clue": "Presente"
+  },
+  {
+   "word": "CLUB",
+   "clue": "Sociedad"
+  },
+  {
+   "word": "BODA",
+   "clue": "Enlace"
+  },
+  {
+   "word": "CRIMEN",
+   "clue": "Delito"
+  },
+  {
+   "word": "PIZZA",
+   "clue": "Plato italiano"
+  },
+  {
+   "word": "SOFA",
+   "clue": "Diván"
+  },
+  {
+   "word": "NUBES",
+   "clue": "En el cielo"
+  },
+  {
+   "word": "PAREJA",
+   "clue": "Dúo"
+  }
+ ]
+}

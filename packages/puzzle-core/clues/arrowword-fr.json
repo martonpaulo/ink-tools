@@ -1,0 +1,4009 @@
+{
+ "language": "fr",
+ "sources": [
+  "ink-tools-clues"
+ ],
+ "reviewed": false,
+ "entries": [
+  {
+   "word": "DE",
+   "clue": "Partitif"
+  },
+  {
+   "word": "EST",
+   "clue": "Point cardinal"
+  },
+  {
+   "word": "JE",
+   "clue": "Pronom sujet"
+  },
+  {
+   "word": "LA",
+   "clue": "Note de musique"
+  },
+  {
+   "word": "IL",
+   "clue": "Pronom masculin"
+  },
+  {
+   "word": "LE",
+   "clue": "Article défini"
+  },
+  {
+   "word": "PAS",
+   "clue": "Foulée"
+  },
+  {
+   "word": "NE",
+   "clue": "Négation"
+  },
+  {
+   "word": "QUE",
+   "clue": "Relatif"
+  },
+  {
+   "word": "VOUS",
+   "clue": "Pronom pluriel"
+  },
+  {
+   "word": "UN",
+   "clue": "Premier nombre"
+  },
+  {
+   "word": "LES",
+   "clue": "Article pluriel"
+  },
+  {
+   "word": "TU",
+   "clue": "Pronom familier"
+  },
+  {
+   "word": "CE",
+   "clue": "Ceci"
+  },
+  {
+   "word": "EN",
+   "clue": "Dedans"
+  },
+  {
+   "word": "UNE",
+   "clue": "Article féminin"
+  },
+  {
+   "word": "AI",
+   "clue": "Avoir, je"
+  },
+  {
+   "word": "ELLE",
+   "clue": "Pronom féminin"
+  },
+  {
+   "word": "NOUS",
+   "clue": "Pronom pluriel"
+  },
+  {
+   "word": "DES",
+   "clue": "Article pluriel"
+  },
+  {
+   "word": "POUR",
+   "clue": "En faveur de"
+  },
+  {
+   "word": "ET",
+   "clue": "Plus"
+  },
+  {
+   "word": "DANS",
+   "clue": "À l'intérieur"
+  },
+  {
+   "word": "DU",
+   "clue": "Article partitif"
+  },
+  {
+   "word": "ME",
+   "clue": "Pronom réfléchi"
+  },
+  {
+   "word": "QUI",
+   "clue": "Pronom relatif"
+  },
+  {
+   "word": "ILS",
+   "clue": "Pronom pluriel"
+  },
+  {
+   "word": "SE",
+   "clue": "Pronom réfléchi"
+  },
+  {
+   "word": "SUIS",
+   "clue": "Verbe être"
+  },
+  {
+   "word": "PLUS",
+   "clue": "En outre"
+  },
+  {
+   "word": "AU",
+   "clue": "À le"
+  },
+  {
+   "word": "SONT",
+   "clue": "Verbe être"
+  },
+  {
+   "word": "AVEC",
+   "clue": "Muni de"
+  },
+  {
+   "word": "SUR",
+   "clue": "Certain"
+  },
+  {
+   "word": "TOUT",
+   "clue": "Totalité"
+  },
+  {
+   "word": "CA",
+   "clue": "Ceci"
+  },
+  {
+   "word": "FAIRE",
+   "clue": "Réaliser"
+  },
+  {
+   "word": "FAIT",
+   "clue": "Réalisé"
+  },
+  {
+   "word": "ETAIT",
+   "clue": "Imparfait d'être"
+  },
+  {
+   "word": "SON",
+   "clue": "Bruit"
+  },
+  {
+   "word": "ONT",
+   "clue": "Verbe avoir"
+  },
+  {
+   "word": "ON",
+   "clue": "Pronom indéfini"
+  },
+  {
+   "word": "MON",
+   "clue": "Possessif"
+  },
+  {
+   "word": "MOI",
+   "clue": "Pronom tonique"
+  },
+  {
+   "word": "LUI",
+   "clue": "Pronom tonique"
+  },
+  {
+   "word": "AS",
+   "clue": "Carte maîtresse"
+  },
+  {
+   "word": "CETTE",
+   "clue": "Celle-ci"
+  },
+  {
+   "word": "OU",
+   "clue": "Sinon"
+  },
+  {
+   "word": "SI",
+   "clue": "Note de musique"
+  },
+  {
+   "word": "TE",
+   "clue": "Pronom réfléchi"
+  },
+  {
+   "word": "ETRE",
+   "clue": "Exister"
+  },
+  {
+   "word": "PAR",
+   "clue": "Via"
+  },
+  {
+   "word": "ELLES",
+   "clue": "Pronom féminin"
+  },
+  {
+   "word": "SA",
+   "clue": "Possessif"
+  },
+  {
+   "word": "AVEZ",
+   "clue": "Verbe avoir"
+  },
+  {
+   "word": "MA",
+   "clue": "Possessif"
+  },
+  {
+   "word": "BIEN",
+   "clue": "Avoir"
+  },
+  {
+   "word": "TRES",
+   "clue": "Fort adverbe"
+  },
+  {
+   "word": "ETE",
+   "clue": "Saison chaude"
+  },
+  {
+   "word": "DIT",
+   "clue": "Prononcé"
+  },
+  {
+   "word": "VEUX",
+   "clue": "Désires"
+  },
+  {
+   "word": "COMME",
+   "clue": "Ainsi que"
+  },
+  {
+   "word": "MAIS",
+   "clue": "Pourtant"
+  },
+  {
+   "word": "ES",
+   "clue": "Verbe être"
+  },
+  {
+   "word": "TEMPS",
+   "clue": "Météo"
+  },
+  {
+   "word": "ETES",
+   "clue": "Verbe être"
+  },
+  {
+   "word": "TOI",
+   "clue": "Pronom tonique"
+  },
+  {
+   "word": "VOTRE",
+   "clue": "Possessif"
+  },
+  {
+   "word": "PEUT",
+   "clue": "Est capable"
+  },
+  {
+   "word": "SES",
+   "clue": "Possessif"
+  },
+  {
+   "word": "JAMAIS",
+   "clue": "Aucune fois"
+  },
+  {
+   "word": "PEUX",
+   "clue": "Es capable"
+  },
+  {
+   "word": "AIME",
+   "clue": "Adore"
+  },
+  {
+   "word": "CELA",
+   "clue": "Ça"
+  },
+  {
+   "word": "ICI",
+   "clue": "En ce lieu"
+  },
+  {
+   "word": "TOUS",
+   "clue": "Chacun"
+  },
+  {
+   "word": "QUAND",
+   "clue": "À quel moment"
+  },
+  {
+   "word": "RIEN",
+   "clue": "Néant"
+  },
+  {
+   "word": "AVONS",
+   "clue": "Verbe avoir"
+  },
+  {
+   "word": "TON",
+   "clue": "Possessif"
+  },
+  {
+   "word": "MEME",
+   "clue": "Identique"
+  },
+  {
+   "word": "VA",
+   "clue": "Se rend"
+  },
+  {
+   "word": "CHOSE",
+   "clue": "Objet"
+  },
+  {
+   "word": "SAIS",
+   "clue": "Connais"
+  },
+  {
+   "word": "DEUX",
+   "clue": "Paire"
+  },
+  {
+   "word": "ENCORE",
+   "clue": "De nouveau"
+  },
+  {
+   "word": "LEUR",
+   "clue": "Possessif"
+  },
+  {
+   "word": "AVAIT",
+   "clue": "Possédait"
+  },
+  {
+   "word": "MAISON",
+   "clue": "Demeure"
+  },
+  {
+   "word": "MES",
+   "clue": "Possessif"
+  },
+  {
+   "word": "PENSE",
+   "clue": "Réfléchit"
+  },
+  {
+   "word": "DIRE",
+   "clue": "Exprimer"
+  },
+  {
+   "word": "MONDE",
+   "clue": "Univers"
+  },
+  {
+   "word": "PEU",
+   "clue": "Guère"
+  },
+  {
+   "word": "AVOIR",
+   "clue": "Posséder"
+  },
+  {
+   "word": "ALLER",
+   "clue": "Se rendre"
+  },
+  {
+   "word": "BESOIN",
+   "clue": "Manque"
+  },
+  {
+   "word": "SANS",
+   "clue": "Dépourvu de"
+  },
+  {
+   "word": "AUX",
+   "clue": "À les"
+  },
+  {
+   "word": "VIE",
+   "clue": "Existence"
+  },
+  {
+   "word": "SOMMES",
+   "clue": "Additions"
+  },
+  {
+   "word": "NOTRE",
+   "clue": "Possessif"
+  },
+  {
+   "word": "FAUT",
+   "clue": "Il le doit"
+  },
+  {
+   "word": "TROP",
+   "clue": "Excès"
+  },
+  {
+   "word": "AUSSI",
+   "clue": "De même"
+  },
+  {
+   "word": "CES",
+   "clue": "Ceux-ci"
+  },
+  {
+   "word": "TA",
+   "clue": "Possessif"
+  },
+  {
+   "word": "VOIR",
+   "clue": "Regarder"
+  },
+  {
+   "word": "AUTRE",
+   "clue": "Différent"
+  },
+  {
+   "word": "VAIS",
+   "clue": "Me rends"
+  },
+  {
+   "word": "PASSE",
+   "clue": "Autrefois"
+  },
+  {
+   "word": "PARLER",
+   "clue": "Discuter"
+  },
+  {
+   "word": "ARGENT",
+   "clue": "Métal précieux"
+  },
+  {
+   "word": "FOIS",
+   "clue": "Occasion"
+  },
+  {
+   "word": "DEJA",
+   "clue": "Dès ce moment"
+  },
+  {
+   "word": "BON",
+   "clue": "Délicieux"
+  },
+  {
+   "word": "APRES",
+   "clue": "Ensuite"
+  },
+  {
+   "word": "ETAIS",
+   "clue": "Imparfait d'être"
+  },
+  {
+   "word": "VU",
+   "clue": "Aperçu"
+  },
+  {
+   "word": "TRAIN",
+   "clue": "Rail roulant"
+  },
+  {
+   "word": "HOMME",
+   "clue": "Monsieur"
+  },
+  {
+   "word": "GRAND",
+   "clue": "De haute taille"
+  },
+  {
+   "word": "QUOI",
+   "clue": "Quelle chose"
+  },
+  {
+   "word": "PERE",
+   "clue": "Papa"
+  },
+  {
+   "word": "TROUVE",
+   "clue": "Découvre"
+  },
+  {
+   "word": "ARRIVE",
+   "clue": "Survient"
+  },
+  {
+   "word": "PARLE",
+   "clue": "Discute"
+  },
+  {
+   "word": "DOIS",
+   "clue": "Suis tenu"
+  },
+  {
+   "word": "PLAIT",
+   "clue": "Agrée"
+  },
+  {
+   "word": "QUEL",
+   "clue": "Lequel"
+  },
+  {
+   "word": "JOUR",
+   "clue": "Lumière solaire"
+  },
+  {
+   "word": "LIVRE",
+   "clue": "Ouvrage"
+  },
+  {
+   "word": "FAIS",
+   "clue": "Réalises"
+  },
+  {
+   "word": "QUELLE",
+   "clue": "Laquelle"
+  },
+  {
+   "word": "CHEZ",
+   "clue": "Au logis de"
+  },
+  {
+   "word": "AVANT",
+   "clue": "Jadis"
+  },
+  {
+   "word": "MERE",
+   "clue": "Maman"
+  },
+  {
+   "word": "PORTE",
+   "clue": "Entrée"
+  },
+  {
+   "word": "GENS",
+   "clue": "Foule"
+  },
+  {
+   "word": "VEUT",
+   "clue": "Désire"
+  },
+  {
+   "word": "DONNE",
+   "clue": "Offre"
+  },
+  {
+   "word": "TES",
+   "clue": "Possessif"
+  },
+  {
+   "word": "NON",
+   "clue": "Refus"
+  },
+  {
+   "word": "MAL",
+   "clue": "Douleur"
+  },
+  {
+   "word": "CET",
+   "clue": "Ce masculin"
+  },
+  {
+   "word": "DEPUIS",
+   "clue": "À partir de"
+  },
+  {
+   "word": "MANGE",
+   "clue": "Dévore"
+  },
+  {
+   "word": "TOUTE",
+   "clue": "Entière"
+  },
+  {
+   "word": "FEMME",
+   "clue": "Épouse"
+  },
+  {
+   "word": "VERS",
+   "clue": "Poésie"
+  },
+  {
+   "word": "EU",
+   "clue": "Possédé"
+  },
+  {
+   "word": "PRIS",
+   "clue": "Saisi"
+  },
+  {
+   "word": "DEMAIN",
+   "clue": "Jour suivant"
+  },
+  {
+   "word": "HIER",
+   "clue": "Jour passé"
+  },
+  {
+   "word": "BONNE",
+   "clue": "Servante"
+  },
+  {
+   "word": "TOUTES",
+   "clue": "Chacune"
+  },
+  {
+   "word": "SOIT",
+   "clue": "Ainsi"
+  },
+  {
+   "word": "TROIS",
+   "clue": "Trio"
+  },
+  {
+   "word": "EAU",
+   "clue": "Liquide vital"
+  },
+  {
+   "word": "AVAIS",
+   "clue": "Détenais"
+  },
+  {
+   "word": "PAYS",
+   "clue": "Nation"
+  },
+  {
+   "word": "ECOLE",
+   "clue": "Lieu d'études"
+  },
+  {
+   "word": "MIEUX",
+   "clue": "Supérieur"
+  },
+  {
+   "word": "ENTRE",
+   "clue": "Parmi"
+  },
+  {
+   "word": "VOS",
+   "clue": "Possessif"
+  },
+  {
+   "word": "JUSTE",
+   "clue": "Équitable"
+  },
+  {
+   "word": "AIR",
+   "clue": "Mélodie"
+  },
+  {
+   "word": "LANGUE",
+   "clue": "Idiome"
+  },
+  {
+   "word": "PETIT",
+   "clue": "Menu"
+  },
+  {
+   "word": "ANS",
+   "clue": "Années"
+  },
+  {
+   "word": "SEUL",
+   "clue": "Isolé"
+  },
+  {
+   "word": "HEURE",
+   "clue": "Soixante minutes"
+  },
+  {
+   "word": "LAISSE",
+   "clue": "Quitte"
+  },
+  {
+   "word": "NUIT",
+   "clue": "Obscurité"
+  },
+  {
+   "word": "AUTRES",
+   "clue": "Divers"
+  },
+  {
+   "word": "LEURS",
+   "clue": "Possessif"
+  },
+  {
+   "word": "MANGER",
+   "clue": "Se nourrir"
+  },
+  {
+   "word": "HEURES",
+   "clue": "Durées"
+  },
+  {
+   "word": "DOIT",
+   "clue": "Est tenu"
+  },
+  {
+   "word": "JOURS",
+   "clue": "Dates"
+  },
+  {
+   "word": "CHOSES",
+   "clue": "Objets"
+  },
+  {
+   "word": "AIDE",
+   "clue": "Secours"
+  },
+  {
+   "word": "POUVEZ",
+   "clue": "Êtes aptes"
+  },
+  {
+   "word": "FILLE",
+   "clue": "Enfant"
+  },
+  {
+   "word": "CHIEN",
+   "clue": "Toutou"
+  },
+  {
+   "word": "PEUR",
+   "clue": "Crainte"
+  },
+  {
+   "word": "SAIT",
+   "clue": "Connaît"
+  },
+  {
+   "word": "SOIR",
+   "clue": "Fin du jour"
+  },
+  {
+   "word": "AIDER",
+   "clue": "Secourir"
+  },
+  {
+   "word": "NOS",
+   "clue": "Possessif"
+  },
+  {
+   "word": "RESTE",
+   "clue": "Demeure"
+  },
+  {
+   "word": "ACHETE",
+   "clue": "Paie"
+  },
+  {
+   "word": "VILLE",
+   "clue": "Cité"
+  },
+  {
+   "word": "CHAQUE",
+   "clue": "Tout"
+  },
+  {
+   "word": "ALORS",
+   "clue": "Ensuite"
+  },
+  {
+   "word": "ASSEZ",
+   "clue": "Suffisant"
+  },
+  {
+   "word": "MORT",
+   "clue": "Décès"
+  },
+  {
+   "word": "MOMENT",
+   "clue": "Instant"
+  },
+  {
+   "word": "FUT",
+   "clue": "Tonneau"
+  },
+  {
+   "word": "SAVOIR",
+   "clue": "Culture"
+  },
+  {
+   "word": "SOUS",
+   "clue": "Dessous"
+  },
+  {
+   "word": "DIS",
+   "clue": "Exprime"
+  },
+  {
+   "word": "AMIS",
+   "clue": "Copains"
+  },
+  {
+   "word": "BELLE",
+   "clue": "Jolie"
+  },
+  {
+   "word": "PUIS",
+   "clue": "Ensuite"
+  },
+  {
+   "word": "VOULEZ",
+   "clue": "Désirez"
+  },
+  {
+   "word": "EUX",
+   "clue": "Pronom"
+  },
+  {
+   "word": "CONTRE",
+   "clue": "Opposé à"
+  },
+  {
+   "word": "MOINS",
+   "clue": "Signe"
+  },
+  {
+   "word": "AMI",
+   "clue": "Copain"
+  },
+  {
+   "word": "RAISON",
+   "clue": "Bon sens"
+  },
+  {
+   "word": "SERA",
+   "clue": "Futur d'être"
+  },
+  {
+   "word": "CROIS",
+   "clue": "Pense"
+  },
+  {
+   "word": "SENS",
+   "clue": "Direction"
+  },
+  {
+   "word": "NOM",
+   "clue": "Prénom"
+  },
+  {
+   "word": "CECI",
+   "clue": "Cela"
+  },
+  {
+   "word": "CELUI",
+   "clue": "Lui"
+  },
+  {
+   "word": "GRANDE",
+   "clue": "Haute"
+  },
+  {
+   "word": "PART",
+   "clue": "Portion"
+  },
+  {
+   "word": "YEUX",
+   "clue": "Pour voir"
+  },
+  {
+   "word": "VENIR",
+   "clue": "Arriver"
+  },
+  {
+   "word": "TETE",
+   "clue": "Crâne"
+  },
+  {
+   "word": "MATIN",
+   "clue": "Aube"
+  },
+  {
+   "word": "VERITE",
+   "clue": "Réalité"
+  },
+  {
+   "word": "PARTIR",
+   "clue": "S'en aller"
+  },
+  {
+   "word": "SEULE",
+   "clue": "Isolée"
+  },
+  {
+   "word": "VAS",
+   "clue": "Te rends"
+  },
+  {
+   "word": "ARRETE",
+   "clue": "Stoppe"
+  },
+  {
+   "word": "RESTER",
+   "clue": "Demeurer"
+  },
+  {
+   "word": "FILS",
+   "clue": "Garçon"
+  },
+  {
+   "word": "FRERE",
+   "clue": "Germain"
+  },
+  {
+   "word": "TERRE",
+   "clue": "Planète"
+  },
+  {
+   "word": "OUBLIE",
+   "clue": "Omis"
+  },
+  {
+   "word": "COEUR",
+   "clue": "Organe vital"
+  },
+  {
+   "word": "PERDU",
+   "clue": "Égaré"
+  },
+  {
+   "word": "ANNEE",
+   "clue": "Douze mois"
+  },
+  {
+   "word": "IDEE",
+   "clue": "Pensée"
+  },
+  {
+   "word": "AMOUR",
+   "clue": "Passion"
+  },
+  {
+   "word": "POINT",
+   "clue": "Fin de phrase"
+  },
+  {
+   "word": "ENFANT",
+   "clue": "Bambin"
+  },
+  {
+   "word": "JEUNE",
+   "clue": "Pas vieux"
+  },
+  {
+   "word": "PU",
+   "clue": "Pouvoir"
+  },
+  {
+   "word": "BAS",
+   "clue": "Inférieur"
+  },
+  {
+   "word": "RENDRE",
+   "clue": "Restituer"
+  },
+  {
+   "word": "KABYLE",
+   "clue": "Berbère"
+  },
+  {
+   "word": "MIS",
+   "clue": "Posé"
+  },
+  {
+   "word": "AUCUN",
+   "clue": "Nul"
+  },
+  {
+   "word": "TOT",
+   "clue": "De bonne heure"
+  },
+  {
+   "word": "ALLEZ",
+   "clue": "Vous rendez"
+  },
+  {
+   "word": "FAITES",
+   "clue": "Réalisez"
+  },
+  {
+   "word": "MAIN",
+   "clue": "Paume"
+  },
+  {
+   "word": "ECRIT",
+   "clue": "Rédigé"
+  },
+  {
+   "word": "VIENS",
+   "clue": "Approche"
+  },
+  {
+   "word": "CAFE",
+   "clue": "Bistrot"
+  },
+  {
+   "word": "DONT",
+   "clue": "De qui"
+  },
+  {
+   "word": "ALLE",
+   "clue": "Parti"
+  },
+  {
+   "word": "BEAU",
+   "clue": "Joli"
+  },
+  {
+   "word": "MARCHE",
+   "clue": "Foire"
+  },
+  {
+   "word": "PLACE",
+   "clue": "Endroit"
+  },
+  {
+   "word": "LIRE",
+   "clue": "Parcourir"
+  },
+  {
+   "word": "TARD",
+   "clue": "Pas tôt"
+  },
+  {
+   "word": "SEMBLE",
+   "clue": "Paraît"
+  },
+  {
+   "word": "DONC",
+   "clue": "Par suite"
+  },
+  {
+   "word": "VITE",
+   "clue": "En hâte"
+  },
+  {
+   "word": "ALLONS",
+   "clue": "En route"
+  },
+  {
+   "word": "AURAIS",
+   "clue": "Avoir"
+  },
+  {
+   "word": "PETITE",
+   "clue": "Menue"
+  },
+  {
+   "word": "CHAT",
+   "clue": "Matou"
+  },
+  {
+   "word": "MOT",
+   "clue": "Terme"
+  },
+  {
+   "word": "LIVRES",
+   "clue": "Ouvrages"
+  },
+  {
+   "word": "PASSER",
+   "clue": "Franchir"
+  },
+  {
+   "word": "JOUER",
+   "clue": "S'amuser"
+  },
+  {
+   "word": "SOIS",
+   "clue": "Être"
+  },
+  {
+   "word": "AUCUNE",
+   "clue": "Nulle"
+  },
+  {
+   "word": "DIX",
+   "clue": "Dizaine"
+  },
+  {
+   "word": "VRAI",
+   "clue": "Exact"
+  },
+  {
+   "word": "COMPTE",
+   "clue": "Calcul"
+  },
+  {
+   "word": "PARCE",
+   "clue": "Car, à demi"
+  },
+  {
+   "word": "ESPERE",
+   "clue": "Souhaite"
+  },
+  {
+   "word": "ECRIRE",
+   "clue": "Rédiger"
+  },
+  {
+   "word": "LIT",
+   "clue": "Couche"
+  },
+  {
+   "word": "VIVRE",
+   "clue": "Exister"
+  },
+  {
+   "word": "MERCI",
+   "clue": "Grâce"
+  },
+  {
+   "word": "SOEUR",
+   "clue": "Nonne"
+  },
+  {
+   "word": "COTE",
+   "clue": "Flanc"
+  },
+  {
+   "word": "VONT",
+   "clue": "Se rendent"
+  },
+  {
+   "word": "CHEMIN",
+   "clue": "Sentier"
+  },
+  {
+   "word": "VIENT",
+   "clue": "Arrive"
+  },
+  {
+   "word": "DEVONS",
+   "clue": "Sommes tenus"
+  },
+  {
+   "word": "CI",
+   "clue": "Ici"
+  },
+  {
+   "word": "FETE",
+   "clue": "Gala"
+  },
+  {
+   "word": "LETTRE",
+   "clue": "Missive"
+  },
+  {
+   "word": "COUP",
+   "clue": "Choc"
+  },
+  {
+   "word": "FORT",
+   "clue": "Robuste"
+  },
+  {
+   "word": "MOIS",
+   "clue": "Trente jours"
+  },
+  {
+   "word": "MOTS",
+   "clue": "Termes"
+  },
+  {
+   "word": "AGE",
+   "clue": "Ère"
+  },
+  {
+   "word": "PARTIE",
+   "clue": "Match"
+  },
+  {
+   "word": "JOUE",
+   "clue": "S'amuse"
+  },
+  {
+   "word": "DEVANT",
+   "clue": "Face à"
+  },
+  {
+   "word": "DROIT",
+   "clue": "Loi"
+  },
+  {
+   "word": "AINSI",
+   "clue": "De la sorte"
+  },
+  {
+   "word": "VUE",
+   "clue": "Regard"
+  },
+  {
+   "word": "VISITE",
+   "clue": "Tournée"
+  },
+  {
+   "word": "VOYAGE",
+   "clue": "Périple"
+  },
+  {
+   "word": "SOLEIL",
+   "clue": "Astre"
+  },
+  {
+   "word": "VENU",
+   "clue": "Arrivé"
+  },
+  {
+   "word": "PRENDS",
+   "clue": "Saisis"
+  },
+  {
+   "word": "METTRE",
+   "clue": "Poser"
+  },
+  {
+   "word": "OUI",
+   "clue": "Accord"
+  },
+  {
+   "word": "SAVAIS",
+   "clue": "Connaître"
+  },
+  {
+   "word": "CEUX",
+   "clue": "Ces gens-là"
+  },
+  {
+   "word": "FROID",
+   "clue": "Glacial"
+  },
+  {
+   "word": "PHRASE",
+   "clue": "Énoncé"
+  },
+  {
+   "word": "SUJET",
+   "clue": "Thème"
+  },
+  {
+   "word": "CROIRE",
+   "clue": "Penser"
+  },
+  {
+   "word": "VOIS",
+   "clue": "Regardes"
+  },
+  {
+   "word": "COURS",
+   "clue": "Leçon"
+  },
+  {
+   "word": "CAUSE",
+   "clue": "Motif"
+  },
+  {
+   "word": "FIN",
+   "clue": "Terme"
+  },
+  {
+   "word": "HOMMES",
+   "clue": "Humains"
+  },
+  {
+   "word": "TANT",
+   "clue": "Autant"
+  },
+  {
+   "word": "SORTIR",
+   "clue": "Quitter"
+  },
+  {
+   "word": "TABLE",
+   "clue": "Meuble"
+  },
+  {
+   "word": "ENVIE",
+   "clue": "Désir"
+  },
+  {
+   "word": "CAR",
+   "clue": "Puisque"
+  },
+  {
+   "word": "SERAIT",
+   "clue": "Être"
+  },
+  {
+   "word": "FONT",
+   "clue": "Réalisent"
+  },
+  {
+   "word": "DONNER",
+   "clue": "Offrir"
+  },
+  {
+   "word": "GUERRE",
+   "clue": "Conflit"
+  },
+  {
+   "word": "GARCON",
+   "clue": "Serveur"
+  },
+  {
+   "word": "MONTRE",
+   "clue": "Bracelet"
+  },
+  {
+   "word": "MALADE",
+   "clue": "Souffrant"
+  },
+  {
+   "word": "RETARD",
+   "clue": "Délai"
+  },
+  {
+   "word": "ACCORD",
+   "clue": "Pacte"
+  },
+  {
+   "word": "MANQUE",
+   "clue": "Absence"
+  },
+  {
+   "word": "CINQ",
+   "clue": "Quintette"
+  },
+  {
+   "word": "LOIN",
+   "clue": "Au large"
+  },
+  {
+   "word": "PRES",
+   "clue": "À côté"
+  },
+  {
+   "word": "BUREAU",
+   "clue": "Pupitre"
+  },
+  {
+   "word": "TOMBE",
+   "clue": "Chute"
+  },
+  {
+   "word": "VIEUX",
+   "clue": "Âgé"
+  },
+  {
+   "word": "FILM",
+   "clue": "Long métrage"
+  },
+  {
+   "word": "SOYEZ",
+   "clue": "Être"
+  },
+  {
+   "word": "PIECE",
+   "clue": "Salle"
+  },
+  {
+   "word": "FEU",
+   "clue": "Flamme"
+  },
+  {
+   "word": "QUATRE",
+   "clue": "Quatuor"
+  },
+  {
+   "word": "ROUTE",
+   "clue": "Voie"
+  },
+  {
+   "word": "ESSAYE",
+   "clue": "Tente"
+  },
+  {
+   "word": "FACILE",
+   "clue": "Aisé"
+  },
+  {
+   "word": "BOIS",
+   "clue": "Forêt"
+  },
+  {
+   "word": "PAIN",
+   "clue": "Baguette"
+  },
+  {
+   "word": "PARTI",
+   "clue": "Allé"
+  },
+  {
+   "word": "PROPRE",
+   "clue": "Net"
+  },
+  {
+   "word": "LU",
+   "clue": "Parcouru"
+  },
+  {
+   "word": "BUS",
+   "clue": "Autocar"
+  },
+  {
+   "word": "MAINS",
+   "clue": "Paumes"
+  },
+  {
+   "word": "DEVEZ",
+   "clue": "Êtes tenus"
+  },
+  {
+   "word": "COLERE",
+   "clue": "Rage"
+  },
+  {
+   "word": "PENSES",
+   "clue": "Crois"
+  },
+  {
+   "word": "CHANCE",
+   "clue": "Veine"
+  },
+  {
+   "word": "PRIX",
+   "clue": "Coût"
+  },
+  {
+   "word": "AUTANT",
+   "clue": "Tant"
+  },
+  {
+   "word": "DESSUS",
+   "clue": "Haut"
+  },
+  {
+   "word": "OCCUPE",
+   "clue": "Affairé"
+  },
+  {
+   "word": "VIT",
+   "clue": "Existe"
+  },
+  {
+   "word": "DORMIR",
+   "clue": "Roupiller"
+  },
+  {
+   "word": "ADORE",
+   "clue": "Raffole"
+  },
+  {
+   "word": "PEINE",
+   "clue": "Chagrin"
+  },
+  {
+   "word": "BOIRE",
+   "clue": "Avaler"
+  },
+  {
+   "word": "APPRIS",
+   "clue": "Étudié"
+  },
+  {
+   "word": "DITES",
+   "clue": "Exprimez"
+  },
+  {
+   "word": "SAVEZ",
+   "clue": "Connaître"
+  },
+  {
+   "word": "FINI",
+   "clue": "Achevé"
+  },
+  {
+   "word": "LIEU",
+   "clue": "Endroit"
+  },
+  {
+   "word": "FEMMES",
+   "clue": "Épouses"
+  },
+  {
+   "word": "JARDIN",
+   "clue": "Potager"
+  },
+  {
+   "word": "CHANGE",
+   "clue": "Devise"
+  },
+  {
+   "word": "PRIE",
+   "clue": "Supplie"
+  },
+  {
+   "word": "SANTE",
+   "clue": "Forme"
+  },
+  {
+   "word": "POLICE",
+   "clue": "Agents"
+  },
+  {
+   "word": "MIDI",
+   "clue": "Sud"
+  },
+  {
+   "word": "FLEURS",
+   "clue": "Bouquet"
+  },
+  {
+   "word": "DECIDE",
+   "clue": "Tranche"
+  },
+  {
+   "word": "ANNEES",
+   "clue": "Ans"
+  },
+  {
+   "word": "VAUT",
+   "clue": "Coûte"
+  },
+  {
+   "word": "DINER",
+   "clue": "Souper"
+  },
+  {
+   "word": "DESOLE",
+   "clue": "Navré"
+  },
+  {
+   "word": "ERREUR",
+   "clue": "Faute"
+  },
+  {
+   "word": "RUE",
+   "clue": "Voie"
+  },
+  {
+   "word": "ARBRE",
+   "clue": "Chêne"
+  },
+  {
+   "word": "VIN",
+   "clue": "Cru"
+  },
+  {
+   "word": "CIEL",
+   "clue": "Azur"
+  },
+  {
+   "word": "AIMES",
+   "clue": "Adores"
+  },
+  {
+   "word": "DEHORS",
+   "clue": "Extérieur"
+  },
+  {
+   "word": "PLUTOT",
+   "clue": "Assez"
+  },
+  {
+   "word": "NEIGE",
+   "clue": "Flocons"
+  },
+  {
+   "word": "FERME",
+   "clue": "Clos"
+  },
+  {
+   "word": "AURAIT",
+   "clue": "Avoir"
+  },
+  {
+   "word": "CELLE",
+   "clue": "Elle, désignée"
+  },
+  {
+   "word": "PLEIN",
+   "clue": "Rempli"
+  },
+  {
+   "word": "GROS",
+   "clue": "Obèse"
+  },
+  {
+   "word": "MER",
+   "clue": "Océan"
+  },
+  {
+   "word": "PHOTO",
+   "clue": "Cliché"
+  },
+  {
+   "word": "HABITE",
+   "clue": "Loge"
+  },
+  {
+   "word": "FACON",
+   "clue": "Manière"
+  },
+  {
+   "word": "AMIE",
+   "clue": "Copine"
+  },
+  {
+   "word": "FAIM",
+   "clue": "Appétit"
+  },
+  {
+   "word": "VELO",
+   "clue": "Bicycle"
+  },
+  {
+   "word": "LAIT",
+   "clue": "Boisson blanche"
+  },
+  {
+   "word": "TOUR",
+   "clue": "Donjon"
+  },
+  {
+   "word": "LONG",
+   "clue": "Étendu"
+  },
+  {
+   "word": "PIED",
+   "clue": "Petons"
+  },
+  {
+   "word": "ROUGE",
+   "clue": "Couleur vive"
+  },
+  {
+   "word": "AIMENT",
+   "clue": "Adorent"
+  },
+  {
+   "word": "JEU",
+   "clue": "Loisir"
+  },
+  {
+   "word": "VOIX",
+   "clue": "Organe vocal"
+  },
+  {
+   "word": "ETUDIE",
+   "clue": "Apprend"
+  },
+  {
+   "word": "AVIS",
+   "clue": "Opinion"
+  },
+  {
+   "word": "ESPRIT",
+   "clue": "Fantôme"
+  },
+  {
+   "word": "CHAUD",
+   "clue": "Brûlant"
+  },
+  {
+   "word": "ETIEZ",
+   "clue": "Être"
+  },
+  {
+   "word": "ETAT",
+   "clue": "Nation"
+  },
+  {
+   "word": "AVION",
+   "clue": "Appareil"
+  },
+  {
+   "word": "GAGNE",
+   "clue": "Vaincu"
+  },
+  {
+   "word": "ASSIS",
+   "clue": "Installé"
+  },
+  {
+   "word": "REVE",
+   "clue": "Songe"
+  },
+  {
+   "word": "CAS",
+   "clue": "Situation"
+  },
+  {
+   "word": "GARDE",
+   "clue": "Vigile"
+  },
+  {
+   "word": "GENRE",
+   "clue": "Sorte"
+  },
+  {
+   "word": "DEVENU",
+   "clue": "Changé en"
+  },
+  {
+   "word": "NI",
+   "clue": "Et pas"
+  },
+  {
+   "word": "PENSEZ",
+   "clue": "Croyez"
+  },
+  {
+   "word": "PRET",
+   "clue": "Disposé"
+  },
+  {
+   "word": "RIRE",
+   "clue": "Hilarité"
+  },
+  {
+   "word": "CLASSE",
+   "clue": "Élèves"
+  },
+  {
+   "word": "RENDU",
+   "clue": "Restitué"
+  },
+  {
+   "word": "GARE",
+   "clue": "Station"
+  },
+  {
+   "word": "RECU",
+   "clue": "Ticket"
+  },
+  {
+   "word": "ALLEE",
+   "clue": "Avenue"
+  },
+  {
+   "word": "FILLES",
+   "clue": "Gamines"
+  },
+  {
+   "word": "SUITE",
+   "clue": "Série"
+  },
+  {
+   "word": "VERRE",
+   "clue": "Coupe"
+  },
+  {
+   "word": "ECOUTE",
+   "clue": "Entend"
+  },
+  {
+   "word": "PREND",
+   "clue": "Saisit"
+  },
+  {
+   "word": "REFUSE",
+   "clue": "Rejette"
+  },
+  {
+   "word": "PENSER",
+   "clue": "Réfléchir"
+  },
+  {
+   "word": "PERDRE",
+   "clue": "Égarer"
+  },
+  {
+   "word": "THE",
+   "clue": "Infusion"
+  },
+  {
+   "word": "CASSE",
+   "clue": "Brise"
+  },
+  {
+   "word": "OEIL",
+   "clue": "Organe de vue"
+  },
+  {
+   "word": "PLUIE",
+   "clue": "Averse"
+  },
+  {
+   "word": "SERAI",
+   "clue": "Être"
+  },
+  {
+   "word": "TOMBER",
+   "clue": "Chuter"
+  },
+  {
+   "word": "DUR",
+   "clue": "Solide"
+  },
+  {
+   "word": "VOICI",
+   "clue": "Voilà"
+  },
+  {
+   "word": "NAGER",
+   "clue": "Crawler"
+  },
+  {
+   "word": "BRAS",
+   "clue": "Membre"
+  },
+  {
+   "word": "CHACUN",
+   "clue": "Tout le monde"
+  },
+  {
+   "word": "ETIONS",
+   "clue": "Être"
+  },
+  {
+   "word": "VINGT",
+   "clue": "Score"
+  },
+  {
+   "word": "PROPOS",
+   "clue": "Discours"
+  },
+  {
+   "word": "NOIR",
+   "clue": "Sombre"
+  },
+  {
+   "word": "EQUIPE",
+   "clue": "Club"
+  },
+  {
+   "word": "VISAGE",
+   "clue": "Figure"
+  },
+  {
+   "word": "BRUIT",
+   "clue": "Vacarme"
+  },
+  {
+   "word": "MOURIR",
+   "clue": "Périr"
+  },
+  {
+   "word": "LIBRE",
+   "clue": "Affranchi"
+  },
+  {
+   "word": "ESSAIE",
+   "clue": "Tente"
+  },
+  {
+   "word": "VENT",
+   "clue": "Brise"
+  },
+  {
+   "word": "BELLES",
+   "clue": "Jolies"
+  },
+  {
+   "word": "GRANDS",
+   "clue": "Hauts"
+  },
+  {
+   "word": "PAIX",
+   "clue": "Calme"
+  },
+  {
+   "word": "CACHE",
+   "clue": "Planque"
+  },
+  {
+   "word": "CORPS",
+   "clue": "Anatomie"
+  },
+  {
+   "word": "PLAN",
+   "clue": "Carte"
+  },
+  {
+   "word": "PUISSE",
+   "clue": "Pouvoir"
+  },
+  {
+   "word": "BOITE",
+   "clue": "Coffret"
+  },
+  {
+   "word": "EXAMEN",
+   "clue": "Épreuve"
+  },
+  {
+   "word": "FORCE",
+   "clue": "Vigueur"
+  },
+  {
+   "word": "POMMES",
+   "clue": "Fruits"
+  },
+  {
+   "word": "APPELE",
+   "clue": "Nommé"
+  },
+  {
+   "word": "REUSSI",
+   "clue": "Gagné"
+  },
+  {
+   "word": "SIX",
+   "clue": "Sixain"
+  },
+  {
+   "word": "AUTOUR",
+   "clue": "Alentour"
+  },
+  {
+   "word": "RICHE",
+   "clue": "Aisé"
+  },
+  {
+   "word": "PRETE",
+   "clue": "Disposée"
+  },
+  {
+   "word": "SAC",
+   "clue": "Besace"
+  },
+  {
+   "word": "IGNORE",
+   "clue": "Délaisse"
+  },
+  {
+   "word": "LEVE",
+   "clue": "Debout"
+  },
+  {
+   "word": "PRENEZ",
+   "clue": "Saisissez"
+  },
+  {
+   "word": "SAVAIT",
+   "clue": "Connaître"
+  },
+  {
+   "word": "TUE",
+   "clue": "Abattu"
+  },
+  {
+   "word": "CADEAU",
+   "clue": "Présent"
+  },
+  {
+   "word": "DOUTE",
+   "clue": "Soupçon"
+  },
+  {
+   "word": "PAYER",
+   "clue": "Régler"
+  },
+  {
+   "word": "HOTEL",
+   "clue": "Auberge"
+  },
+  {
+   "word": "VOILA",
+   "clue": "Voici"
+  },
+  {
+   "word": "VOLE",
+   "clue": "Dérobe"
+  },
+  {
+   "word": "PARLEZ",
+   "clue": "Dites"
+  },
+  {
+   "word": "METS",
+   "clue": "Plat"
+  },
+  {
+   "word": "ELEVE",
+   "clue": "Écolier"
+  },
+  {
+   "word": "PIEDS",
+   "clue": "Orteils"
+  },
+  {
+   "word": "FIT",
+   "clue": "Réalisa"
+  },
+  {
+   "word": "BU",
+   "clue": "Avalé"
+  },
+  {
+   "word": "CENT",
+   "clue": "Centaine"
+  },
+  {
+   "word": "GATEAU",
+   "clue": "Tarte"
+  },
+  {
+   "word": "VIANDE",
+   "clue": "Bifteck"
+  },
+  {
+   "word": "JEUNES",
+   "clue": "Ados"
+  },
+  {
+   "word": "BIERE",
+   "clue": "Pression"
+  },
+  {
+   "word": "POSE",
+   "clue": "Attitude"
+  },
+  {
+   "word": "AIMEZ",
+   "clue": "Adorez"
+  },
+  {
+   "word": "MARI",
+   "clue": "Époux"
+  },
+  {
+   "word": "AGIT",
+   "clue": "Opère"
+  },
+  {
+   "word": "EXISTE",
+   "clue": "Vit"
+  },
+  {
+   "word": "HAUT",
+   "clue": "Élevé"
+  },
+  {
+   "word": "SALLE",
+   "clue": "Pièce"
+  },
+  {
+   "word": "AURA",
+   "clue": "Avoir"
+  },
+  {
+   "word": "CHIENS",
+   "clue": "Toutous"
+  },
+  {
+   "word": "FERAIS",
+   "clue": "Faire"
+  },
+  {
+   "word": "PROJET",
+   "clue": "Dessein"
+  },
+  {
+   "word": "CHER",
+   "clue": "Coûteux"
+  },
+  {
+   "word": "FUMER",
+   "clue": "Cigarette"
+  },
+  {
+   "word": "ROBE",
+   "clue": "Tenue"
+  },
+  {
+   "word": "RETOUR",
+   "clue": "Rentrée"
+  },
+  {
+   "word": "CHOIX",
+   "clue": "Option"
+  },
+  {
+   "word": "FACE",
+   "clue": "Visage"
+  },
+  {
+   "word": "SIMPLE",
+   "clue": "Facile"
+  },
+  {
+   "word": "ENTRER",
+   "clue": "Pénétrer"
+  },
+  {
+   "word": "REND",
+   "clue": "Restitue"
+  },
+  {
+   "word": "GAGNER",
+   "clue": "Vaincre"
+  },
+  {
+   "word": "COUTE",
+   "clue": "Vaut"
+  },
+  {
+   "word": "CHEVAL",
+   "clue": "Équidé"
+  },
+  {
+   "word": "ENFIN",
+   "clue": "En fin de compte"
+  },
+  {
+   "word": "BEBE",
+   "clue": "Poupon"
+  },
+  {
+   "word": "ARBRES",
+   "clue": "Forêt"
+  },
+  {
+   "word": "BLANC",
+   "clue": "Couleur pure"
+  },
+  {
+   "word": "CLE",
+   "clue": "Serrure"
+  },
+  {
+   "word": "VOIT",
+   "clue": "Regarde"
+  },
+  {
+   "word": "BONNES",
+   "clue": "Exquises"
+  },
+  {
+   "word": "FORME",
+   "clue": "Allure"
+  },
+  {
+   "word": "VIS",
+   "clue": "Boulon"
+  },
+  {
+   "word": "COUPE",
+   "clue": "Trophée"
+  },
+  {
+   "word": "OUVERT",
+   "clue": "Béant"
+  },
+  {
+   "word": "SANG",
+   "clue": "Globules"
+  },
+  {
+   "word": "ELEVES",
+   "clue": "Écoliers"
+  },
+  {
+   "word": "FOU",
+   "clue": "Dément"
+  },
+  {
+   "word": "ROI",
+   "clue": "Sire"
+  },
+  {
+   "word": "NOMBRE",
+   "clue": "Chiffre"
+  },
+  {
+   "word": "CARTE",
+   "clue": "Plan"
+  },
+  {
+   "word": "SERAIS",
+   "clue": "Être"
+  },
+  {
+   "word": "QUITTE",
+   "clue": "Laisse"
+  },
+  {
+   "word": "SELON",
+   "clue": "D'après"
+  },
+  {
+   "word": "HIVER",
+   "clue": "Saison froide"
+  },
+  {
+   "word": "POSTE",
+   "clue": "Emploi"
+  },
+  {
+   "word": "MUR",
+   "clue": "Paroi"
+  },
+  {
+   "word": "IDEES",
+   "clue": "Pensées"
+  },
+  {
+   "word": "DOS",
+   "clue": "Échine"
+  },
+  {
+   "word": "TRENTE",
+   "clue": "Âge rond"
+  },
+  {
+   "word": "RENDEZ",
+   "clue": "Restituez"
+  },
+  {
+   "word": "PAUVRE",
+   "clue": "Démuni"
+  },
+  {
+   "word": "PARLES",
+   "clue": "Bavardes"
+  },
+  {
+   "word": "PARC",
+   "clue": "Jardin public"
+  },
+  {
+   "word": "PAROLE",
+   "clue": "Promesse"
+  },
+  {
+   "word": "FERA",
+   "clue": "Faire"
+  },
+  {
+   "word": "PETITS",
+   "clue": "Menus"
+  },
+  {
+   "word": "ALLES",
+   "clue": "Partis"
+  },
+  {
+   "word": "SECRET",
+   "clue": "Mystère"
+  },
+  {
+   "word": "MAMAN",
+   "clue": "Mère"
+  },
+  {
+   "word": "RENTRE",
+   "clue": "Revient"
+  },
+  {
+   "word": "MILLE",
+   "clue": "Millier"
+  },
+  {
+   "word": "ESPOIR",
+   "clue": "Attente"
+  },
+  {
+   "word": "LAVE",
+   "clue": "Nettoie"
+  },
+  {
+   "word": "TELLE",
+   "clue": "Pareille"
+  },
+  {
+   "word": "MEMES",
+   "clue": "Pareils"
+  },
+  {
+   "word": "TORT",
+   "clue": "Erreur"
+  },
+  {
+   "word": "SOIN",
+   "clue": "Attention"
+  },
+  {
+   "word": "SORTE",
+   "clue": "Espèce"
+  },
+  {
+   "word": "CESSE",
+   "clue": "Arrête"
+  },
+  {
+   "word": "REVOIR",
+   "clue": "Revue"
+  },
+  {
+   "word": "CHANTE",
+   "clue": "Fredonne"
+  },
+  {
+   "word": "MOYEN",
+   "clue": "Méthode"
+  },
+  {
+   "word": "REGLES",
+   "clue": "Lois"
+  },
+  {
+   "word": "MESURE",
+   "clue": "Évalue"
+  },
+  {
+   "word": "AN",
+   "clue": "Année"
+  },
+  {
+   "word": "HUIT",
+   "clue": "Octuor"
+  },
+  {
+   "word": "DENTS",
+   "clue": "Molaires"
+  },
+  {
+   "word": "AVENIR",
+   "clue": "Futur"
+  },
+  {
+   "word": "TRISTE",
+   "clue": "Chagriné"
+  },
+  {
+   "word": "NATURE",
+   "clue": "Flore"
+  },
+  {
+   "word": "NEZ",
+   "clue": "Odorat"
+  },
+  {
+   "word": "OUVRIR",
+   "clue": "Déclore"
+  },
+  {
+   "word": "PIERRE",
+   "clue": "Caillou"
+  },
+  {
+   "word": "COURT",
+   "clue": "Bref"
+  },
+  {
+   "word": "ATTEND",
+   "clue": "Patiente"
+  },
+  {
+   "word": "SAVENT",
+   "clue": "Connaître"
+  },
+  {
+   "word": "PLAGE",
+   "clue": "Sable"
+  },
+  {
+   "word": "TIRE",
+   "clue": "Tracte"
+  },
+  {
+   "word": "LONGUE",
+   "clue": "Étendue"
+  },
+  {
+   "word": "PORTER",
+   "clue": "Soulever"
+  },
+  {
+   "word": "SUCCES",
+   "clue": "Triomphe"
+  },
+  {
+   "word": "LOI",
+   "clue": "Règle"
+  },
+  {
+   "word": "REPAS",
+   "clue": "Déjeuner"
+  },
+  {
+   "word": "DEVOIR",
+   "clue": "Tâche"
+  },
+  {
+   "word": "VOULU",
+   "clue": "Souhaité"
+  },
+  {
+   "word": "BOUT",
+   "clue": "Extrémité"
+  },
+  {
+   "word": "VIDE",
+   "clue": "Creux"
+  },
+  {
+   "word": "BORD",
+   "clue": "Rive"
+  },
+  {
+   "word": "CROIT",
+   "clue": "Pense"
+  },
+  {
+   "word": "SEPT",
+   "clue": "Semaine"
+  },
+  {
+   "word": "BONS",
+   "clue": "Délicieux"
+  },
+  {
+   "word": "SOIREE",
+   "clue": "Veillée"
+  },
+  {
+   "word": "VENUE",
+   "clue": "Arrivée"
+  },
+  {
+   "word": "ENVOYE",
+   "clue": "Expédié"
+  },
+  {
+   "word": "LUNDI",
+   "clue": "Jour un"
+  },
+  {
+   "word": "BLESSE",
+   "clue": "Meurtri"
+  },
+  {
+   "word": "BOUCHE",
+   "clue": "Lèvres"
+  },
+  {
+   "word": "DONNEZ",
+   "clue": "Offrez"
+  },
+  {
+   "word": "TIENS",
+   "clue": "Saisis"
+  },
+  {
+   "word": "BUT",
+   "clue": "Objectif"
+  },
+  {
+   "word": "FAUTE",
+   "clue": "Erreur"
+  },
+  {
+   "word": "ART",
+   "clue": "Peinture"
+  },
+  {
+   "word": "SORTI",
+   "clue": "Dehors"
+  },
+  {
+   "word": "GROUPE",
+   "clue": "Bande"
+  },
+  {
+   "word": "DEBUT",
+   "clue": "Origine"
+  },
+  {
+   "word": "PRISON",
+   "clue": "Geôle"
+  },
+  {
+   "word": "INVITE",
+   "clue": "Convive"
+  },
+  {
+   "word": "OR",
+   "clue": "Métal jaune"
+  },
+  {
+   "word": "PAYE",
+   "clue": "Salaire"
+  },
+  {
+   "word": "EMPLOI",
+   "clue": "Travail"
+  },
+  {
+   "word": "NUMERO",
+   "clue": "Chiffre"
+  },
+  {
+   "word": "LUNE",
+   "clue": "Satellite"
+  },
+  {
+   "word": "OISEAU",
+   "clue": "Volatile"
+  },
+  {
+   "word": "TYPE",
+   "clue": "Gars"
+  },
+  {
+   "word": "NEUF",
+   "clue": "Tout nouveau"
+  },
+  {
+   "word": "SURE",
+   "clue": "Certaine"
+  },
+  {
+   "word": "PEUPLE",
+   "clue": "Nation"
+  },
+  {
+   "word": "AVANCE",
+   "clue": "Progrès"
+  },
+  {
+   "word": "TEL",
+   "clue": "Pareil"
+  },
+  {
+   "word": "LIS",
+   "clue": "Fleur royale"
+  },
+  {
+   "word": "FASSE",
+   "clue": "Faire"
+  },
+  {
+   "word": "VIVENT",
+   "clue": "Existent"
+  },
+  {
+   "word": "CHATS",
+   "clue": "Matous"
+  },
+  {
+   "word": "BATEAU",
+   "clue": "Navire"
+  },
+  {
+   "word": "LEQUEL",
+   "clue": "Pronom relatif"
+  },
+  {
+   "word": "SUIVRE",
+   "clue": "Escorter"
+  },
+  {
+   "word": "ALLAIT",
+   "clue": "Aller"
+  },
+  {
+   "word": "GAUCHE",
+   "clue": "Maladroit"
+  },
+  {
+   "word": "LORS",
+   "clue": "Au moment"
+  },
+  {
+   "word": "DURANT",
+   "clue": "Pendant"
+  },
+  {
+   "word": "PAPIER",
+   "clue": "Feuille"
+  },
+  {
+   "word": "CALME",
+   "clue": "Serein"
+  },
+  {
+   "word": "DIRAIT",
+   "clue": "Dire"
+  },
+  {
+   "word": "FIER",
+   "clue": "Altier"
+  },
+  {
+   "word": "ONCLE",
+   "clue": "Tonton"
+  },
+  {
+   "word": "DISENT",
+   "clue": "Narrent"
+  },
+  {
+   "word": "FERAI",
+   "clue": "Faire"
+  },
+  {
+   "word": "SUCRE",
+   "clue": "Douceur"
+  },
+  {
+   "word": "POMME",
+   "clue": "Reinette"
+  },
+  {
+   "word": "SIGNE",
+   "clue": "Indice"
+  },
+  {
+   "word": "DISAIT",
+   "clue": "Dire"
+  },
+  {
+   "word": "FINIR",
+   "clue": "Achever"
+  },
+  {
+   "word": "SOL",
+   "clue": "Plancher"
+  },
+  {
+   "word": "FRUITS",
+   "clue": "Récolte"
+  },
+  {
+   "word": "AVIONS",
+   "clue": "Avoir"
+  },
+  {
+   "word": "DORMI",
+   "clue": "Reposé"
+  },
+  {
+   "word": "AIMAIT",
+   "clue": "Adorait"
+  },
+  {
+   "word": "FORET",
+   "clue": "Futaie"
+  },
+  {
+   "word": "GOUT",
+   "clue": "Saveur"
+  },
+  {
+   "word": "COURIR",
+   "clue": "Galoper"
+  },
+  {
+   "word": "ABORD",
+   "clue": "Accès"
+  },
+  {
+   "word": "SUIVI",
+   "clue": "Escorté"
+  },
+  {
+   "word": "TENNIS",
+   "clue": "Sport de raquette"
+  },
+  {
+   "word": "CHEF",
+   "clue": "Patron"
+  },
+  {
+   "word": "PLANTE",
+   "clue": "Végétal"
+  },
+  {
+   "word": "POIDS",
+   "clue": "Masse"
+  },
+  {
+   "word": "SOUPE",
+   "clue": "Potage"
+  },
+  {
+   "word": "EPOUSE",
+   "clue": "Femme"
+  },
+  {
+   "word": "EPOQUE",
+   "clue": "Ère"
+  },
+  {
+   "word": "VECU",
+   "clue": "Existé"
+  },
+  {
+   "word": "VENEZ",
+   "clue": "Arrivez"
+  },
+  {
+   "word": "ENVERS",
+   "clue": "Verso"
+  },
+  {
+   "word": "FOND",
+   "clue": "Base"
+  },
+  {
+   "word": "BEAUTE",
+   "clue": "Grâce"
+  },
+  {
+   "word": "MONTE",
+   "clue": "Grimpe"
+  },
+  {
+   "word": "TAILLE",
+   "clue": "Hauteur"
+  },
+  {
+   "word": "PARMI",
+   "clue": "Entre"
+  },
+  {
+   "word": "SPORT",
+   "clue": "Exercice"
+  },
+  {
+   "word": "OEUFS",
+   "clue": "Omelette"
+  },
+  {
+   "word": "BEAUX",
+   "clue": "Jolis"
+  },
+  {
+   "word": "CINEMA",
+   "clue": "Salle obscure"
+  },
+  {
+   "word": "PLEINE",
+   "clue": "Remplie"
+  },
+  {
+   "word": "TOUCHE",
+   "clue": "Effleure"
+  },
+  {
+   "word": "TENIR",
+   "clue": "Garder"
+  },
+  {
+   "word": "SOI",
+   "clue": "Sa personne"
+  },
+  {
+   "word": "SOURIS",
+   "clue": "Rongeur"
+  },
+  {
+   "word": "BOULOT",
+   "clue": "Travail"
+  },
+  {
+   "word": "HORS",
+   "clue": "Dehors"
+  },
+  {
+   "word": "GARDER",
+   "clue": "Retenir"
+  },
+  {
+   "word": "GROSSE",
+   "clue": "Énorme"
+  },
+  {
+   "word": "PIRE",
+   "clue": "Plus mauvais"
+  },
+  {
+   "word": "CONNU",
+   "clue": "Célèbre"
+  },
+  {
+   "word": "VALEUR",
+   "clue": "Prix"
+  },
+  {
+   "word": "PATRON",
+   "clue": "Chef"
+  },
+  {
+   "word": "TUER",
+   "clue": "Abattre"
+  },
+  {
+   "word": "DROITE",
+   "clue": "Côté"
+  },
+  {
+   "word": "PHOTOS",
+   "clue": "Clichés"
+  },
+  {
+   "word": "RUSSE",
+   "clue": "Slave"
+  },
+  {
+   "word": "TASSE",
+   "clue": "Bol"
+  },
+  {
+   "word": "FRERES",
+   "clue": "Germains"
+  },
+  {
+   "word": "TOMBEE",
+   "clue": "Chute"
+  },
+  {
+   "word": "AFIN",
+   "clue": "Pour"
+  },
+  {
+   "word": "MILIEU",
+   "clue": "Centre"
+  },
+  {
+   "word": "BAIN",
+   "clue": "Baignade"
+  },
+  {
+   "word": "CHAMP",
+   "clue": "Pré"
+  },
+  {
+   "word": "PLEURE",
+   "clue": "Sanglote"
+  },
+  {
+   "word": "COIN",
+   "clue": "Angle"
+  },
+  {
+   "word": "ECRIS",
+   "clue": "Rédige"
+  },
+  {
+   "word": "FRAPPE",
+   "clue": "Cogne"
+  },
+  {
+   "word": "AME",
+   "clue": "Esprit"
+  },
+  {
+   "word": "ALLEES",
+   "clue": "Avenues"
+  },
+  {
+   "word": "POSER",
+   "clue": "Placer"
+  },
+  {
+   "word": "GLACE",
+   "clue": "Miroir"
+  },
+  {
+   "word": "QUELS",
+   "clue": "Lesquels"
+  },
+  {
+   "word": "DANGER",
+   "clue": "Péril"
+  },
+  {
+   "word": "IMAGE",
+   "clue": "Dessin"
+  },
+  {
+   "word": "AIMER",
+   "clue": "Chérir"
+  },
+  {
+   "word": "MERITE",
+   "clue": "Vaut"
+  },
+  {
+   "word": "LEVER",
+   "clue": "Hisser"
+  },
+  {
+   "word": "BANQUE",
+   "clue": "Caisse"
+  },
+  {
+   "word": "ROMAN",
+   "clue": "Récit"
+  },
+  {
+   "word": "LISTE",
+   "clue": "Relevé"
+  },
+  {
+   "word": "PUBLIC",
+   "clue": "Foule"
+  },
+  {
+   "word": "SORT",
+   "clue": "Destin"
+  },
+  {
+   "word": "EUT",
+   "clue": "Avoir"
+  },
+  {
+   "word": "PRESSE",
+   "clue": "Journaux"
+  },
+  {
+   "word": "REVENU",
+   "clue": "Salaire"
+  },
+  {
+   "word": "CLES",
+   "clue": "Sésames"
+  },
+  {
+   "word": "ECHECS",
+   "clue": "Jeu de rois"
+  },
+  {
+   "word": "LAC",
+   "clue": "Étang"
+  },
+  {
+   "word": "RISQUE",
+   "clue": "Péril"
+  },
+  {
+   "word": "CHARGE",
+   "clue": "Fardeau"
+  },
+  {
+   "word": "SENTI",
+   "clue": "Perçu"
+  },
+  {
+   "word": "PORTES",
+   "clue": "Entrées"
+  },
+  {
+   "word": "TELE",
+   "clue": "Écran"
+  },
+  {
+   "word": "DEBOUT",
+   "clue": "Levé"
+  },
+  {
+   "word": "DEMI",
+   "clue": "Moitié"
+  },
+  {
+   "word": "TIENT",
+   "clue": "Garde"
+  },
+  {
+   "word": "OUVRE",
+   "clue": "Déclôt"
+  },
+  {
+   "word": "EFFET",
+   "clue": "Impact"
+  },
+  {
+   "word": "EGLISE",
+   "clue": "Chapelle"
+  },
+  {
+   "word": "JOIE",
+   "clue": "Bonheur"
+  },
+  {
+   "word": "PERMIS",
+   "clue": "Licence"
+  },
+  {
+   "word": "CENTRE",
+   "clue": "Milieu"
+  },
+  {
+   "word": "SENT",
+   "clue": "Flaire"
+  },
+  {
+   "word": "CLAIR",
+   "clue": "Limpide"
+  },
+  {
+   "word": "LIGNE",
+   "clue": "Trait"
+  },
+  {
+   "word": "MOITIE",
+   "clue": "Demi"
+  },
+  {
+   "word": "DURE",
+   "clue": "Pénible"
+  },
+  {
+   "word": "UTILE",
+   "clue": "Pratique"
+  },
+  {
+   "word": "VOIE",
+   "clue": "Chemin"
+  },
+  {
+   "word": "AIE",
+   "clue": "Avoir"
+  },
+  {
+   "word": "FERMER",
+   "clue": "Clore"
+  },
+  {
+   "word": "RAPIDE",
+   "clue": "Véloce"
+  },
+  {
+   "word": "ENNEMI",
+   "clue": "Rival"
+  },
+  {
+   "word": "MIT",
+   "clue": "Plaça"
+  },
+  {
+   "word": "SERAS",
+   "clue": "Être"
+  },
+  {
+   "word": "SERT",
+   "clue": "Aide"
+  },
+  {
+   "word": "FURENT",
+   "clue": "Être"
+  },
+  {
+   "word": "BOIT",
+   "clue": "Avale"
+  },
+  {
+   "word": "PROMIS",
+   "clue": "Juré"
+  },
+  {
+   "word": "STYLO",
+   "clue": "Plume"
+  },
+  {
+   "word": "HONTE",
+   "clue": "Gêne"
+  },
+  {
+   "word": "DANSER",
+   "clue": "Valser"
+  },
+  {
+   "word": "PROCHE",
+   "clue": "Voisin"
+  },
+  {
+   "word": "TEXTE",
+   "clue": "Écrit"
+  },
+  {
+   "word": "GRACE",
+   "clue": "Charme"
+  },
+  {
+   "word": "ROSE",
+   "clue": "Fleur"
+  },
+  {
+   "word": "MET",
+   "clue": "Pose"
+  },
+  {
+   "word": "OFFRE",
+   "clue": "Donne"
+  },
+  {
+   "word": "AYEZ",
+   "clue": "Avoir"
+  },
+  {
+   "word": "MORTS",
+   "clue": "Défunts"
+  },
+  {
+   "word": "MALGRE",
+   "clue": "En dépit de"
+  },
+  {
+   "word": "MISE",
+   "clue": "Enjeu"
+  },
+  {
+   "word": "SERONT",
+   "clue": "Être"
+  },
+  {
+   "word": "AVOCAT",
+   "clue": "Fruit vert"
+  },
+  {
+   "word": "AVIEZ",
+   "clue": "Avoir"
+  },
+  {
+   "word": "REVES",
+   "clue": "Songes"
+  },
+  {
+   "word": "CHAISE",
+   "clue": "Siège"
+  },
+  {
+   "word": "PIANO",
+   "clue": "Clavier"
+  },
+  {
+   "word": "TROMPE",
+   "clue": "Dupe"
+  },
+  {
+   "word": "ANIMAL",
+   "clue": "Bête"
+  },
+  {
+   "word": "PLEUT",
+   "clue": "Bruine"
+  },
+  {
+   "word": "POULE",
+   "clue": "Gallinacé"
+  },
+  {
+   "word": "SAVONS",
+   "clue": "Pains de toilette"
+  },
+  {
+   "word": "MINUTE",
+   "clue": "Instant"
+  },
+  {
+   "word": "TENTE",
+   "clue": "Essaie"
+  },
+  {
+   "word": "TOURNE",
+   "clue": "Pivote"
+  },
+  {
+   "word": "COUCHE",
+   "clue": "Lange"
+  },
+  {
+   "word": "CRU",
+   "clue": "Pas cuit"
+  },
+  {
+   "word": "GENTIL",
+   "clue": "Aimable"
+  },
+  {
+   "word": "HUMAIN",
+   "clue": "Mortel"
+  },
+  {
+   "word": "LARMES",
+   "clue": "Pleurs"
+  },
+  {
+   "word": "OBLIGE",
+   "clue": "Force"
+  },
+  {
+   "word": "VENDU",
+   "clue": "Cédé"
+  },
+  {
+   "word": "ENTREE",
+   "clue": "Hall"
+  },
+  {
+   "word": "NIVEAU",
+   "clue": "Étage"
+  },
+  {
+   "word": "PAPA",
+   "clue": "Père"
+  },
+  {
+   "word": "RADIO",
+   "clue": "Poste"
+  },
+  {
+   "word": "REGLE",
+   "clue": "Norme"
+  },
+  {
+   "word": "RENDS",
+   "clue": "Restitue"
+  },
+  {
+   "word": "SOIENT",
+   "clue": "Être"
+  },
+  {
+   "word": "DROLE",
+   "clue": "Amusant"
+  },
+  {
+   "word": "HASARD",
+   "clue": "Aléa"
+  },
+  {
+   "word": "SEULS",
+   "clue": "Isolés"
+  },
+  {
+   "word": "REGARD",
+   "clue": "Air, mine"
+  },
+  {
+   "word": "MENTI",
+   "clue": "Trompé"
+  },
+  {
+   "word": "FRAIS",
+   "clue": "Dépenses"
+  },
+  {
+   "word": "EVITER",
+   "clue": "Esquiver"
+  },
+  {
+   "word": "LAVER",
+   "clue": "Nettoyer"
+  },
+  {
+   "word": "VOL",
+   "clue": "Larcin"
+  },
+  {
+   "word": "JOLIE",
+   "clue": "Belle"
+  },
+  {
+   "word": "ORDRE",
+   "clue": "Consigne"
+  },
+  {
+   "word": "FORCES",
+   "clue": "Énergies"
+  },
+  {
+   "word": "SAUF",
+   "clue": "Excepté"
+  },
+  {
+   "word": "PRISE",
+   "clue": "Capture"
+  },
+  {
+   "word": "SALE",
+   "clue": "Crasseux"
+  },
+  {
+   "word": "NOUVEL",
+   "clue": "Neuf"
+  },
+  {
+   "word": "VOYEZ",
+   "clue": "Regardez"
+  },
+  {
+   "word": "FAUX",
+   "clue": "Erroné"
+  },
+  {
+   "word": "SEREZ",
+   "clue": "Être"
+  },
+  {
+   "word": "RESTES",
+   "clue": "Débris"
+  },
+  {
+   "word": "SUD",
+   "clue": "Midi"
+  },
+  {
+   "word": "VENDRE",
+   "clue": "Céder"
+  },
+  {
+   "word": "COURU",
+   "clue": "Galopé"
+  },
+  {
+   "word": "DORT",
+   "clue": "Repose"
+  },
+  {
+   "word": "PARAIT",
+   "clue": "Semble"
+  },
+  {
+   "word": "PRIT",
+   "clue": "Saisit"
+  },
+  {
+   "word": "ARME",
+   "clue": "Fusil"
+  },
+  {
+   "word": "MATCH",
+   "clue": "Partie"
+  },
+  {
+   "word": "ETAGE",
+   "clue": "Palier"
+  },
+  {
+   "word": "CHOISI",
+   "clue": "Élu"
+  },
+  {
+   "word": "DEVAIT",
+   "clue": "Devoir"
+  },
+  {
+   "word": "FLEUR",
+   "clue": "Tulipe"
+  },
+  {
+   "word": "IRAI",
+   "clue": "Aller"
+  },
+  {
+   "word": "RESTEZ",
+   "clue": "Ne partez pas"
+  },
+  {
+   "word": "SU",
+   "clue": "Connu"
+  },
+  {
+   "word": "TACHE",
+   "clue": "Souillure"
+  },
+  {
+   "word": "CELLES",
+   "clue": "Pronom"
+  },
+  {
+   "word": "FORTE",
+   "clue": "Robuste"
+  },
+  {
+   "word": "AMIES",
+   "clue": "Copines"
+  },
+  {
+   "word": "NULLE",
+   "clue": "Aucune"
+  },
+  {
+   "word": "SENTIR",
+   "clue": "Humer"
+  },
+  {
+   "word": "AISE",
+   "clue": "Content"
+  },
+  {
+   "word": "MARIE",
+   "clue": "Épouse"
+  },
+  {
+   "word": "ENTIER",
+   "clue": "Complet"
+  },
+  {
+   "word": "SOIF",
+   "clue": "Pépie"
+  },
+  {
+   "word": "SUFFIT",
+   "clue": "Assez"
+  },
+  {
+   "word": "FERAIT",
+   "clue": "Faire"
+  },
+  {
+   "word": "HUILE",
+   "clue": "Olive"
+  },
+  {
+   "word": "METTEZ",
+   "clue": "Posez"
+  },
+  {
+   "word": "TRAITE",
+   "clue": "Accord"
+  },
+  {
+   "word": "MARIER",
+   "clue": "Unir"
+  },
+  {
+   "word": "FAITS",
+   "clue": "Actes"
+  },
+  {
+   "word": "ETUDES",
+   "clue": "Cursus"
+  },
+  {
+   "word": "PASSEE",
+   "clue": "Révolue"
+  },
+  {
+   "word": "BLEU",
+   "clue": "Azur"
+  },
+  {
+   "word": "PEAU",
+   "clue": "Épiderme"
+  },
+  {
+   "word": "IDIOT",
+   "clue": "Sot"
+  },
+  {
+   "word": "PERMET",
+   "clue": "Autorise"
+  },
+  {
+   "word": "SITE",
+   "clue": "Lieu"
+  },
+  {
+   "word": "TAXI",
+   "clue": "Voiture"
+  },
+  {
+   "word": "VIEIL",
+   "clue": "Âgé"
+  },
+  {
+   "word": "MARIEE",
+   "clue": "Épousée"
+  },
+  {
+   "word": "PECHE",
+   "clue": "Fruit"
+  },
+  {
+   "word": "PREVU",
+   "clue": "Planifié"
+  },
+  {
+   "word": "ESPACE",
+   "clue": "Cosmos"
+  },
+  {
+   "word": "SORTIE",
+   "clue": "Issue"
+  },
+  {
+   "word": "VOISIN",
+   "clue": "Proche"
+  },
+  {
+   "word": "PLU",
+   "clue": "Charmé"
+  },
+  {
+   "word": "PONT",
+   "clue": "Viaduc"
+  },
+  {
+   "word": "CRAINS",
+   "clue": "Redoute"
+  },
+  {
+   "word": "BATTRE",
+   "clue": "Vaincre"
+  },
+  {
+   "word": "NUL",
+   "clue": "Aucun"
+  },
+  {
+   "word": "AILLE",
+   "clue": "Aller"
+  },
+  {
+   "word": "ALCOOL",
+   "clue": "Liqueur"
+  },
+  {
+   "word": "MAITRE",
+   "clue": "Patron"
+  },
+  {
+   "word": "ROSES",
+   "clue": "Fleurs"
+  },
+  {
+   "word": "POUSSE",
+   "clue": "Germe"
+  },
+  {
+   "word": "PARTIS",
+   "clue": "Allés"
+  },
+  {
+   "word": "BRULE",
+   "clue": "Flambe"
+  },
+  {
+   "word": "AMITIE",
+   "clue": "Affection"
+  },
+  {
+   "word": "VOLER",
+   "clue": "Planer"
+  },
+  {
+   "word": "ILE",
+   "clue": "Atoll"
+  },
+  {
+   "word": "ODEUR",
+   "clue": "Parfum"
+  },
+  {
+   "word": "CROYEZ",
+   "clue": "Pensez"
+  },
+  {
+   "word": "BASE",
+   "clue": "Socle"
+  },
+  {
+   "word": "VRAIE",
+   "clue": "Exacte"
+  },
+  {
+   "word": "MUSEE",
+   "clue": "Galerie"
+  },
+  {
+   "word": "DROITS",
+   "clue": "Libertés"
+  },
+  {
+   "word": "ARMEE",
+   "clue": "Troupes"
+  },
+  {
+   "word": "COPINE",
+   "clue": "Amie"
+  },
+  {
+   "word": "AURAI",
+   "clue": "Avoir"
+  },
+  {
+   "word": "MORTE",
+   "clue": "Défunte"
+  },
+  {
+   "word": "REGION",
+   "clue": "Province"
+  },
+  {
+   "word": "IRA",
+   "clue": "Aller"
+  },
+  {
+   "word": "VENUS",
+   "clue": "Arrivés"
+  },
+  {
+   "word": "SORS",
+   "clue": "Quitte"
+  },
+  {
+   "word": "UNIQUE",
+   "clue": "Seul"
+  },
+  {
+   "word": "CRIME",
+   "clue": "Forfait"
+  },
+  {
+   "word": "ARMES",
+   "clue": "Fusils"
+  },
+  {
+   "word": "POEME",
+   "clue": "Ode"
+  },
+  {
+   "word": "AURIEZ",
+   "clue": "Avoir"
+  },
+  {
+   "word": "COTES",
+   "clue": "Flancs"
+  },
+  {
+   "word": "RIZ",
+   "clue": "Céréale"
+  },
+  {
+   "word": "BRISE",
+   "clue": "Zéphyr"
+  },
+  {
+   "word": "JEUX",
+   "clue": "Loisirs"
+  },
+  {
+   "word": "FOULE",
+   "clue": "Cohue"
+  },
+  {
+   "word": "MANGEZ",
+   "clue": "Dévorez"
+  },
+  {
+   "word": "TANTE",
+   "clue": "Tata"
+  },
+  {
+   "word": "ARRET",
+   "clue": "Halte"
+  },
+  {
+   "word": "FILMS",
+   "clue": "Longs métrages"
+  },
+  {
+   "word": "FUME",
+   "clue": "Fumée"
+  },
+  {
+   "word": "RATE",
+   "clue": "Manqué"
+  },
+  {
+   "word": "ROLE",
+   "clue": "Fonction"
+  },
+  {
+   "word": "AURAS",
+   "clue": "Avoir"
+  },
+  {
+   "word": "GOUTE",
+   "clue": "Savoure"
+  },
+  {
+   "word": "LAPIN",
+   "clue": "Lièvre"
+  },
+  {
+   "word": "DATE",
+   "clue": "Jour fixé"
+  },
+  {
+   "word": "DOIGTS",
+   "clue": "Pouce et index"
+  },
+  {
+   "word": "OMBRE",
+   "clue": "Obscurité"
+  },
+  {
+   "word": "AIES",
+   "clue": "Avoir"
+  },
+  {
+   "word": "ALLAIS",
+   "clue": "Aller"
+  },
+  {
+   "word": "OEUVRE",
+   "clue": "Ouvrage"
+  },
+  {
+   "word": "GRAVE",
+   "clue": "Sérieux"
+  },
+  {
+   "word": "HATE",
+   "clue": "Urgence"
+  },
+  {
+   "word": "JAMBES",
+   "clue": "Membres"
+  },
+  {
+   "word": "DEPART",
+   "clue": "Envol"
+  },
+  {
+   "word": "HUMEUR",
+   "clue": "Caprice"
+  },
+  {
+   "word": "DOUCHE",
+   "clue": "Jet d'eau"
+  },
+  {
+   "word": "VERT",
+   "clue": "Feuillu"
+  },
+  {
+   "word": "HAUTE",
+   "clue": "Élevée"
+  },
+  {
+   "word": "MENTIR",
+   "clue": "Tromper"
+  },
+  {
+   "word": "MOYENS",
+   "clue": "Fortune"
+  },
+  {
+   "word": "PIZZA",
+   "clue": "Plat italien"
+  },
+  {
+   "word": "COUPER",
+   "clue": "Trancher"
+  },
+  {
+   "word": "FIL",
+   "clue": "Ficelle"
+  },
+  {
+   "word": "TANDIS",
+   "clue": "Alors que"
+  },
+  {
+   "word": "DANSE",
+   "clue": "Valse"
+  },
+  {
+   "word": "SITUE",
+   "clue": "Placé"
+  },
+  {
+   "word": "CAMION",
+   "clue": "Poids lourd"
+  },
+  {
+   "word": "POCHE",
+   "clue": "Gousset"
+  },
+  {
+   "word": "PRETER",
+   "clue": "Avancer"
+  },
+  {
+   "word": "NOTE",
+   "clue": "Facture"
+  },
+  {
+   "word": "PARS",
+   "clue": "Quitte"
+  },
+  {
+   "word": "VIVANT",
+   "clue": "En vie"
+  },
+  {
+   "word": "BEURRE",
+   "clue": "Tartine"
+  },
+  {
+   "word": "DAME",
+   "clue": "Lady"
+  },
+  {
+   "word": "SACHE",
+   "clue": "Savoir"
+  },
+  {
+   "word": "ALLUME",
+   "clue": "Éclaire"
+  },
+  {
+   "word": "CARTES",
+   "clue": "Plans"
+  },
+  {
+   "word": "QUEUE",
+   "clue": "File"
+  },
+  {
+   "word": "COUR",
+   "clue": "Préau"
+  },
+  {
+   "word": "AUPRES",
+   "clue": "Près de"
+  },
+  {
+   "word": "DIABLE",
+   "clue": "Démon"
+  },
+  {
+   "word": "BALLE",
+   "clue": "Ballon"
+  },
+  {
+   "word": "PREUVE",
+   "clue": "Indice"
+  },
+  {
+   "word": "SOUCI",
+   "clue": "Tracas"
+  },
+  {
+   "word": "ETANT",
+   "clue": "Être"
+  },
+  {
+   "word": "DOIGT",
+   "clue": "Index"
+  },
+  {
+   "word": "NAGE",
+   "clue": "Crawl"
+  },
+  {
+   "word": "APPEL",
+   "clue": "Cri"
+  },
+  {
+   "word": "FAIBLE",
+   "clue": "Fragile"
+  },
+  {
+   "word": "RUES",
+   "clue": "Voies"
+  },
+  {
+   "word": "CREE",
+   "clue": "Invente"
+  },
+  {
+   "word": "FOUS",
+   "clue": "Déments"
+  },
+  {
+   "word": "PAGE",
+   "clue": "Feuillet"
+  },
+  {
+   "word": "PLAT",
+   "clue": "Mets"
+  },
+  {
+   "word": "MONTER",
+   "clue": "Grimper"
+  },
+  {
+   "word": "ORANGE",
+   "clue": "Agrume"
+  },
+  {
+   "word": "VIENNE",
+   "clue": "Venir"
+  },
+  {
+   "word": "AGIR",
+   "clue": "Opérer"
+  },
+  {
+   "word": "SAMEDI",
+   "clue": "Jour de repos"
+  },
+  {
+   "word": "VACHE",
+   "clue": "Bovin"
+  },
+  {
+   "word": "FER",
+   "clue": "Métal"
+  },
+  {
+   "word": "MENE",
+   "clue": "Conduit"
+  },
+  {
+   "word": "TRUC",
+   "clue": "Astuce"
+  },
+  {
+   "word": "FICHE",
+   "clue": "Carton"
+  },
+  {
+   "word": "OFFERT",
+   "clue": "Donné"
+  },
+  {
+   "word": "ACCUSE",
+   "clue": "Inculpé"
+  },
+  {
+   "word": "SAUVE",
+   "clue": "Secouru"
+  },
+  {
+   "word": "CHERE",
+   "clue": "Coûteuse"
+  },
+  {
+   "word": "PARDON",
+   "clue": "Excuse"
+  },
+  {
+   "word": "ARABE",
+   "clue": "Langue"
+  },
+  {
+   "word": "AUTEUR",
+   "clue": "Écrivain"
+  },
+  {
+   "word": "DEDANS",
+   "clue": "Intérieur"
+  },
+  {
+   "word": "OBTENU",
+   "clue": "Acquis"
+  },
+  {
+   "word": "COUPS",
+   "clue": "Chocs"
+  },
+  {
+   "word": "LINGE",
+   "clue": "Lessive"
+  },
+  {
+   "word": "PIECES",
+   "clue": "Monnaie"
+  }
+ ]
+}

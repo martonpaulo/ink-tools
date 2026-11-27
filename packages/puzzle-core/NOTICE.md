@@ -80,6 +80,12 @@ SOFTWARE.
 The Portuguese word-search themes, `words/themes-pt.source.json`, were written for this package
 under the repository's licence, CC BY-NC-SA 4.0.
 
+## Ink Tools arrowword clues
+
+The arrowword clue banks, `clues/arrowword-<lang>.json`, were written for this package under the
+repository's licence, CC BY-NC-SA 4.0. Their words come from the word lists above; no clue set,
+dictionary gloss or Wiktionary text was used ([#454](https://github.com/martonpaulo/ink-tools/issues/454)).
+
 ## Figtree
 
 The page renderer draws its text from the outlines of Figtree, the typeface in `design/fonts/`

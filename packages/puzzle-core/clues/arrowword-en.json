@@ -1,0 +1,4009 @@
+{
+ "language": "en",
+ "sources": [
+  "ink-tools-clues"
+ ],
+ "reviewed": false,
+ "entries": [
+  {
+   "word": "TO",
+   "clue": "Toward"
+  },
+  {
+   "word": "THE",
+   "clue": "Definite article"
+  },
+  {
+   "word": "THAT",
+   "clue": "Not this"
+  },
+  {
+   "word": "YOU",
+   "clue": "Second person"
+  },
+  {
+   "word": "IS",
+   "clue": "Exists"
+  },
+  {
+   "word": "IN",
+   "clue": "Not out"
+  },
+  {
+   "word": "OF",
+   "clue": "Part ___"
+  },
+  {
+   "word": "AND",
+   "clue": "Plus"
+  },
+  {
+   "word": "HE",
+   "clue": "Male pronoun"
+  },
+  {
+   "word": "WAS",
+   "clue": "Used to be"
+  },
+  {
+   "word": "DO",
+   "clue": "Perform"
+  },
+  {
+   "word": "IT",
+   "clue": "Neuter pronoun"
+  },
+  {
+   "word": "FOR",
+   "clue": "In favour of"
+  },
+  {
+   "word": "HAVE",
+   "clue": "Own"
+  },
+  {
+   "word": "BE",
+   "clue": "Exist"
+  },
+  {
+   "word": "ME",
+   "clue": "Myself"
+  },
+  {
+   "word": "THIS",
+   "clue": "Not that"
+  },
+  {
+   "word": "HIS",
+   "clue": "Belongs to him"
+  },
+  {
+   "word": "ARE",
+   "clue": "Exist, plural"
+  },
+  {
+   "word": "SHE",
+   "clue": "Female pronoun"
+  },
+  {
+   "word": "WITH",
+   "clue": "Along and"
+  },
+  {
+   "word": "ON",
+   "clue": "Not off"
+  },
+  {
+   "word": "MY",
+   "clue": "Belongs to me"
+  },
+  {
+   "word": "WE",
+   "clue": "You and I"
+  },
+  {
+   "word": "WHAT",
+   "clue": "Which thing?"
+  },
+  {
+   "word": "NOT",
+   "clue": "Negative word"
+  },
+  {
+   "word": "THEY",
+   "clue": "Those people"
+  },
+  {
+   "word": "KNOW",
+   "clue": "Be aware of"
+  },
+  {
+   "word": "AT",
+   "clue": "Located near"
+  },
+  {
+   "word": "SAID",
+   "clue": "Spoke"
+  },
+  {
+   "word": "HER",
+   "clue": "That woman"
+  },
+  {
+   "word": "HAS",
+   "clue": "Owns"
+  },
+  {
+   "word": "THINK",
+   "clue": "Ponder"
+  },
+  {
+   "word": "LIKE",
+   "clue": "Enjoy"
+  },
+  {
+   "word": "YOUR",
+   "clue": "Not mine"
+  },
+  {
+   "word": "CAN",
+   "clue": "Is able to"
+  },
+  {
+   "word": "DID",
+   "clue": "Carried out"
+  },
+  {
+   "word": "WANT",
+   "clue": "Desire"
+  },
+  {
+   "word": "HIM",
+   "clue": "That man"
+  },
+  {
+   "word": "WILL",
+   "clue": "Shall"
+  },
+  {
+   "word": "ABOUT",
+   "clue": "Roughly"
+  },
+  {
+   "word": "HAD",
+   "clue": "Owned"
+  },
+  {
+   "word": "HOW",
+   "clue": "In what way?"
+  },
+  {
+   "word": "ALL",
+   "clue": "Every one"
+  },
+  {
+   "word": "FROM",
+   "clue": "Out of"
+  },
+  {
+   "word": "GOING",
+   "clue": "Leaving"
+  },
+  {
+   "word": "GO",
+   "clue": "Leave"
+  },
+  {
+   "word": "THERE",
+   "clue": "Not here"
+  },
+  {
+   "word": "BY",
+   "clue": "Next to"
+  },
+  {
+   "word": "WERE",
+   "clue": "Existed then"
+  },
+  {
+   "word": "IF",
+   "clue": "Provided that"
+  },
+  {
+   "word": "OUT",
+   "clue": "Not in"
+  },
+  {
+   "word": "ONE",
+   "clue": "Single unit"
+  },
+  {
+   "word": "TIME",
+   "clue": "Clock reading"
+  },
+  {
+   "word": "AS",
+   "clue": "While"
+  },
+  {
+   "word": "AN",
+   "clue": "Indefinite article"
+  },
+  {
+   "word": "UP",
+   "clue": "Not down"
+  },
+  {
+   "word": "TOLD",
+   "clue": "Informed"
+  },
+  {
+   "word": "VERY",
+   "clue": "Highly"
+  },
+  {
+   "word": "GET",
+   "clue": "Obtain"
+  },
+  {
+   "word": "WOULD",
+   "clue": "Past of will"
+  },
+  {
+   "word": "HERE",
+   "clue": "At this place"
+  },
+  {
+   "word": "WHEN",
+   "clue": "At what time?"
+  },
+  {
+   "word": "BEEN",
+   "clue": "Existed"
+  },
+  {
+   "word": "BUT",
+   "clue": "However"
+  },
+  {
+   "word": "WHY",
+   "clue": "For what reason?"
+  },
+  {
+   "word": "WHO",
+   "clue": "Which person?"
+  },
+  {
+   "word": "NO",
+   "clue": "Opposite of yes"
+  },
+  {
+   "word": "JUST",
+   "clue": "Fair"
+  },
+  {
+   "word": "SO",
+   "clue": "Therefore"
+  },
+  {
+   "word": "US",
+   "clue": "You and me"
+  },
+  {
+   "word": "REALLY",
+   "clue": "Truly"
+  },
+  {
+   "word": "NEVER",
+   "clue": "Not ever"
+  },
+  {
+   "word": "NEED",
+   "clue": "Require"
+  },
+  {
+   "word": "SHOULD",
+   "clue": "Ought to"
+  },
+  {
+   "word": "GOOD",
+   "clue": "Not bad"
+  },
+  {
+   "word": "COULD",
+   "clue": "Was able to"
+  },
+  {
+   "word": "GOT",
+   "clue": "Obtained"
+  },
+  {
+   "word": "MORE",
+   "clue": "Extra"
+  },
+  {
+   "word": "HELP",
+   "clue": "Assist"
+  },
+  {
+   "word": "THAN",
+   "clue": "Bigger ___"
+  },
+  {
+   "word": "TELL",
+   "clue": "Inform"
+  },
+  {
+   "word": "DOING",
+   "clue": "Up to"
+  },
+  {
+   "word": "NOW",
+   "clue": "At present"
+  },
+  {
+   "word": "SOME",
+   "clue": "A few"
+  },
+  {
+   "word": "THEM",
+   "clue": "Those ones"
+  },
+  {
+   "word": "PEOPLE",
+   "clue": "Folks"
+  },
+  {
+   "word": "SEE",
+   "clue": "Look at"
+  },
+  {
+   "word": "THEIR",
+   "clue": "Belongs to them"
+  },
+  {
+   "word": "BACK",
+   "clue": "Rear"
+  },
+  {
+   "word": "STILL",
+   "clue": "Not moving"
+  },
+  {
+   "word": "MUCH",
+   "clue": "A lot"
+  },
+  {
+   "word": "ONLY",
+   "clue": "Sole"
+  },
+  {
+   "word": "OUR",
+   "clue": "Belongs to us"
+  },
+  {
+   "word": "COME",
+   "clue": "Arrive"
+  },
+  {
+   "word": "WHERE",
+   "clue": "At what place?"
+  },
+  {
+   "word": "WANTED",
+   "clue": "Desired"
+  },
+  {
+   "word": "TOO",
+   "clue": "Also"
+  },
+  {
+   "word": "HOME",
+   "clue": "Dwelling"
+  },
+  {
+   "word": "TAKE",
+   "clue": "Grab"
+  },
+  {
+   "word": "ANY",
+   "clue": "At all"
+  },
+  {
+   "word": "INTO",
+   "clue": "Inside of"
+  },
+  {
+   "word": "SAY",
+   "clue": "Utter"
+  },
+  {
+   "word": "OR",
+   "clue": "Either's pair"
+  },
+  {
+   "word": "DOES",
+   "clue": "Performs"
+  },
+  {
+   "word": "MAKE",
+   "clue": "Create"
+  },
+  {
+   "word": "WORK",
+   "clue": "Labour"
+  },
+  {
+   "word": "MANY",
+   "clue": "Lots of"
+  },
+  {
+   "word": "DAY",
+   "clue": "Not night"
+  },
+  {
+   "word": "WENT",
+   "clue": "Left"
+  },
+  {
+   "word": "WAY",
+   "clue": "Path"
+  },
+  {
+   "word": "TODAY",
+   "clue": "This day"
+  },
+  {
+   "word": "LOT",
+   "clue": "Plot of land"
+  },
+  {
+   "word": "ALWAYS",
+   "clue": "Forever"
+  },
+  {
+   "word": "LAST",
+   "clue": "Final"
+  },
+  {
+   "word": "RIGHT",
+   "clue": "Correct"
+  },
+  {
+   "word": "HOUSE",
+   "clue": "Building"
+  },
+  {
+   "word": "KNEW",
+   "clue": "Was aware"
+  },
+  {
+   "word": "MADE",
+   "clue": "Created"
+  },
+  {
+   "word": "NEW",
+   "clue": "Not old"
+  },
+  {
+   "word": "MONEY",
+   "clue": "Cash"
+  },
+  {
+   "word": "WELL",
+   "clue": "Healthy"
+  },
+  {
+   "word": "LIFE",
+   "clue": "Existence"
+  },
+  {
+   "word": "OVER",
+   "clue": "Above"
+  },
+  {
+   "word": "OFF",
+   "clue": "Not on"
+  },
+  {
+   "word": "AGAIN",
+   "clue": "Once more"
+  },
+  {
+   "word": "ASKED",
+   "clue": "Inquired"
+  },
+  {
+   "word": "THREE",
+   "clue": "Trio"
+  },
+  {
+   "word": "LONG",
+   "clue": "Not short"
+  },
+  {
+   "word": "CAR",
+   "clue": "Motor"
+  },
+  {
+   "word": "LET",
+   "clue": "Allow"
+  },
+  {
+   "word": "DONE",
+   "clue": "Finished"
+  },
+  {
+   "word": "BEFORE",
+   "clue": "Prior to"
+  },
+  {
+   "word": "SCHOOL",
+   "clue": "Pupils' place"
+  },
+  {
+   "word": "OTHER",
+   "clue": "Different"
+  },
+  {
+   "word": "BETTER",
+   "clue": "Improved"
+  },
+  {
+   "word": "LEFT",
+   "clue": "Not right"
+  },
+  {
+   "word": "PLEASE",
+   "clue": "Polite word"
+  },
+  {
+   "word": "LOVE",
+   "clue": "Adore"
+  },
+  {
+   "word": "DOWN",
+   "clue": "Not up"
+  },
+  {
+   "word": "SURE",
+   "clue": "Certain"
+  },
+  {
+   "word": "FIRST",
+   "clue": "Number one"
+  },
+  {
+   "word": "AFTER",
+   "clue": "Following"
+  },
+  {
+   "word": "ABLE",
+   "clue": "Capable"
+  },
+  {
+   "word": "AM",
+   "clue": "I ___"
+  },
+  {
+   "word": "FIND",
+   "clue": "Discover"
+  },
+  {
+   "word": "EAT",
+   "clue": "Dine"
+  },
+  {
+   "word": "LOOK",
+   "clue": "Gaze"
+  },
+  {
+   "word": "ROOM",
+   "clue": "Chamber"
+  },
+  {
+   "word": "KNOWS",
+   "clue": "Is aware"
+  },
+  {
+   "word": "TWO",
+   "clue": "Pair"
+  },
+  {
+   "word": "USED",
+   "clue": "Worn"
+  },
+  {
+   "word": "EVERY",
+   "clue": "Each"
+  },
+  {
+   "word": "THINGS",
+   "clue": "Objects"
+  },
+  {
+   "word": "GIVE",
+   "clue": "Donate"
+  },
+  {
+   "word": "WANTS",
+   "clue": "Desires"
+  },
+  {
+   "word": "SAW",
+   "clue": "Cutting tool"
+  },
+  {
+   "word": "YEARS",
+   "clue": "Decades' parts"
+  },
+  {
+   "word": "PUT",
+   "clue": "Place"
+  },
+  {
+   "word": "MIGHT",
+   "clue": "Strength"
+  },
+  {
+   "word": "EVER",
+   "clue": "At any time"
+  },
+  {
+   "word": "NEXT",
+   "clue": "Coming up"
+  },
+  {
+   "word": "TALK",
+   "clue": "Chat"
+  },
+  {
+   "word": "LEAVE",
+   "clue": "Depart"
+  },
+  {
+   "word": "LITTLE",
+   "clue": "Small"
+  },
+  {
+   "word": "AWAY",
+   "clue": "Absent"
+  },
+  {
+   "word": "EVEN",
+   "clue": "Level"
+  },
+  {
+   "word": "TOOK",
+   "clue": "Grabbed"
+  },
+  {
+   "word": "SAYS",
+   "clue": "Utters"
+  },
+  {
+   "word": "OLD",
+   "clue": "Not new"
+  },
+  {
+   "word": "BUY",
+   "clue": "Purchase"
+  },
+  {
+   "word": "MAN",
+   "clue": "Adult male"
+  },
+  {
+   "word": "CAME",
+   "clue": "Arrived"
+  },
+  {
+   "word": "SPEAK",
+   "clue": "Talk"
+  },
+  {
+   "word": "STAY",
+   "clue": "Remain"
+  },
+  {
+   "word": "THESE",
+   "clue": "Plural of this"
+  },
+  {
+   "word": "FOUND",
+   "clue": "Came upon"
+  },
+  {
+   "word": "NIGHT",
+   "clue": "Dark hours"
+  },
+  {
+   "word": "NEEDS",
+   "clue": "Requires"
+  },
+  {
+   "word": "LIVE",
+   "clue": "Be alive"
+  },
+  {
+   "word": "BEING",
+   "clue": "Creature"
+  },
+  {
+   "word": "WHICH",
+   "clue": "What one?"
+  },
+  {
+   "word": "MAY",
+   "clue": "Spring month"
+  },
+  {
+   "word": "MUST",
+   "clue": "Have to"
+  },
+  {
+   "word": "BOTH",
+   "clue": "The two"
+  },
+  {
+   "word": "BOOK",
+   "clue": "Novel"
+  },
+  {
+   "word": "AROUND",
+   "clue": "About"
+  },
+  {
+   "word": "HOPE",
+   "clue": "Wish"
+  },
+  {
+   "word": "HEARD",
+   "clue": "Listened"
+  },
+  {
+   "word": "FEEL",
+   "clue": "Sense"
+  },
+  {
+   "word": "JOB",
+   "clue": "Work"
+  },
+  {
+   "word": "DOG",
+   "clue": "Barking pet"
+  },
+  {
+   "word": "MOST",
+   "clue": "Majority"
+  },
+  {
+   "word": "GAVE",
+   "clue": "Donated"
+  },
+  {
+   "word": "TRIED",
+   "clue": "Had a go"
+  },
+  {
+   "word": "WORLD",
+   "clue": "Globe"
+  },
+  {
+   "word": "YET",
+   "clue": "So far"
+  },
+  {
+   "word": "OFTEN",
+   "clue": "Many times"
+  },
+  {
+   "word": "ASK",
+   "clue": "Inquire"
+  },
+  {
+   "word": "SAME",
+   "clue": "Identical"
+  },
+  {
+   "word": "YEAR",
+   "clue": "Twelve months"
+  },
+  {
+   "word": "HAPPY",
+   "clue": "Glad"
+  },
+  {
+   "word": "STOP",
+   "clue": "Halt"
+  },
+  {
+   "word": "HARD",
+   "clue": "Firm"
+  },
+  {
+   "word": "DOOR",
+   "clue": "Entrance"
+  },
+  {
+   "word": "LOOKED",
+   "clue": "Gazed"
+  },
+  {
+   "word": "TRY",
+   "clue": "Attempt"
+  },
+  {
+   "word": "ENOUGH",
+   "clue": "Sufficient"
+  },
+  {
+   "word": "WATER",
+   "clue": "H2O"
+  },
+  {
+   "word": "THING",
+   "clue": "Object"
+  },
+  {
+   "word": "THOSE",
+   "clue": "Not these"
+  },
+  {
+   "word": "OWN",
+   "clue": "Possess"
+  },
+  {
+   "word": "READ",
+   "clue": "Peruse"
+  },
+  {
+   "word": "BEST",
+   "clue": "Top"
+  },
+  {
+   "word": "FATHER",
+   "clue": "Dad"
+  },
+  {
+   "word": "SOON",
+   "clue": "Shortly"
+  },
+  {
+   "word": "CALL",
+   "clue": "Phone"
+  },
+  {
+   "word": "ITS",
+   "clue": "Belongs to it"
+  },
+  {
+   "word": "PERSON",
+   "clue": "Human"
+  },
+  {
+   "word": "KEEP",
+   "clue": "Retain"
+  },
+  {
+   "word": "WEEK",
+   "clue": "Seven days"
+  },
+  {
+   "word": "WHILE",
+   "clue": "During"
+  },
+  {
+   "word": "BAD",
+   "clue": "Not good"
+  },
+  {
+   "word": "EACH",
+   "clue": "Every"
+  },
+  {
+   "word": "NAME",
+   "clue": "Label"
+  },
+  {
+   "word": "WONDER",
+   "clue": "Marvel"
+  },
+  {
+   "word": "BOUGHT",
+   "clue": "Paid for"
+  },
+  {
+   "word": "ALONE",
+   "clue": "Solo"
+  },
+  {
+   "word": "PLACE",
+   "clue": "Spot"
+  },
+  {
+   "word": "CALLED",
+   "clue": "Phoned"
+  },
+  {
+   "word": "PLAY",
+   "clue": "Drama"
+  },
+  {
+   "word": "ANYONE",
+   "clue": "Anybody"
+  },
+  {
+   "word": "SEEN",
+   "clue": "Spotted"
+  },
+  {
+   "word": "LATE",
+   "clue": "Tardy"
+  },
+  {
+   "word": "PARTY",
+   "clue": "Bash"
+  },
+  {
+   "word": "USE",
+   "clue": "Employ"
+  },
+  {
+   "word": "WRONG",
+   "clue": "Incorrect"
+  },
+  {
+   "word": "LOST",
+   "clue": "Missing"
+  },
+  {
+   "word": "FELT",
+   "clue": "Sensed"
+  },
+  {
+   "word": "NEEDED",
+   "clue": "Required"
+  },
+  {
+   "word": "GREAT",
+   "clue": "Grand"
+  },
+  {
+   "word": "CARE",
+   "clue": "Concern"
+  },
+  {
+   "word": "MOTHER",
+   "clue": "Mom"
+  },
+  {
+   "word": "FEW",
+   "clue": "Not many"
+  },
+  {
+   "word": "HAPPEN",
+   "clue": "Occur"
+  },
+  {
+   "word": "FOOD",
+   "clue": "Meals"
+  },
+  {
+   "word": "AFRAID",
+   "clue": "Scared"
+  },
+  {
+   "word": "LOOKS",
+   "clue": "Glances"
+  },
+  {
+   "word": "TRYING",
+   "clue": "Striving"
+  },
+  {
+   "word": "UNTIL",
+   "clue": "Till"
+  },
+  {
+   "word": "KIND",
+   "clue": "Gentle"
+  },
+  {
+   "word": "PRETTY",
+   "clue": "Lovely"
+  },
+  {
+   "word": "IDEA",
+   "clue": "Notion"
+  },
+  {
+   "word": "FAMILY",
+   "clue": "Relatives"
+  },
+  {
+   "word": "BIG",
+   "clue": "Large"
+  },
+  {
+   "word": "WAIT",
+   "clue": "Hold on"
+  },
+  {
+   "word": "SUCH",
+   "clue": "Like that"
+  },
+  {
+   "word": "ELSE",
+   "clue": "Or ___"
+  },
+  {
+   "word": "THEN",
+   "clue": "Next"
+  },
+  {
+   "word": "LEARN",
+   "clue": "Study"
+  },
+  {
+   "word": "DAYS",
+   "clue": "Weeks' parts"
+  },
+  {
+   "word": "WIN",
+   "clue": "Triumph"
+  },
+  {
+   "word": "PLAN",
+   "clue": "Scheme"
+  },
+  {
+   "word": "FRIEND",
+   "clue": "Pal"
+  },
+  {
+   "word": "MIND",
+   "clue": "Intellect"
+  },
+  {
+   "word": "SINCE",
+   "clue": "Ever ___"
+  },
+  {
+   "word": "WISH",
+   "clue": "Long for"
+  },
+  {
+   "word": "COMING",
+   "clue": "Arriving"
+  },
+  {
+   "word": "HAVING",
+   "clue": "Owning"
+  },
+  {
+   "word": "HEAR",
+   "clue": "Listen"
+  },
+  {
+   "word": "OPEN",
+   "clue": "Not shut"
+  },
+  {
+   "word": "ALMOST",
+   "clue": "Nearly"
+  },
+  {
+   "word": "READY",
+   "clue": "Prepared"
+  },
+  {
+   "word": "BUSY",
+   "clue": "Occupied"
+  },
+  {
+   "word": "LIKES",
+   "clue": "Enjoys"
+  },
+  {
+   "word": "PHONE",
+   "clue": "Ring up"
+  },
+  {
+   "word": "CHANGE",
+   "clue": "Alter"
+  },
+  {
+   "word": "EARLY",
+   "clue": "Not late"
+  },
+  {
+   "word": "SEEMS",
+   "clue": "Appears"
+  },
+  {
+   "word": "DRINK",
+   "clue": "Beverage"
+  },
+  {
+   "word": "SEEM",
+   "clue": "Appear"
+  },
+  {
+   "word": "LIKELY",
+   "clue": "Probable"
+  },
+  {
+   "word": "LIVES",
+   "clue": "Resides"
+  },
+  {
+   "word": "COLD",
+   "clue": "Chilly"
+  },
+  {
+   "word": "MET",
+   "clue": "Came across"
+  },
+  {
+   "word": "BED",
+   "clue": "Sleeping place"
+  },
+  {
+   "word": "ALSO",
+   "clue": "As well"
+  },
+  {
+   "word": "MYSELF",
+   "clue": "Me, in person"
+  },
+  {
+   "word": "LIVING",
+   "clue": "Alive"
+  },
+  {
+   "word": "QUITE",
+   "clue": "Rather"
+  },
+  {
+   "word": "TIRED",
+   "clue": "Weary"
+  },
+  {
+   "word": "YOUNG",
+   "clue": "Youthful"
+  },
+  {
+   "word": "HIGH",
+   "clue": "Tall"
+  },
+  {
+   "word": "TIMES",
+   "clue": "Multiplied by"
+  },
+  {
+   "word": "ONCE",
+   "clue": "One time"
+  },
+  {
+   "word": "POLICE",
+   "clue": "Law officers"
+  },
+  {
+   "word": "SLEEP",
+   "clue": "Doze"
+  },
+  {
+   "word": "STUDY",
+   "clue": "Learn"
+  },
+  {
+   "word": "GIRL",
+   "clue": "Young lass"
+  },
+  {
+   "word": "CITY",
+   "clue": "Big town"
+  },
+  {
+   "word": "EYES",
+   "clue": "Seeing organs"
+  },
+  {
+   "word": "BIT",
+   "clue": "Small piece"
+  },
+  {
+   "word": "FACE",
+   "clue": "Visage"
+  },
+  {
+   "word": "SHOW",
+   "clue": "Display"
+  },
+  {
+   "word": "HAND",
+   "clue": "Palm"
+  },
+  {
+   "word": "TRUTH",
+   "clue": "Fact"
+  },
+  {
+   "word": "NICE",
+   "clue": "Pleasant"
+  },
+  {
+   "word": "MEET",
+   "clue": "Come across"
+  },
+  {
+   "word": "PAY",
+   "clue": "Wages"
+  },
+  {
+   "word": "FAR",
+   "clue": "Distant"
+  },
+  {
+   "word": "WIFE",
+   "clue": "Spouse"
+  },
+  {
+   "word": "TRUE",
+   "clue": "Real"
+  },
+  {
+   "word": "AGO",
+   "clue": "In the past"
+  },
+  {
+   "word": "THINKS",
+   "clue": "Believes"
+  },
+  {
+   "word": "SMALL",
+   "clue": "Tiny"
+  },
+  {
+   "word": "WALK",
+   "clue": "Stroll"
+  },
+  {
+   "word": "BECOME",
+   "clue": "Turn into"
+  },
+  {
+   "word": "SORRY",
+   "clue": "Regretful"
+  },
+  {
+   "word": "GONE",
+   "clue": "Departed"
+  },
+  {
+   "word": "FUN",
+   "clue": "Good times"
+  },
+  {
+   "word": "UNDER",
+   "clue": "Below"
+  },
+  {
+   "word": "WOMAN",
+   "clue": "Adult female"
+  },
+  {
+   "word": "END",
+   "clue": "Finish"
+  },
+  {
+   "word": "COFFEE",
+   "clue": "Morning brew"
+  },
+  {
+   "word": "BOOKS",
+   "clue": "Library items"
+  },
+  {
+   "word": "TURNED",
+   "clue": "Rotated"
+  },
+  {
+   "word": "HOURS",
+   "clue": "Clock units"
+  },
+  {
+   "word": "EASY",
+   "clue": "Simple"
+  },
+  {
+   "word": "LONGER",
+   "clue": "More lengthy"
+  },
+  {
+   "word": "CHANCE",
+   "clue": "Luck"
+  },
+  {
+   "word": "DIED",
+   "clue": "Passed away"
+  },
+  {
+   "word": "SEEMED",
+   "clue": "Appeared"
+  },
+  {
+   "word": "BECAME",
+   "clue": "Turned into"
+  },
+  {
+   "word": "BUS",
+   "clue": "Coach"
+  },
+  {
+   "word": "WATCH",
+   "clue": "Observe"
+  },
+  {
+   "word": "ANSWER",
+   "clue": "Reply"
+  },
+  {
+   "word": "START",
+   "clue": "Begin"
+  },
+  {
+   "word": "RAN",
+   "clue": "Jogged"
+  },
+  {
+   "word": "OFFICE",
+   "clue": "Work room"
+  },
+  {
+   "word": "HURT",
+   "clue": "Injured"
+  },
+  {
+   "word": "MAKES",
+   "clue": "Creates"
+  },
+  {
+   "word": "TRAIN",
+   "clue": "Railway car"
+  },
+  {
+   "word": "NOBODY",
+   "clue": "No one"
+  },
+  {
+   "word": "BEHIND",
+   "clue": "At the rear"
+  },
+  {
+   "word": "MAKING",
+   "clue": "Creating"
+  },
+  {
+   "word": "LIVED",
+   "clue": "Resided"
+  },
+  {
+   "word": "WORD",
+   "clue": "Term"
+  },
+  {
+   "word": "HEAD",
+   "clue": "Skull"
+  },
+  {
+   "word": "DINNER",
+   "clue": "Evening meal"
+  },
+  {
+   "word": "WHOLE",
+   "clue": "Entire"
+  },
+  {
+   "word": "VISIT",
+   "clue": "Call on"
+  },
+  {
+   "word": "CAT",
+   "clue": "Feline pet"
+  },
+  {
+   "word": "TURN",
+   "clue": "Rotate"
+  },
+  {
+   "word": "CLASS",
+   "clue": "Lesson"
+  },
+  {
+   "word": "SON",
+   "clue": "Male child"
+  },
+  {
+   "word": "WALKED",
+   "clue": "Strolled"
+  },
+  {
+   "word": "MAYBE",
+   "clue": "Perhaps"
+  },
+  {
+   "word": "MATTER",
+   "clue": "Issue"
+  },
+  {
+   "word": "HAIR",
+   "clue": "Locks"
+  },
+  {
+   "word": "PART",
+   "clue": "Portion"
+  },
+  {
+   "word": "WRITE",
+   "clue": "Pen"
+  },
+  {
+   "word": "MUSIC",
+   "clue": "Melodies"
+  },
+  {
+   "word": "CHILD",
+   "clue": "Kid"
+  },
+  {
+   "word": "SPENT",
+   "clue": "Used up"
+  },
+  {
+   "word": "SICK",
+   "clue": "Ill"
+  },
+  {
+   "word": "TABLE",
+   "clue": "Desk"
+  },
+  {
+   "word": "WORDS",
+   "clue": "Terms"
+  },
+  {
+   "word": "FIVE",
+   "clue": "Quintet"
+  },
+  {
+   "word": "FELL",
+   "clue": "Tumbled"
+  },
+  {
+   "word": "EATING",
+   "clue": "Dining"
+  },
+  {
+   "word": "BOY",
+   "clue": "Lad"
+  },
+  {
+   "word": "STORY",
+   "clue": "Tale"
+  },
+  {
+   "word": "LIGHT",
+   "clue": "Not heavy"
+  },
+  {
+   "word": "FREE",
+   "clue": "At no cost"
+  },
+  {
+   "word": "FOUR",
+   "clue": "Quartet"
+  },
+  {
+   "word": "DRIVE",
+   "clue": "Steer"
+  },
+  {
+   "word": "KEPT",
+   "clue": "Retained"
+  },
+  {
+   "word": "ATE",
+   "clue": "Dined"
+  },
+  {
+   "word": "DEATH",
+   "clue": "End of life"
+  },
+  {
+   "word": "DOCTOR",
+   "clue": "Physician"
+  },
+  {
+   "word": "FORGET",
+   "clue": "Not recall"
+  },
+  {
+   "word": "FRONT",
+   "clue": "Fore"
+  },
+  {
+   "word": "GLAD",
+   "clue": "Pleased"
+  },
+  {
+   "word": "PARK",
+   "clue": "Green space"
+  },
+  {
+   "word": "CANNOT",
+   "clue": "Is unable"
+  },
+  {
+   "word": "LATER",
+   "clue": "After that"
+  },
+  {
+   "word": "REASON",
+   "clue": "Cause"
+  },
+  {
+   "word": "TOWN",
+   "clue": "Village"
+  },
+  {
+   "word": "ANGRY",
+   "clue": "Cross"
+  },
+  {
+   "word": "NUMBER",
+   "clue": "Digit"
+  },
+  {
+   "word": "DURING",
+   "clue": "In the time of"
+  },
+  {
+   "word": "SUMMER",
+   "clue": "Hot season"
+  },
+  {
+   "word": "HANDS",
+   "clue": "Clock parts"
+  },
+  {
+   "word": "HEART",
+   "clue": "Blood pump"
+  },
+  {
+   "word": "KNOWN",
+   "clue": "Famous"
+  },
+  {
+   "word": "TAKING",
+   "clue": "Grabbing"
+  },
+  {
+   "word": "KIDS",
+   "clue": "Children"
+  },
+  {
+   "word": "WINDOW",
+   "clue": "Glass pane"
+  },
+  {
+   "word": "FIRE",
+   "clue": "Blaze"
+  },
+  {
+   "word": "RUN",
+   "clue": "Sprint"
+  },
+  {
+   "word": "FULL",
+   "clue": "Not empty"
+  },
+  {
+   "word": "MEN",
+   "clue": "Males"
+  },
+  {
+   "word": "LUNCH",
+   "clue": "Midday meal"
+  },
+  {
+   "word": "CLOSE",
+   "clue": "Shut"
+  },
+  {
+   "word": "SET",
+   "clue": "Group"
+  },
+  {
+   "word": "SISTER",
+   "clue": "Sibling"
+  },
+  {
+   "word": "LETTER",
+   "clue": "Mail item"
+  },
+  {
+   "word": "MOVIE",
+   "clue": "Film"
+  },
+  {
+   "word": "GAME",
+   "clue": "Match"
+  },
+  {
+   "word": "BROKE",
+   "clue": "Penniless"
+  },
+  {
+   "word": "BEGAN",
+   "clue": "Started"
+  },
+  {
+   "word": "HELPED",
+   "clue": "Assisted"
+  },
+  {
+   "word": "RAIN",
+   "clue": "Showers"
+  },
+  {
+   "word": "STREET",
+   "clue": "Road"
+  },
+  {
+   "word": "OTHERS",
+   "clue": "The rest"
+  },
+  {
+   "word": "MONTH",
+   "clue": "Calendar unit"
+  },
+  {
+   "word": "ENJOY",
+   "clue": "Relish"
+  },
+  {
+   "word": "TREE",
+   "clue": "Oak or elm"
+  },
+  {
+   "word": "BORN",
+   "clue": "Brought forth"
+  },
+  {
+   "word": "KILLED",
+   "clue": "Slain"
+  },
+  {
+   "word": "GUY",
+   "clue": "Fellow"
+  },
+  {
+   "word": "RED",
+   "clue": "Rose colour"
+  },
+  {
+   "word": "REAL",
+   "clue": "Genuine"
+  },
+  {
+   "word": "HOT",
+   "clue": "Not cold"
+  },
+  {
+   "word": "SAT",
+   "clue": "Was seated"
+  },
+  {
+   "word": "LIKED",
+   "clue": "Enjoyed"
+  },
+  {
+   "word": "MEAN",
+   "clue": "Average"
+  },
+  {
+   "word": "BLACK",
+   "clue": "Darkest hue"
+  },
+  {
+   "word": "INSIDE",
+   "clue": "Indoors"
+  },
+  {
+   "word": "FAST",
+   "clue": "Quick"
+  },
+  {
+   "word": "HATE",
+   "clue": "Loathe"
+  },
+  {
+   "word": "GOES",
+   "clue": "Leaves"
+  },
+  {
+   "word": "STAYED",
+   "clue": "Lingered"
+  },
+  {
+   "word": "BRING",
+   "clue": "Fetch"
+  },
+  {
+   "word": "MOVE",
+   "clue": "Shift"
+  },
+  {
+   "word": "TEAM",
+   "clue": "Squad"
+  },
+  {
+   "word": "WORKS",
+   "clue": "Factory"
+  },
+  {
+   "word": "COMES",
+   "clue": "Arrives"
+  },
+  {
+   "word": "WAR",
+   "clue": "Conflict"
+  },
+  {
+   "word": "TRUST",
+   "clue": "Faith"
+  },
+  {
+   "word": "THIRTY",
+   "clue": "Three tens"
+  },
+  {
+   "word": "DEAD",
+   "clue": "Lifeless"
+  },
+  {
+   "word": "WOMEN",
+   "clue": "Ladies"
+  },
+  {
+   "word": "GETS",
+   "clue": "Obtains"
+  },
+  {
+   "word": "TALKED",
+   "clue": "Chatted"
+  },
+  {
+   "word": "LARGE",
+   "clue": "Big"
+  },
+  {
+   "word": "TEN",
+   "clue": "Decade"
+  },
+  {
+   "word": "NEAR",
+   "clue": "Close by"
+  },
+  {
+   "word": "PAID",
+   "clue": "Settled"
+  },
+  {
+   "word": "WORKED",
+   "clue": "Laboured"
+  },
+  {
+   "word": "HALF",
+   "clue": "Fifty percent"
+  },
+  {
+   "word": "SWIM",
+   "clue": "Do laps"
+  },
+  {
+   "word": "ALONG",
+   "clue": "Beside"
+  },
+  {
+   "word": "SCARED",
+   "clue": "Fearful"
+  },
+  {
+   "word": "MOMENT",
+   "clue": "Instant"
+  },
+  {
+   "word": "DRESS",
+   "clue": "Gown"
+  },
+  {
+   "word": "ROAD",
+   "clue": "Highway"
+  },
+  {
+   "word": "RICH",
+   "clue": "Wealthy"
+  },
+  {
+   "word": "CUT",
+   "clue": "Slice"
+  },
+  {
+   "word": "RATHER",
+   "clue": "Fairly"
+  },
+  {
+   "word": "LOVES",
+   "clue": "Adores"
+  },
+  {
+   "word": "LOVED",
+   "clue": "Adored"
+  },
+  {
+   "word": "WHITE",
+   "clue": "Snow colour"
+  },
+  {
+   "word": "SAYING",
+   "clue": "Proverb"
+  },
+  {
+   "word": "SAFE",
+   "clue": "Secure"
+  },
+  {
+   "word": "HUNGRY",
+   "clue": "Starving"
+  },
+  {
+   "word": "MOVED",
+   "clue": "Shifted"
+  },
+  {
+   "word": "DIE",
+   "clue": "Cube in games"
+  },
+  {
+   "word": "FORGOT",
+   "clue": "Did not recall"
+  },
+  {
+   "word": "LEAST",
+   "clue": "Smallest"
+  },
+  {
+   "word": "SPEND",
+   "clue": "Pay out"
+  },
+  {
+   "word": "CAUGHT",
+   "clue": "Trapped"
+  },
+  {
+   "word": "STORE",
+   "clue": "Shop"
+  },
+  {
+   "word": "DARK",
+   "clue": "Unlit"
+  },
+  {
+   "word": "REST",
+   "clue": "Relax"
+  },
+  {
+   "word": "AGE",
+   "clue": "Era"
+  },
+  {
+   "word": "SENT",
+   "clue": "Mailed"
+  },
+  {
+   "word": "SIX",
+   "clue": "Half a dozen"
+  },
+  {
+   "word": "CLEAN",
+   "clue": "Spotless"
+  },
+  {
+   "word": "WROTE",
+   "clue": "Penned"
+  },
+  {
+   "word": "HIT",
+   "clue": "Strike"
+  },
+  {
+   "word": "THANK",
+   "clue": "Show gratitude"
+  },
+  {
+   "word": "SIDE",
+   "clue": "Flank"
+  },
+  {
+   "word": "ORDER",
+   "clue": "Decree"
+  },
+  {
+   "word": "SHOES",
+   "clue": "Footwear"
+  },
+  {
+   "word": "LISTEN",
+   "clue": "Hear"
+  },
+  {
+   "word": "MONTHS",
+   "clue": "Year parts"
+  },
+  {
+   "word": "SING",
+   "clue": "Chant"
+  },
+  {
+   "word": "SECOND",
+   "clue": "Next to first"
+  },
+  {
+   "word": "PAST",
+   "clue": "History"
+  },
+  {
+   "word": "KILL",
+   "clue": "Slay"
+  },
+  {
+   "word": "SIT",
+   "clue": "Be seated"
+  },
+  {
+   "word": "AIR",
+   "clue": "What we breathe"
+  },
+  {
+   "word": "SUN",
+   "clue": "Our star"
+  },
+  {
+   "word": "HUMAN",
+   "clue": "Mortal"
+  },
+  {
+   "word": "FINE",
+   "clue": "Penalty"
+  },
+  {
+   "word": "NEWS",
+   "clue": "Headlines"
+  },
+  {
+   "word": "TAKEN",
+   "clue": "Seized"
+  },
+  {
+   "word": "BABY",
+   "clue": "Infant"
+  },
+  {
+   "word": "OPENED",
+   "clue": "Unlocked"
+  },
+  {
+   "word": "SOUND",
+   "clue": "Noise"
+  },
+  {
+   "word": "HOUR",
+   "clue": "Sixty minutes"
+  },
+  {
+   "word": "HEALTH",
+   "clue": "Wellness"
+  },
+  {
+   "word": "FINISH",
+   "clue": "Wrap up"
+  },
+  {
+   "word": "AGREE",
+   "clue": "Concur"
+  },
+  {
+   "word": "WEAR",
+   "clue": "Have on"
+  },
+  {
+   "word": "BODY",
+   "clue": "Torso"
+  },
+  {
+   "word": "DOUBT",
+   "clue": "Suspicion"
+  },
+  {
+   "word": "STRONG",
+   "clue": "Mighty"
+  },
+  {
+   "word": "FISH",
+   "clue": "Trout"
+  },
+  {
+   "word": "ASLEEP",
+   "clue": "Dozing"
+  },
+  {
+   "word": "STUPID",
+   "clue": "Foolish"
+  },
+  {
+   "word": "WINE",
+   "clue": "Grape drink"
+  },
+  {
+   "word": "CLEAR",
+   "clue": "Obvious"
+  },
+  {
+   "word": "ACROSS",
+   "clue": "Over"
+  },
+  {
+   "word": "TRIP",
+   "clue": "Journey"
+  },
+  {
+   "word": "FUTURE",
+   "clue": "Time ahead"
+  },
+  {
+   "word": "POINT",
+   "clue": "Tip"
+  },
+  {
+   "word": "THOUGH",
+   "clue": "Yet"
+  },
+  {
+   "word": "BREAK",
+   "clue": "Smash"
+  },
+  {
+   "word": "LOSE",
+   "clue": "Misplace"
+  },
+  {
+   "word": "GARDEN",
+   "clue": "Flower bed"
+  },
+  {
+   "word": "SHOWED",
+   "clue": "Displayed"
+  },
+  {
+   "word": "EXPECT",
+   "clue": "Await"
+  },
+  {
+   "word": "GIVEN",
+   "clue": "Granted"
+  },
+  {
+   "word": "LESS",
+   "clue": "Fewer"
+  },
+  {
+   "word": "TEA",
+   "clue": "Hot brew"
+  },
+  {
+   "word": "SHORT",
+   "clue": "Brief"
+  },
+  {
+   "word": "AREA",
+   "clue": "Zone"
+  },
+  {
+   "word": "SONG",
+   "clue": "Tune"
+  },
+  {
+   "word": "GUYS",
+   "clue": "Fellows"
+  },
+  {
+   "word": "STAND",
+   "clue": "Rise"
+  },
+  {
+   "word": "PLAYED",
+   "clue": "Took part"
+  },
+  {
+   "word": "RIVER",
+   "clue": "Stream"
+  },
+  {
+   "word": "FLOOR",
+   "clue": "Ground"
+  },
+  {
+   "word": "MINE",
+   "clue": "Gold pit"
+  },
+  {
+   "word": "PLANS",
+   "clue": "Schemes"
+  },
+  {
+   "word": "EITHER",
+   "clue": "One or other"
+  },
+  {
+   "word": "MOM",
+   "clue": "Mother"
+  },
+  {
+   "word": "SNOW",
+   "clue": "Winter flakes"
+  },
+  {
+   "word": "BLUE",
+   "clue": "Sad"
+  },
+  {
+   "word": "OLDER",
+   "clue": "Senior"
+  },
+  {
+   "word": "FIGHT",
+   "clue": "Battle"
+  },
+  {
+   "word": "DEAL",
+   "clue": "Bargain"
+  },
+  {
+   "word": "DRUNK",
+   "clue": "Tipsy"
+  },
+  {
+   "word": "POOR",
+   "clue": "Needy"
+  },
+  {
+   "word": "TEST",
+   "clue": "Exam"
+  },
+  {
+   "word": "PASSED",
+   "clue": "Went by"
+  },
+  {
+   "word": "SENSE",
+   "clue": "Feeling"
+  },
+  {
+   "word": "BOX",
+   "clue": "Carton"
+  },
+  {
+   "word": "MILK",
+   "clue": "Dairy drink"
+  },
+  {
+   "word": "VOICE",
+   "clue": "Speech"
+  },
+  {
+   "word": "HOTEL",
+   "clue": "Inn"
+  },
+  {
+   "word": "CLOSED",
+   "clue": "Not open"
+  },
+  {
+   "word": "MISS",
+   "clue": "Fail to hit"
+  },
+  {
+   "word": "CATCH",
+   "clue": "Snag"
+  },
+  {
+   "word": "CRY",
+   "clue": "Weep"
+  },
+  {
+   "word": "WORRY",
+   "clue": "Fret"
+  },
+  {
+   "word": "DOGS",
+   "clue": "Hounds"
+  },
+  {
+   "word": "TAKES",
+   "clue": "Grabs"
+  },
+  {
+   "word": "SPEAKS",
+   "clue": "Talks"
+  },
+  {
+   "word": "MEANS",
+   "clue": "Method"
+  },
+  {
+   "word": "LIE",
+   "clue": "Fib"
+  },
+  {
+   "word": "COST",
+   "clue": "Price"
+  },
+  {
+   "word": "MAD",
+   "clue": "Insane"
+  },
+  {
+   "word": "LYING",
+   "clue": "Fibbing"
+  },
+  {
+   "word": "WEEKS",
+   "clue": "Month parts"
+  },
+  {
+   "word": "DREAM",
+   "clue": "Reverie"
+  },
+  {
+   "word": "WON",
+   "clue": "Came first"
+  },
+  {
+   "word": "QUIET",
+   "clue": "Silent"
+  },
+  {
+   "word": "BREAD",
+   "clue": "Loaf"
+  },
+  {
+   "word": "SHOT",
+   "clue": "Fired"
+  },
+  {
+   "word": "SEA",
+   "clue": "Ocean"
+  },
+  {
+   "word": "SPOKE",
+   "clue": "Wheel rod"
+  },
+  {
+   "word": "TEACH",
+   "clue": "Instruct"
+  },
+  {
+   "word": "KISS",
+   "clue": "Peck"
+  },
+  {
+   "word": "POWER",
+   "clue": "Energy"
+  },
+  {
+   "word": "VIDEO",
+   "clue": "Film clip"
+  },
+  {
+   "word": "PAIN",
+   "clue": "Ache"
+  },
+  {
+   "word": "COUPLE",
+   "clue": "Two people"
+  },
+  {
+   "word": "CRYING",
+   "clue": "Weeping"
+  },
+  {
+   "word": "CASE",
+   "clue": "Lawsuit"
+  },
+  {
+   "word": "CRAZY",
+   "clue": "Mad"
+  },
+  {
+   "word": "QUIT",
+   "clue": "Resign"
+  },
+  {
+   "word": "GUESS",
+   "clue": "Estimate"
+  },
+  {
+   "word": "CHECK",
+   "clue": "Verify"
+  },
+  {
+   "word": "LAW",
+   "clue": "Statute"
+  },
+  {
+   "word": "SHALL",
+   "clue": "Will"
+  },
+  {
+   "word": "ICE",
+   "clue": "Frozen water"
+  },
+  {
+   "word": "BEACH",
+   "clue": "Shore"
+  },
+  {
+   "word": "GIRLS",
+   "clue": "Young ladies"
+  },
+  {
+   "word": "TREES",
+   "clue": "Forest"
+  },
+  {
+   "word": "SPACE",
+   "clue": "Cosmos"
+  },
+  {
+   "word": "SINGLE",
+   "clue": "Only one"
+  },
+  {
+   "word": "COURSE",
+   "clue": "Route"
+  },
+  {
+   "word": "BEER",
+   "clue": "Ale"
+  },
+  {
+   "word": "SELL",
+   "clue": "Vend"
+  },
+  {
+   "word": "KEY",
+   "clue": "Lock opener"
+  },
+  {
+   "word": "NOR",
+   "clue": "Neither's pair"
+  },
+  {
+   "word": "FALL",
+   "clue": "Autumn"
+  },
+  {
+   "word": "PUBLIC",
+   "clue": "Open to all"
+  },
+  {
+   "word": "PICK",
+   "clue": "Choose"
+  },
+  {
+   "word": "STATE",
+   "clue": "Nation"
+  },
+  {
+   "word": "DAD",
+   "clue": "Father"
+  },
+  {
+   "word": "BAG",
+   "clue": "Sack"
+  },
+  {
+   "word": "SECRET",
+   "clue": "Hidden"
+  },
+  {
+   "word": "BROKEN",
+   "clue": "Smashed"
+  },
+  {
+   "word": "TRUCK",
+   "clue": "Lorry"
+  },
+  {
+   "word": "RETURN",
+   "clue": "Come back"
+  },
+  {
+   "word": "THANKS",
+   "clue": "Gratitude"
+  },
+  {
+   "word": "PAPER",
+   "clue": "Sheet"
+  },
+  {
+   "word": "UPSET",
+   "clue": "Hurt"
+  },
+  {
+   "word": "WINTER",
+   "clue": "Cold season"
+  },
+  {
+   "word": "HOLD",
+   "clue": "Grip"
+  },
+  {
+   "word": "PASS",
+   "clue": "Go by"
+  },
+  {
+   "word": "ADVICE",
+   "clue": "Counsel"
+  },
+  {
+   "word": "GLASS",
+   "clue": "Tumbler"
+  },
+  {
+   "word": "CAKE",
+   "clue": "Birthday treat"
+  },
+  {
+   "word": "SYSTEM",
+   "clue": "Setup"
+  },
+  {
+   "word": "SHIRT",
+   "clue": "Blouse"
+  },
+  {
+   "word": "BLOOD",
+   "clue": "Red fluid"
+  },
+  {
+   "word": "AGREED",
+   "clue": "Said yes"
+  },
+  {
+   "word": "STOOD",
+   "clue": "Rose"
+  },
+  {
+   "word": "ONES",
+   "clue": "Units"
+  },
+  {
+   "word": "COOK",
+   "clue": "Chef"
+  },
+  {
+   "word": "MIDDLE",
+   "clue": "Centre"
+  },
+  {
+   "word": "UPON",
+   "clue": "On top of"
+  },
+  {
+   "word": "KID",
+   "clue": "Child"
+  },
+  {
+   "word": "TOP",
+   "clue": "Summit"
+  },
+  {
+   "word": "DANCE",
+   "clue": "Waltz"
+  },
+  {
+   "word": "OUGHT",
+   "clue": "Should"
+  },
+  {
+   "word": "LUCKY",
+   "clue": "Fortunate"
+  },
+  {
+   "word": "TENNIS",
+   "clue": "Racket sport"
+  },
+  {
+   "word": "WALL",
+   "clue": "Barrier"
+  },
+  {
+   "word": "EATEN",
+   "clue": "Devoured"
+  },
+  {
+   "word": "FAMOUS",
+   "clue": "Well known"
+  },
+  {
+   "word": "LAND",
+   "clue": "Terrain"
+  },
+  {
+   "word": "CHOICE",
+   "clue": "Option"
+  },
+  {
+   "word": "DROVE",
+   "clue": "Steered"
+  },
+  {
+   "word": "FIX",
+   "clue": "Repair"
+  },
+  {
+   "word": "HELD",
+   "clue": "Gripped"
+  },
+  {
+   "word": "FIRED",
+   "clue": "Let go"
+  },
+  {
+   "word": "HAT",
+   "clue": "Cap"
+  },
+  {
+   "word": "REPORT",
+   "clue": "Account"
+  },
+  {
+   "word": "DATE",
+   "clue": "Day number"
+  },
+  {
+   "word": "HORSE",
+   "clue": "Steed"
+  },
+  {
+   "word": "EYE",
+   "clue": "Seeing organ"
+  },
+  {
+   "word": "SEND",
+   "clue": "Mail"
+  },
+  {
+   "word": "FOLLOW",
+   "clue": "Pursue"
+  },
+  {
+   "word": "PROUD",
+   "clue": "Haughty"
+  },
+  {
+   "word": "BOSS",
+   "clue": "Manager"
+  },
+  {
+   "word": "PREFER",
+   "clue": "Favour"
+  },
+  {
+   "word": "CUP",
+   "clue": "Mug"
+  },
+  {
+   "word": "PRISON",
+   "clue": "Jail"
+  },
+  {
+   "word": "WAITED",
+   "clue": "Stood by"
+  },
+  {
+   "word": "STUFF",
+   "clue": "Things"
+  },
+  {
+   "word": "HURRY",
+   "clue": "Rush"
+  },
+  {
+   "word": "SAVE",
+   "clue": "Rescue"
+  },
+  {
+   "word": "SHUT",
+   "clue": "Closed"
+  },
+  {
+   "word": "GREEN",
+   "clue": "Grass colour"
+  },
+  {
+   "word": "COMMON",
+   "clue": "Usual"
+  },
+  {
+   "word": "LIST",
+   "clue": "Roster"
+  },
+  {
+   "word": "NATIVE",
+   "clue": "Local"
+  },
+  {
+   "word": "TRAVEL",
+   "clue": "Tour"
+  },
+  {
+   "word": "FEAR",
+   "clue": "Dread"
+  },
+  {
+   "word": "WORTH",
+   "clue": "Value"
+  },
+  {
+   "word": "GROUP",
+   "clue": "Cluster"
+  },
+  {
+   "word": "HUGE",
+   "clue": "Giant"
+  },
+  {
+   "word": "TAUGHT",
+   "clue": "Trained"
+  },
+  {
+   "word": "MISSED",
+   "clue": "Longed for"
+  },
+  {
+   "word": "WASH",
+   "clue": "Rinse"
+  },
+  {
+   "word": "BANK",
+   "clue": "River edge"
+  },
+  {
+   "word": "SAD",
+   "clue": "Unhappy"
+  },
+  {
+   "word": "SEEING",
+   "clue": "Viewing"
+  },
+  {
+   "word": "GREW",
+   "clue": "Got bigger"
+  },
+  {
+   "word": "SKY",
+   "clue": "Heavens"
+  },
+  {
+   "word": "FIGURE",
+   "clue": "Shape"
+  },
+  {
+   "word": "ASKING",
+   "clue": "Inquiring"
+  },
+  {
+   "word": "LINE",
+   "clue": "Queue"
+  },
+  {
+   "word": "ALIVE",
+   "clue": "Living"
+  },
+  {
+   "word": "WEIGHT",
+   "clue": "Mass"
+  },
+  {
+   "word": "BUILT",
+   "clue": "Made"
+  },
+  {
+   "word": "TOUCH",
+   "clue": "Feel"
+  },
+  {
+   "word": "CATS",
+   "clue": "Felines"
+  },
+  {
+   "word": "SOUNDS",
+   "clue": "Noises"
+  },
+  {
+   "word": "NOISE",
+   "clue": "Racket"
+  },
+  {
+   "word": "GROUND",
+   "clue": "Earth"
+  },
+  {
+   "word": "PEACE",
+   "clue": "Calm"
+  },
+  {
+   "word": "FUNNY",
+   "clue": "Comic"
+  },
+  {
+   "word": "TALL",
+   "clue": "High"
+  },
+  {
+   "word": "EXAM",
+   "clue": "Test"
+  },
+  {
+   "word": "FEET",
+   "clue": "Soles"
+  },
+  {
+   "word": "PULLED",
+   "clue": "Tugged"
+  },
+  {
+   "word": "GUN",
+   "clue": "Pistol"
+  },
+  {
+   "word": "WIND",
+   "clue": "Breeze"
+  },
+  {
+   "word": "DEEP",
+   "clue": "Profound"
+  },
+  {
+   "word": "MEAT",
+   "clue": "Beef"
+  },
+  {
+   "word": "SOLD",
+   "clue": "Vended"
+  },
+  {
+   "word": "THREW",
+   "clue": "Tossed"
+  },
+  {
+   "word": "HEAVY",
+   "clue": "Weighty"
+  },
+  {
+   "word": "MARK",
+   "clue": "Stain"
+  },
+  {
+   "word": "WOODS",
+   "clue": "Thicket"
+  },
+  {
+   "word": "FACT",
+   "clue": "Truth"
+  },
+  {
+   "word": "LEAVES",
+   "clue": "Foliage"
+  },
+  {
+   "word": "STOLE",
+   "clue": "Robbed"
+  },
+  {
+   "word": "WISHED",
+   "clue": "Longed"
+  },
+  {
+   "word": "ART",
+   "clue": "Painting"
+  },
+  {
+   "word": "RIDE",
+   "clue": "Trip"
+  },
+  {
+   "word": "AMONG",
+   "clue": "Amid"
+  },
+  {
+   "word": "MOVING",
+   "clue": "Touching"
+  },
+  {
+   "word": "SIGN",
+   "clue": "Omen"
+  },
+  {
+   "word": "SELF",
+   "clue": "Ego"
+  },
+  {
+   "word": "AVOID",
+   "clue": "Dodge"
+  },
+  {
+   "word": "SPEECH",
+   "clue": "Address"
+  },
+  {
+   "word": "ALLOW",
+   "clue": "Permit"
+  },
+  {
+   "word": "FOREST",
+   "clue": "Woods"
+  },
+  {
+   "word": "KISSED",
+   "clue": "Pecked"
+  },
+  {
+   "word": "YOURS",
+   "clue": "Sincerely ___"
+  },
+  {
+   "word": "SLEPT",
+   "clue": "Dozed"
+  },
+  {
+   "word": "MINUTE",
+   "clue": "Very small"
+  },
+  {
+   "word": "NOTICE",
+   "clue": "Sign"
+  },
+  {
+   "word": "ENDED",
+   "clue": "Stopped"
+  },
+  {
+   "word": "HARDLY",
+   "clue": "Barely"
+  },
+  {
+   "word": "DESK",
+   "clue": "Bureau"
+  },
+  {
+   "word": "WORSE",
+   "clue": "Not as good"
+  },
+  {
+   "word": "HOPING",
+   "clue": "Wishing"
+  },
+  {
+   "word": "HOPES",
+   "clue": "Wishes"
+  },
+  {
+   "word": "SMILE",
+   "clue": "Grin"
+  },
+  {
+   "word": "OIL",
+   "clue": "Crude"
+  },
+  {
+   "word": "DRANK",
+   "clue": "Sipped"
+  },
+  {
+   "word": "EASILY",
+   "clue": "With ease"
+  },
+  {
+   "word": "ISLAND",
+   "clue": "Isle"
+  },
+  {
+   "word": "PLANE",
+   "clue": "Aircraft"
+  },
+  {
+   "word": "RULES",
+   "clue": "Laws"
+  },
+  {
+   "word": "WARM",
+   "clue": "Toasty"
+  },
+  {
+   "word": "KEYS",
+   "clue": "Piano parts"
+  },
+  {
+   "word": "FEELS",
+   "clue": "Senses"
+  },
+  {
+   "word": "PRICE",
+   "clue": "Cost"
+  },
+  {
+   "word": "GIFT",
+   "clue": "Present"
+  },
+  {
+   "word": "CHURCH",
+   "clue": "Chapel"
+  },
+  {
+   "word": "WHOSE",
+   "clue": "Of whom?"
+  },
+  {
+   "word": "LAUGH",
+   "clue": "Chuckle"
+  },
+  {
+   "word": "PICKED",
+   "clue": "Chose"
+  },
+  {
+   "word": "SHOP",
+   "clue": "Store"
+  },
+  {
+   "word": "BOYS",
+   "clue": "Lads"
+  },
+  {
+   "word": "PLAYER",
+   "clue": "Athlete"
+  },
+  {
+   "word": "PIECE",
+   "clue": "Part"
+  },
+  {
+   "word": "SEAT",
+   "clue": "Chair"
+  },
+  {
+   "word": "MOUTH",
+   "clue": "Lips area"
+  },
+  {
+   "word": "ILL",
+   "clue": "Sick"
+  },
+  {
+   "word": "OFFER",
+   "clue": "Bid"
+  },
+  {
+   "word": "COAT",
+   "clue": "Jacket"
+  },
+  {
+   "word": "HIDE",
+   "clue": "Conceal"
+  },
+  {
+   "word": "ACT",
+   "clue": "Deed"
+  },
+  {
+   "word": "SLOWLY",
+   "clue": "Gradually"
+  },
+  {
+   "word": "EMPTY",
+   "clue": "Vacant"
+  },
+  {
+   "word": "SHIP",
+   "clue": "Vessel"
+  },
+  {
+   "word": "APPLE",
+   "clue": "Orchard fruit"
+  },
+  {
+   "word": "CARS",
+   "clue": "Autos"
+  },
+  {
+   "word": "LIED",
+   "clue": "Fibbed"
+  },
+  {
+   "word": "ACCEPT",
+   "clue": "Receive"
+  },
+  {
+   "word": "RING",
+   "clue": "Band"
+  },
+  {
+   "word": "ARRIVE",
+   "clue": "Get there"
+  },
+  {
+   "word": "BIRDS",
+   "clue": "Fliers"
+  },
+  {
+   "word": "EGGS",
+   "clue": "Omelette base"
+  },
+  {
+   "word": "GROW",
+   "clue": "Expand"
+  },
+  {
+   "word": "KING",
+   "clue": "Monarch"
+  },
+  {
+   "word": "GUITAR",
+   "clue": "String tool"
+  },
+  {
+   "word": "BALL",
+   "clue": "Sphere"
+  },
+  {
+   "word": "GOTTEN",
+   "clue": "Got, in US"
+  },
+  {
+   "word": "ENTIRE",
+   "clue": "Whole"
+  },
+  {
+   "word": "SEVEN",
+   "clue": "Days in a week"
+  },
+  {
+   "word": "PIANO",
+   "clue": "Keyboard"
+  },
+  {
+   "word": "MOSQUE",
+   "clue": "Prayer hall"
+  },
+  {
+   "word": "AWARE",
+   "clue": "Mindful"
+  },
+  {
+   "word": "COOL",
+   "clue": "Fairly cold"
+  },
+  {
+   "word": "SOCIAL",
+   "clue": "Friendly"
+  },
+  {
+   "word": "LOCKED",
+   "clue": "Bolted"
+  },
+  {
+   "word": "FILM",
+   "clue": "Movie"
+  },
+  {
+   "word": "KNIFE",
+   "clue": "Blade"
+  },
+  {
+   "word": "SMART",
+   "clue": "Clever"
+  },
+  {
+   "word": "AHEAD",
+   "clue": "In front"
+  },
+  {
+   "word": "SIMPLE",
+   "clue": "Easy"
+  },
+  {
+   "word": "WORE",
+   "clue": "Had on"
+  },
+  {
+   "word": "BIKE",
+   "clue": "Cycle"
+  },
+  {
+   "word": "SMELL",
+   "clue": "Odour"
+  },
+  {
+   "word": "NAMED",
+   "clue": "Called"
+  },
+  {
+   "word": "SPRING",
+   "clue": "Season"
+  },
+  {
+   "word": "CARRY",
+   "clue": "Bear"
+  },
+  {
+   "word": "GIVING",
+   "clue": "Donating"
+  },
+  {
+   "word": "JOIN",
+   "clue": "Unite"
+  },
+  {
+   "word": "NATURE",
+   "clue": "Wildlife"
+  },
+  {
+   "word": "TWENTY",
+   "clue": "Score"
+  },
+  {
+   "word": "CAUSE",
+   "clue": "Reason"
+  },
+  {
+   "word": "ADMIT",
+   "clue": "Confess"
+  },
+  {
+   "word": "GAS",
+   "clue": "Fuel"
+  },
+  {
+   "word": "BLAME",
+   "clue": "Accuse"
+  },
+  {
+   "word": "BOTTLE",
+   "clue": "Flask"
+  },
+  {
+   "word": "LOW",
+   "clue": "Not high"
+  },
+  {
+   "word": "MOVIES",
+   "clue": "Cinema"
+  },
+  {
+   "word": "SMOKE",
+   "clue": "Fumes"
+  },
+  {
+   "word": "MOON",
+   "clue": "Lunar body"
+  },
+  {
+   "word": "BORROW",
+   "clue": "Take on loan"
+  },
+  {
+   "word": "WOKE",
+   "clue": "Got up"
+  },
+  {
+   "word": "HOPED",
+   "clue": "Wished"
+  },
+  {
+   "word": "DRIVER",
+   "clue": "Motorist"
+  },
+  {
+   "word": "FASTER",
+   "clue": "Quicker"
+  },
+  {
+   "word": "FAILED",
+   "clue": "Flunked"
+  },
+  {
+   "word": "MARRY",
+   "clue": "Wed"
+  },
+  {
+   "word": "LAWYER",
+   "clue": "Attorney"
+  },
+  {
+   "word": "SLEEPY",
+   "clue": "Drowsy"
+  },
+  {
+   "word": "ENERGY",
+   "clue": "Vigour"
+  },
+  {
+   "word": "WITHIN",
+   "clue": "Inside"
+  },
+  {
+   "word": "DUE",
+   "clue": "Owed"
+  },
+  {
+   "word": "PIZZA",
+   "clue": "Italian pie"
+  },
+  {
+   "word": "BEAT",
+   "clue": "Rhythm"
+  },
+  {
+   "word": "COLOR",
+   "clue": "Hue"
+  },
+  {
+   "word": "SOLVE",
+   "clue": "Work out"
+  },
+  {
+   "word": "CUTE",
+   "clue": "Adorable"
+  },
+  {
+   "word": "VIEW",
+   "clue": "Scene"
+  },
+  {
+   "word": "FORM",
+   "clue": "Mould"
+  },
+  {
+   "word": "HANDLE",
+   "clue": "Knob"
+  },
+  {
+   "word": "BILL",
+   "clue": "Invoice"
+  },
+  {
+   "word": "ARM",
+   "clue": "Limb"
+  },
+  {
+   "word": "WAKE",
+   "clue": "Rouse"
+  },
+  {
+   "word": "HATES",
+   "clue": "Loathes"
+  },
+  {
+   "word": "ABOVE",
+   "clue": "Higher than"
+  },
+  {
+   "word": "MARKET",
+   "clue": "Bazaar"
+  },
+  {
+   "word": "TEETH",
+   "clue": "Molars"
+  },
+  {
+   "word": "DRINKS",
+   "clue": "Sips"
+  },
+  {
+   "word": "CREAM",
+   "clue": "Dairy top"
+  },
+  {
+   "word": "SPOKEN",
+   "clue": "Oral"
+  },
+  {
+   "word": "IDEAS",
+   "clue": "Notions"
+  },
+  {
+   "word": "SHARE",
+   "clue": "Split"
+  },
+  {
+   "word": "MEANT",
+   "clue": "Intended"
+  },
+  {
+   "word": "MAIN",
+   "clue": "Chief"
+  },
+  {
+   "word": "NONE",
+   "clue": "Not any"
+  },
+  {
+   "word": "BIRD",
+   "clue": "Robin"
+  },
+  {
+   "word": "EATS",
+   "clue": "Dines"
+  },
+  {
+   "word": "LOCAL",
+   "clue": "Nearby"
+  },
+  {
+   "word": "CAMERA",
+   "clue": "Photo tool"
+  },
+  {
+   "word": "LAKE",
+   "clue": "Pond"
+  },
+  {
+   "word": "THIRD",
+   "clue": "After second"
+  },
+  {
+   "word": "WASTE",
+   "clue": "Squander"
+  },
+  {
+   "word": "FIELD",
+   "clue": "Meadow"
+  },
+  {
+   "word": "TEARS",
+   "clue": "Rips"
+  },
+  {
+   "word": "CHAIR",
+   "clue": "Seat"
+  },
+  {
+   "word": "FRUIT",
+   "clue": "Pear or plum"
+  },
+  {
+   "word": "CALM",
+   "clue": "Serene"
+  },
+  {
+   "word": "FILLED",
+   "clue": "Stuffed"
+  },
+  {
+   "word": "SIGHT",
+   "clue": "Vision"
+  },
+  {
+   "word": "FOOT",
+   "clue": "Twelve inches"
+  },
+  {
+   "word": "HONEST",
+   "clue": "Truthful"
+  },
+  {
+   "word": "FLY",
+   "clue": "Soar"
+  },
+  {
+   "word": "FRESH",
+   "clue": "New"
+  },
+  {
+   "word": "CHESS",
+   "clue": "Board game"
+  },
+  {
+   "word": "STEP",
+   "clue": "Stair"
+  },
+  {
+   "word": "TICKET",
+   "clue": "Pass"
+  },
+  {
+   "word": "CAUSED",
+   "clue": "Led to"
+  },
+  {
+   "word": "PLAYS",
+   "clue": "Dramas"
+  },
+  {
+   "word": "BUILD",
+   "clue": "Erect"
+  },
+  {
+   "word": "DIRTY",
+   "clue": "Filthy"
+  },
+  {
+   "word": "SWEET",
+   "clue": "Sugary"
+  },
+  {
+   "word": "BEAR",
+   "clue": "Grizzly"
+  },
+  {
+   "word": "AFFORD",
+   "clue": "Pay for"
+  },
+  {
+   "word": "ARMS",
+   "clue": "Weapons"
+  },
+  {
+   "word": "CHOOSE",
+   "clue": "Pick"
+  },
+  {
+   "word": "ROUND",
+   "clue": "Circular"
+  },
+  {
+   "word": "DATING",
+   "clue": "Courting"
+  },
+  {
+   "word": "TYPE",
+   "clue": "Kind"
+  },
+  {
+   "word": "WEIRD",
+   "clue": "Strange"
+  },
+  {
+   "word": "EIGHT",
+   "clue": "Octet"
+  },
+  {
+   "word": "BAR",
+   "clue": "Pub"
+  },
+  {
+   "word": "LIGHTS",
+   "clue": "Lamps"
+  },
+  {
+   "word": "PLANET",
+   "clue": "Mars, say"
+  },
+  {
+   "word": "REACH",
+   "clue": "Arrive at"
+  },
+  {
+   "word": "EXCEPT",
+   "clue": "Apart from"
+  },
+  {
+   "word": "AWAKE",
+   "clue": "Not asleep"
+  },
+  {
+   "word": "HANG",
+   "clue": "Dangle"
+  },
+  {
+   "word": "TWICE",
+   "clue": "Two times"
+  },
+  {
+   "word": "ADD",
+   "clue": "Sum up"
+  },
+  {
+   "word": "CRIED",
+   "clue": "Wept"
+  },
+  {
+   "word": "DANGER",
+   "clue": "Peril"
+  },
+  {
+   "word": "ESCAPE",
+   "clue": "Flee"
+  },
+  {
+   "word": "CLUB",
+   "clue": "Society"
+  },
+  {
+   "word": "HARDER",
+   "clue": "Tougher"
+  },
+  {
+   "word": "EXCUSE",
+   "clue": "Pardon"
+  },
+  {
+   "word": "BORED",
+   "clue": "Fed up"
+  },
+  {
+   "word": "BUYING",
+   "clue": "Shopping"
+  },
+  {
+   "word": "FIT",
+   "clue": "In shape"
+  },
+  {
+   "word": "NORMAL",
+   "clue": "Standard"
+  },
+  {
+   "word": "CRIME",
+   "clue": "Offence"
+  },
+  {
+   "word": "DECIDE",
+   "clue": "Settle"
+  },
+  {
+   "word": "CARD",
+   "clue": "Ace or king"
+  },
+  {
+   "word": "STUCK",
+   "clue": "Jammed"
+  },
+  {
+   "word": "SUGAR",
+   "clue": "Sweet stuff"
+  },
+  {
+   "word": "BOAT",
+   "clue": "Canoe"
+  },
+  {
+   "word": "GAMES",
+   "clue": "Pastimes"
+  },
+  {
+   "word": "RISK",
+   "clue": "Hazard"
+  },
+  {
+   "word": "TENT",
+   "clue": "Camp shelter"
+  },
+  {
+   "word": "ANIMAL",
+   "clue": "Beast"
+  },
+  {
+   "word": "HANDED",
+   "clue": "Passed"
+  },
+  {
+   "word": "LONELY",
+   "clue": "Solitary"
+  },
+  {
+   "word": "BEAUTY",
+   "clue": "Charm"
+  },
+  {
+   "word": "FAULT",
+   "clue": "Flaw"
+  },
+  {
+   "word": "CROSS",
+   "clue": "Angry"
+  },
+  {
+   "word": "POST",
+   "clue": "Pole"
+  },
+  {
+   "word": "STARS",
+   "clue": "Night lights"
+  },
+  {
+   "word": "TASTE",
+   "clue": "Flavour"
+  },
+  {
+   "word": "POOL",
+   "clue": "Swim spot"
+  },
+  {
+   "word": "THROW",
+   "clue": "Toss"
+  },
+  {
+   "word": "REGRET",
+   "clue": "Remorse"
+  },
+  {
+   "word": "STOLEN",
+   "clue": "Taken"
+  },
+  {
+   "word": "LEG",
+   "clue": "Shin part"
+  },
+  {
+   "word": "LEGS",
+   "clue": "Limbs"
+  },
+  {
+   "word": "INTEND",
+   "clue": "Mean to"
+  },
+  {
+   "word": "JOKE",
+   "clue": "Gag"
+  },
+  {
+   "word": "LEAD",
+   "clue": "Guide"
+  },
+  {
+   "word": "BEGIN",
+   "clue": "Start"
+  },
+  {
+   "word": "SPORTS",
+   "clue": "Games"
+  },
+  {
+   "word": "ATTACK",
+   "clue": "Assault"
+  },
+  {
+   "word": "HIDING",
+   "clue": "Out of sight"
+  },
+  {
+   "word": "LOTS",
+   "clue": "Heaps"
+  },
+  {
+   "word": "WAYS",
+   "clue": "Paths"
+  },
+  {
+   "word": "FAT",
+   "clue": "Plump"
+  },
+  {
+   "word": "KEEPS",
+   "clue": "Retains"
+  },
+  {
+   "word": "FORCED",
+   "clue": "Made to"
+  },
+  {
+   "word": "DISHES",
+   "clue": "Plates"
+  },
+  {
+   "word": "JAIL",
+   "clue": "Prison"
+  },
+  {
+   "word": "GUILTY",
+   "clue": "Culpable"
+  },
+  {
+   "word": "ITSELF",
+   "clue": "On its own"
+  },
+  {
+   "word": "SLOW",
+   "clue": "Not fast"
+  },
+  {
+   "word": "BRIDGE",
+   "clue": "Span"
+  },
+  {
+   "word": "UNCLE",
+   "clue": "Aunt's mate"
+  },
+  {
+   "word": "MURDER",
+   "clue": "Homicide"
+  },
+  {
+   "word": "RAISED",
+   "clue": "Lifted"
+  },
+  {
+   "word": "DREAMS",
+   "clue": "Visions"
+  },
+  {
+   "word": "SHOWER",
+   "clue": "Wash stall"
+  },
+  {
+   "word": "HID",
+   "clue": "Kept secret"
+  },
+  {
+   "word": "FAIR",
+   "clue": "Just"
+  },
+  {
+   "word": "JOBS",
+   "clue": "Tasks"
+  },
+  {
+   "word": "TOUGH",
+   "clue": "Hard"
+  },
+  {
+   "word": "EXIST",
+   "clue": "Be"
+  },
+  {
+   "word": "IVY",
+   "clue": "Climber"
+  },
+  {
+   "word": "SOCCER",
+   "clue": "Football"
+  },
+  {
+   "word": "TEXT",
+   "clue": "Message"
+  },
+  {
+   "word": "ABROAD",
+   "clue": "Overseas"
+  },
+  {
+   "word": "NEARLY",
+   "clue": "Almost"
+  },
+  {
+   "word": "STORM",
+   "clue": "Tempest"
+  },
+  {
+   "word": "LEND",
+   "clue": "Loan"
+  },
+  {
+   "word": "JUMPED",
+   "clue": "Leapt"
+  },
+  {
+   "word": "TALKS",
+   "clue": "Chats"
+  },
+  {
+   "word": "SUIT",
+   "clue": "Outfit"
+  },
+  {
+   "word": "APPLES",
+   "clue": "Pippins"
+  },
+  {
+   "word": "SOUP",
+   "clue": "Broth"
+  },
+  {
+   "word": "BARELY",
+   "clue": "Hardly"
+  },
+  {
+   "word": "LIES",
+   "clue": "Fibs"
+  },
+  {
+   "word": "SKIN",
+   "clue": "Hide"
+  },
+  {
+   "word": "EASIER",
+   "clue": "Simpler"
+  },
+  {
+   "word": "WORST",
+   "clue": "Lowest"
+  },
+  {
+   "word": "PATH",
+   "clue": "Trail"
+  },
+  {
+   "word": "RADIO",
+   "clue": "Wireless"
+  },
+  {
+   "word": "GOLD",
+   "clue": "Precious metal"
+  },
+  {
+   "word": "BATH",
+   "clue": "Tub"
+  },
+  {
+   "word": "USES",
+   "clue": "Employs"
+  },
+  {
+   "word": "RENT",
+   "clue": "Lease"
+  },
+  {
+   "word": "NOSE",
+   "clue": "Sniffer"
+  },
+  {
+   "word": "ONLINE",
+   "clue": "On the web"
+  },
+  {
+   "word": "SORT",
+   "clue": "Variety"
+  },
+  {
+   "word": "TIE",
+   "clue": "Draw"
+  },
+  {
+   "word": "FLIGHT",
+   "clue": "Air trip"
+  },
+  {
+   "word": "HATED",
+   "clue": "Loathed"
+  },
+  {
+   "word": "MATCH",
+   "clue": "Game"
+  },
+  {
+   "word": "RACE",
+   "clue": "Contest"
+  },
+  {
+   "word": "SOONER",
+   "clue": "Earlier"
+  },
+  {
+   "word": "CORNER",
+   "clue": "Angle"
+  },
+  {
+   "word": "MAJOR",
+   "clue": "Key"
+  },
+  {
+   "word": "LUCK",
+   "clue": "Fortune"
+  },
+  {
+   "word": "ROCK",
+   "clue": "Stone"
+  },
+  {
+   "word": "STAR",
+   "clue": "Celebrity"
+  },
+  {
+   "word": "FLAT",
+   "clue": "Even"
+  },
+  {
+   "word": "LOUD",
+   "clue": "Noisy"
+  },
+  {
+   "word": "NOVEL",
+   "clue": "Fiction book"
+  },
+  {
+   "word": "COUNT",
+   "clue": "Tally"
+  },
+  {
+   "word": "HOUSES",
+   "clue": "Homes"
+  },
+  {
+   "word": "CHARGE",
+   "clue": "Fee"
+  },
+  {
+   "word": "LADY",
+   "clue": "Woman"
+  },
+  {
+   "word": "PLACES",
+   "clue": "Spots"
+  },
+  {
+   "word": "LOSING",
+   "clue": "Defeated"
+  },
+  {
+   "word": "MESS",
+   "clue": "Muddle"
+  },
+  {
+   "word": "FIXED",
+   "clue": "Repaired"
+  },
+  {
+   "word": "TAXI",
+   "clue": "Cab"
+  },
+  {
+   "word": "SHY",
+   "clue": "Timid"
+  },
+  {
+   "word": "HUMANS",
+   "clue": "People"
+  },
+  {
+   "word": "MOOD",
+   "clue": "Temper"
+  },
+  {
+   "word": "RICE",
+   "clue": "Grain"
+  },
+  {
+   "word": "GIVES",
+   "clue": "Donates"
+  },
+  {
+   "word": "SAVED",
+   "clue": "Rescued"
+  },
+  {
+   "word": "DROP",
+   "clue": "Bead"
+  },
+  {
+   "word": "RESULT",
+   "clue": "Outcome"
+  }
+ ]
+}

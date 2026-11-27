@@ -1,0 +1,6009 @@
+{
+ "language": "de",
+ "sources": [
+  "ink-tools-clues"
+ ],
+ "reviewed": false,
+ "entries": [
+  {
+   "word": "ICH",
+   "clue": "Ego"
+  },
+  {
+   "word": "IST",
+   "clue": "er ... da"
+  },
+  {
+   "word": "NICHT",
+   "clue": "Negation"
+  },
+  {
+   "word": "DIE",
+   "clue": "weibl. Artikel"
+  },
+  {
+   "word": "SIE",
+   "clue": "weibl. Fürwort"
+  },
+  {
+   "word": "DAS",
+   "clue": "sächl. Artikel"
+  },
+  {
+   "word": "DER",
+   "clue": "männl. Artikel"
+  },
+  {
+   "word": "DU",
+   "clue": "Anrede, vertraut"
+  },
+  {
+   "word": "ZU",
+   "clue": "nicht offen"
+  },
+  {
+   "word": "ES",
+   "clue": "sächl. Fürwort"
+  },
+  {
+   "word": "IN",
+   "clue": "modern, angesagt"
+  },
+  {
+   "word": "UND",
+   "clue": "plus, sowie"
+  },
+  {
+   "word": "EIN",
+   "clue": "unbest. Artikel"
+  },
+  {
+   "word": "HAT",
+   "clue": "besitzt"
+  },
+  {
+   "word": "DASS",
+   "clue": "ich weiß, ..."
+  },
+  {
+   "word": "DEN",
+   "clue": "Artikel (Akk.)"
+  },
+  {
+   "word": "SICH",
+   "clue": "rückbez. Fürwort"
+  },
+  {
+   "word": "EINE",
+   "clue": "unbest. Art. (f)"
+  },
+  {
+   "word": "WIR",
+   "clue": "Fürwort (Plural)"
+  },
+  {
+   "word": "MIT",
+   "clue": "samt"
+  },
+  {
+   "word": "AUF",
+   "clue": "geöffnet"
+  },
+  {
+   "word": "WAS",
+   "clue": "Frage: ...?"
+  },
+  {
+   "word": "HABE",
+   "clue": "Besitz"
+  },
+  {
+   "word": "MIR",
+   "clue": "gib es ..."
+  },
+  {
+   "word": "WIE",
+   "clue": "welche Art?"
+  },
+  {
+   "word": "IHR",
+   "clue": "Anrede (Plural)"
+  },
+  {
+   "word": "SIND",
+   "clue": "wir ... da"
+  },
+  {
+   "word": "MICH",
+   "clue": "Fürwort (Akk.)"
+  },
+  {
+   "word": "WAR",
+   "clue": "es ... einmal"
+  },
+  {
+   "word": "VON",
+   "clue": "ab, aus"
+  },
+  {
+   "word": "HABEN",
+   "clue": "besitzen"
+  },
+  {
+   "word": "AN",
+   "clue": "nicht aus"
+  },
+  {
+   "word": "DEM",
+   "clue": "Artikel (Dativ)"
+  },
+  {
+   "word": "EINEN",
+   "clue": "vereinen"
+  },
+  {
+   "word": "SO",
+   "clue": "auf diese Art"
+  },
+  {
+   "word": "KANN",
+   "clue": "vermag"
+  },
+  {
+   "word": "FUER",
+   "clue": "pro"
+  },
+  {
+   "word": "IM",
+   "clue": "in dem"
+  },
+  {
+   "word": "WENN",
+   "clue": "falls"
+  },
+  {
+   "word": "NOCH",
+   "clue": "weiterhin"
+  },
+  {
+   "word": "MAN",
+   "clue": "jemand"
+  },
+  {
+   "word": "SEIN",
+   "clue": "Dasein"
+  },
+  {
+   "word": "AUS",
+   "clue": "vorbei, Ende"
+  },
+  {
+   "word": "BIN",
+   "clue": "ich ... da"
+  },
+  {
+   "word": "UM",
+   "clue": "herum"
+  },
+  {
+   "word": "WIRD",
+   "clue": "er ... alt"
+  },
+  {
+   "word": "HAST",
+   "clue": "du ... Zeit?"
+  },
+  {
+   "word": "NACH",
+   "clue": "später als"
+  },
+  {
+   "word": "DIR",
+   "clue": "Fürwort (Dativ)"
+  },
+  {
+   "word": "DICH",
+   "clue": "ich liebe ..."
+  },
+  {
+   "word": "UNS",
+   "clue": "Fürwort (1. Pl.)"
+  },
+  {
+   "word": "SEHR",
+   "clue": "äußerst"
+  },
+  {
+   "word": "NUR",
+   "clue": "lediglich"
+  },
+  {
+   "word": "ABER",
+   "clue": "jedoch"
+  },
+  {
+   "word": "SCHON",
+   "clue": "bereits"
+  },
+  {
+   "word": "MEINE",
+   "clue": "glaube, denke"
+  },
+  {
+   "word": "HIER",
+   "clue": "an dem Ort"
+  },
+  {
+   "word": "IMMER",
+   "clue": "stets"
+  },
+  {
+   "word": "WERDEN",
+   "clue": "sich bilden"
+  },
+  {
+   "word": "MEHR",
+   "clue": "nicht weniger"
+  },
+  {
+   "word": "ETWAS",
+   "clue": "ein wenig"
+  },
+  {
+   "word": "DES",
+   "clue": "Artikel (Gen.)"
+  },
+  {
+   "word": "MEIN",
+   "clue": "mir gehörend"
+  },
+  {
+   "word": "AUCH",
+   "clue": "ebenfalls"
+  },
+  {
+   "word": "VOR",
+   "clue": "früher als"
+  },
+  {
+   "word": "KEINE",
+   "clue": "nicht eine"
+  },
+  {
+   "word": "IHN",
+   "clue": "Fürwort (Akk. m)"
+  },
+  {
+   "word": "DIESE",
+   "clue": "jene"
+  },
+  {
+   "word": "WARUM",
+   "clue": "wieso"
+  },
+  {
+   "word": "EINEM",
+   "clue": "mit ... Mal"
+  },
+  {
+   "word": "AM",
+   "clue": "an dem"
+  },
+  {
+   "word": "WEISS",
+   "clue": "helle Farbe"
+  },
+  {
+   "word": "MUSS",
+   "clue": "Zwang"
+  },
+  {
+   "word": "ZUM",
+   "clue": "zu dem"
+  },
+  {
+   "word": "BEI",
+   "clue": "nahe an"
+  },
+  {
+   "word": "WILL",
+   "clue": "möchte"
+  },
+  {
+   "word": "GUT",
+   "clue": "prima"
+  },
+  {
+   "word": "BIST",
+   "clue": "du ... da"
+  },
+  {
+   "word": "NICHTS",
+   "clue": "null"
+  },
+  {
+   "word": "UEBER",
+   "clue": "oberhalb"
+  },
+  {
+   "word": "HEUTE",
+   "clue": "diesen Tag"
+  },
+  {
+   "word": "IHM",
+   "clue": "Fürwort (Dat. m)"
+  },
+  {
+   "word": "VIEL",
+   "clue": "reichlich"
+  },
+  {
+   "word": "EINER",
+   "clue": "jemand"
+  },
+  {
+   "word": "ALLES",
+   "clue": "das Ganze"
+  },
+  {
+   "word": "HATTE",
+   "clue": "besaß"
+  },
+  {
+   "word": "TUN",
+   "clue": "machen"
+  },
+  {
+   "word": "ODER",
+   "clue": "entweder ..."
+  },
+  {
+   "word": "ALLE",
+   "clue": "sämtliche"
+  },
+  {
+   "word": "WURDE",
+   "clue": "es ... Nacht"
+  },
+  {
+   "word": "DA",
+   "clue": "zugegen"
+  },
+  {
+   "word": "WO",
+   "clue": "welcher Ort?"
+  },
+  {
+   "word": "GIBT",
+   "clue": "reicht"
+  },
+  {
+   "word": "IHRE",
+   "clue": "ihr gehörend"
+  },
+  {
+   "word": "EUCH",
+   "clue": "Fürwort (2. Pl.)"
+  },
+  {
+   "word": "LEBEN",
+   "clue": "Existenz"
+  },
+  {
+   "word": "MACHEN",
+   "clue": "tun"
+  },
+  {
+   "word": "DIESES",
+   "clue": "jenes"
+  },
+  {
+   "word": "JETZT",
+   "clue": "nun"
+  },
+  {
+   "word": "SAGEN",
+   "clue": "äußern"
+  },
+  {
+   "word": "WERDE",
+   "clue": "ich ... alt"
+  },
+  {
+   "word": "ZEIT",
+   "clue": "Dauer"
+  },
+  {
+   "word": "BITTE",
+   "clue": "Gesuch"
+  },
+  {
+   "word": "GEHEN",
+   "clue": "laufen"
+  },
+  {
+   "word": "WER",
+   "clue": "welche Person"
+  },
+  {
+   "word": "VIELE",
+   "clue": "eine Menge"
+  },
+  {
+   "word": "NIE",
+   "clue": "zu keiner Zeit"
+  },
+  {
+   "word": "MAL",
+   "clue": "Fleck"
+  },
+  {
+   "word": "KEIN",
+   "clue": "nicht ein"
+  },
+  {
+   "word": "DIESER",
+   "clue": "jener"
+  },
+  {
+   "word": "DOCH",
+   "clue": "trotzdem"
+  },
+  {
+   "word": "IHNEN",
+   "clue": "Anrede (Dativ)"
+  },
+  {
+   "word": "GESAGT",
+   "clue": "geäußert"
+  },
+  {
+   "word": "WUERDE",
+   "clue": "Ehre, Stolz"
+  },
+  {
+   "word": "DEINE",
+   "clue": "dir gehörend"
+  },
+  {
+   "word": "WIEDER",
+   "clue": "erneut"
+  },
+  {
+   "word": "SAGTE",
+   "clue": "sprach"
+  },
+  {
+   "word": "GELD",
+   "clue": "Taler, Münzen"
+  },
+  {
+   "word": "MORGEN",
+   "clue": "Frühe"
+  },
+  {
+   "word": "EINMAL",
+   "clue": "einst"
+  },
+  {
+   "word": "ZUR",
+   "clue": "zu der"
+  },
+  {
+   "word": "GEHT",
+   "clue": "läuft"
+  },
+  {
+   "word": "KANNST",
+   "clue": "du ... das?"
+  },
+  {
+   "word": "SEHEN",
+   "clue": "schauen"
+  },
+  {
+   "word": "HABT",
+   "clue": "ihr ... Zeit"
+  },
+  {
+   "word": "TAG",
+   "clue": "24 Stunden"
+  },
+  {
+   "word": "MACHT",
+   "clue": "Gewalt"
+  },
+  {
+   "word": "HAETTE",
+   "clue": "besäße"
+  },
+  {
+   "word": "WISSEN",
+   "clue": "Kenntnis"
+  },
+  {
+   "word": "KOMMT",
+   "clue": "naht"
+  },
+  {
+   "word": "ZWEI",
+   "clue": "eins plus eins"
+  },
+  {
+   "word": "DANN",
+   "clue": "später"
+  },
+  {
+   "word": "OHNE",
+   "clue": "minus"
+  },
+  {
+   "word": "HAUSE",
+   "clue": "daheim"
+  },
+  {
+   "word": "DREI",
+   "clue": "Zahl nach zwei"
+  },
+  {
+   "word": "SELBST",
+   "clue": "eigen"
+  },
+  {
+   "word": "SEINEN",
+   "clue": "ihm gehörend"
+  },
+  {
+   "word": "KOMMEN",
+   "clue": "nahen"
+  },
+  {
+   "word": "WAREN",
+   "clue": "Güter"
+  },
+  {
+   "word": "ESSEN",
+   "clue": "Mahlzeit"
+  },
+  {
+   "word": "GLAUBE",
+   "clue": "Religion"
+  },
+  {
+   "word": "HAUS",
+   "clue": "Gebäude"
+  },
+  {
+   "word": "FRAU",
+   "clue": "Gattin"
+  },
+  {
+   "word": "BIS",
+   "clue": "von A ... Z"
+  },
+  {
+   "word": "SEI",
+   "clue": "... still!"
+  },
+  {
+   "word": "GERADE",
+   "clue": "nicht krumm"
+  },
+  {
+   "word": "ARBEIT",
+   "clue": "Job, Mühe"
+  },
+  {
+   "word": "WOLLTE",
+   "clue": "hatte vor"
+  },
+  {
+   "word": "WAERE",
+   "clue": "es ... schön"
+  },
+  {
+   "word": "GERNE",
+   "clue": "mit Freude"
+  },
+  {
+   "word": "DENN",
+   "clue": "weil"
+  },
+  {
+   "word": "DURCH",
+   "clue": "quer"
+  },
+  {
+   "word": "BUCH",
+   "clue": "Lektüre"
+  },
+  {
+   "word": "HELFEN",
+   "clue": "stützen"
+  },
+  {
+   "word": "MANN",
+   "clue": "Gatte"
+  },
+  {
+   "word": "BESSER",
+   "clue": "gut, ..., best"
+  },
+  {
+   "word": "DEIN",
+   "clue": "dir gehörig"
+  },
+  {
+   "word": "WELT",
+   "clue": "Erde, Globus"
+  },
+  {
+   "word": "MAG",
+   "clue": "liebt"
+  },
+  {
+   "word": "INS",
+   "clue": "in das"
+  },
+  {
+   "word": "KEINEN",
+   "clue": "nicht einen"
+  },
+  {
+   "word": "SOLL",
+   "clue": "Plan, Vorgabe"
+  },
+  {
+   "word": "LANGE",
+   "clue": "eine Weile"
+  },
+  {
+   "word": "LASSEN",
+   "clue": "erlauben"
+  },
+  {
+   "word": "MEINEN",
+   "clue": "glauben"
+  },
+  {
+   "word": "KINDER",
+   "clue": "Söhne, Töchter"
+  },
+  {
+   "word": "WOLLEN",
+   "clue": "begehren"
+  },
+  {
+   "word": "AUTO",
+   "clue": "Wagen"
+  },
+  {
+   "word": "GANZ",
+   "clue": "komplett"
+  },
+  {
+   "word": "OFT",
+   "clue": "häufig"
+  },
+  {
+   "word": "OB",
+   "clue": "Strom in Asien"
+  },
+  {
+   "word": "DIESEM",
+   "clue": "jenem"
+  },
+  {
+   "word": "JA",
+   "clue": "Bejahung"
+  },
+  {
+   "word": "WILLST",
+   "clue": "du ... das?"
+  },
+  {
+   "word": "WEG",
+   "clue": "Pfad"
+  },
+  {
+   "word": "VATER",
+   "clue": "Papa"
+  },
+  {
+   "word": "SEINER",
+   "clue": "Fürwort (Gen.)"
+  },
+  {
+   "word": "WANN",
+   "clue": "welche Zeit?"
+  },
+  {
+   "word": "LIEBE",
+   "clue": "Amor, Gefühl"
+  },
+  {
+   "word": "AB",
+   "clue": "weg, los"
+  },
+  {
+   "word": "EINES",
+   "clue": "... Tages"
+  },
+  {
+   "word": "IHREN",
+   "clue": "mit ... Eltern"
+  },
+  {
+   "word": "DIESEN",
+   "clue": "jenen"
+  },
+  {
+   "word": "DORT",
+   "clue": "da drüben"
+  },
+  {
+   "word": "KONNTE",
+   "clue": "war fähig"
+  },
+  {
+   "word": "MEINER",
+   "clue": "einer ... Ideen"
+  },
+  {
+   "word": "WEIL",
+   "clue": "da, denn"
+  },
+  {
+   "word": "MUTTER",
+   "clue": "Mama"
+  },
+  {
+   "word": "SOLLTE",
+   "clue": "müsste"
+  },
+  {
+   "word": "SCHULE",
+   "clue": "Lernort"
+  },
+  {
+   "word": "DAMIT",
+   "clue": "somit"
+  },
+  {
+   "word": "SAGT",
+   "clue": "spricht"
+  },
+  {
+   "word": "LEUTE",
+   "clue": "Personen"
+  },
+  {
+   "word": "SEINEM",
+   "clue": "mit ... Hund"
+  },
+  {
+   "word": "LERNEN",
+   "clue": "pauken"
+  },
+  {
+   "word": "UHR",
+   "clue": "Wecker"
+  },
+  {
+   "word": "UNTER",
+   "clue": "nicht über"
+  },
+  {
+   "word": "KAM",
+   "clue": "traf ein"
+  },
+  {
+   "word": "GING",
+   "clue": "lief"
+  },
+  {
+   "word": "SEIT",
+   "clue": "ab jener Zeit"
+  },
+  {
+   "word": "UNSERE",
+   "clue": "uns gehörig"
+  },
+  {
+   "word": "ANDERE",
+   "clue": "weitere"
+  },
+  {
+   "word": "GETAN",
+   "clue": "erledigt"
+  },
+  {
+   "word": "JEDEN",
+   "clue": "an ... Tag"
+  },
+  {
+   "word": "HUND",
+   "clue": "Haustier"
+  },
+  {
+   "word": "VOM",
+   "clue": "von dem"
+  },
+  {
+   "word": "FRAGE",
+   "clue": "Problem"
+  },
+  {
+   "word": "MENSCH",
+   "clue": "Person"
+  },
+  {
+   "word": "MEINEM",
+   "clue": "mit ... Freund"
+  },
+  {
+   "word": "JAHRE",
+   "clue": "Lenze"
+  },
+  {
+   "word": "JEDER",
+   "clue": "alle"
+  },
+  {
+   "word": "WASSER",
+   "clue": "H2O"
+  },
+  {
+   "word": "SICHER",
+   "clue": "gewiss"
+  },
+  {
+   "word": "JEMAND",
+   "clue": "eine Person"
+  },
+  {
+   "word": "GEBEN",
+   "clue": "reichen"
+  },
+  {
+   "word": "MUSST",
+   "clue": "du ... gehen"
+  },
+  {
+   "word": "SAH",
+   "clue": "blickte"
+  },
+  {
+   "word": "ZIMMER",
+   "clue": "Raum"
+  },
+  {
+   "word": "ABEND",
+   "clue": "vor der Nacht"
+  },
+  {
+   "word": "TUT",
+   "clue": "macht"
+  },
+  {
+   "word": "GAR",
+   "clue": "fertig gekocht"
+  },
+  {
+   "word": "STADT",
+   "clue": "Ort, City"
+  },
+  {
+   "word": "FREUND",
+   "clue": "Kumpel"
+  },
+  {
+   "word": "BEIM",
+   "clue": "bei dem"
+  },
+  {
+   "word": "ALLEIN",
+   "clue": "einsam"
+  },
+  {
+   "word": "SIEHT",
+   "clue": "schaut"
+  },
+  {
+   "word": "JAHR",
+   "clue": "zwölf Monate"
+  },
+  {
+   "word": "DAVON",
+   "clue": "weg, fort"
+  },
+  {
+   "word": "GUTE",
+   "clue": "die ... Fee"
+  },
+  {
+   "word": "WIRST",
+   "clue": "du ... sehen"
+  },
+  {
+   "word": "SEID",
+   "clue": "ihr ... da"
+  },
+  {
+   "word": "IHRER",
+   "clue": "eine ... Ideen"
+  },
+  {
+   "word": "SOLLEN",
+   "clue": "müssen"
+  },
+  {
+   "word": "FRAGEN",
+   "clue": "erkunden"
+  },
+  {
+   "word": "JAHREN",
+   "clue": "vor vielen ..."
+  },
+  {
+   "word": "RECHT",
+   "clue": "Anspruch"
+  },
+  {
+   "word": "LASS",
+   "clue": "... das!"
+  },
+  {
+   "word": "ANGST",
+   "clue": "Furcht"
+  },
+  {
+   "word": "DENKE",
+   "clue": "ich grüble"
+  },
+  {
+   "word": "GAB",
+   "clue": "reichte"
+  },
+  {
+   "word": "SCHOEN",
+   "clue": "hübsch"
+  },
+  {
+   "word": "GERN",
+   "clue": "mit Lust"
+  },
+  {
+   "word": "WOHL",
+   "clue": "zum ...!"
+  },
+  {
+   "word": "WUSSTE",
+   "clue": "kannte"
+  },
+  {
+   "word": "FINDEN",
+   "clue": "orten"
+  },
+  {
+   "word": "STEHT",
+   "clue": "ist aufrecht"
+  },
+  {
+   "word": "FAST",
+   "clue": "beinahe"
+  },
+  {
+   "word": "NACHT",
+   "clue": "nicht Tag"
+  },
+  {
+   "word": "KAUFEN",
+   "clue": "erwerben"
+  },
+  {
+   "word": "FEHLER",
+   "clue": "Irrtum"
+  },
+  {
+   "word": "WARTEN",
+   "clue": "harren"
+  },
+  {
+   "word": "PAAR",
+   "clue": "Duo"
+  },
+  {
+   "word": "WAHR",
+   "clue": "richtig"
+  },
+  {
+   "word": "KIND",
+   "clue": "Knirps"
+  },
+  {
+   "word": "WOCHE",
+   "clue": "sieben Tage"
+  },
+  {
+   "word": "WEISST",
+   "clue": "du ... es"
+  },
+  {
+   "word": "FAHREN",
+   "clue": "reisen"
+  },
+  {
+   "word": "AUGEN",
+   "clue": "zum Sehen"
+  },
+  {
+   "word": "ELTERN",
+   "clue": "Vater, Mutter"
+  },
+  {
+   "word": "GEGEN",
+   "clue": "wider"
+  },
+  {
+   "word": "NEUE",
+   "clue": "frische"
+  },
+  {
+   "word": "DEINEN",
+   "clue": "zu ... Eltern"
+  },
+  {
+   "word": "TUER",
+   "clue": "Pforte"
+  },
+  {
+   "word": "HILFE",
+   "clue": "Beistand"
+  },
+  {
+   "word": "GENUG",
+   "clue": "satt, reicht"
+  },
+  {
+   "word": "LAND",
+   "clue": "Staat"
+  },
+  {
+   "word": "WELCHE",
+   "clue": "... Farbe?"
+  },
+  {
+   "word": "ERST",
+   "clue": "nicht eher"
+  },
+  {
+   "word": "GANZE",
+   "clue": "totale"
+  },
+  {
+   "word": "HOEREN",
+   "clue": "lauschen"
+  },
+  {
+   "word": "REDEN",
+   "clue": "sprechen"
+  },
+  {
+   "word": "DARAN",
+   "clue": "denk ...!"
+  },
+  {
+   "word": "DARF",
+   "clue": "ist erlaubt"
+  },
+  {
+   "word": "DIES",
+   "clue": "das da"
+  },
+  {
+   "word": "LESEN",
+   "clue": "Buch ansehen"
+  },
+  {
+   "word": "GANZEN",
+   "clue": "im ...: total"
+  },
+  {
+   "word": "SCHWER",
+   "clue": "nicht leicht"
+  },
+  {
+   "word": "UNSER",
+   "clue": "Vater ..."
+  },
+  {
+   "word": "GROSSE",
+   "clue": "riesige"
+  },
+  {
+   "word": "DACHTE",
+   "clue": "meinte"
+  },
+  {
+   "word": "BRUDER",
+   "clue": "männl. Geschw."
+  },
+  {
+   "word": "WORT",
+   "clue": "Begriff"
+  },
+  {
+   "word": "DAFUER",
+   "clue": "pro"
+  },
+  {
+   "word": "IHREM",
+   "clue": "aus ... Haus"
+  },
+  {
+   "word": "GLEICH",
+   "clue": "sofort"
+  },
+  {
+   "word": "JE",
+   "clue": "jemals"
+  },
+  {
+   "word": "DARAUF",
+   "clue": "danach"
+  },
+  {
+   "word": "LIEGT",
+   "clue": "ruht"
+  },
+  {
+   "word": "ENDE",
+   "clue": "Schluss"
+  },
+  {
+   "word": "BALD",
+   "clue": "in Kürze"
+  },
+  {
+   "word": "DAZU",
+   "clue": "hinzu"
+  },
+  {
+   "word": "GEHE",
+   "clue": "ich ... heim"
+  },
+  {
+   "word": "LIEBER",
+   "clue": "eher"
+  },
+  {
+   "word": "KAFFEE",
+   "clue": "Mokka"
+  },
+  {
+   "word": "NEHMEN",
+   "clue": "greifen"
+  },
+  {
+   "word": "EINIGE",
+   "clue": "mehrere"
+  },
+  {
+   "word": "NEIN",
+   "clue": "Absage"
+  },
+  {
+   "word": "HOFFE",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "HEISST",
+   "clue": "bedeutet"
+  },
+  {
+   "word": "SPAET",
+   "clue": "nicht früh"
+  },
+  {
+   "word": "BETT",
+   "clue": "Lager, Koje"
+  },
+  {
+   "word": "KATZE",
+   "clue": "Mieze"
+  },
+  {
+   "word": "ZUG",
+   "clue": "Bahn"
+  },
+  {
+   "word": "WORDEN",
+   "clue": "es ist ... Tag"
+  },
+  {
+   "word": "DENKEN",
+   "clue": "grübeln"
+  },
+  {
+   "word": "LETZTE",
+   "clue": "finale"
+  },
+  {
+   "word": "BRIEF",
+   "clue": "Post, Karte"
+  },
+  {
+   "word": "DEINER",
+   "clue": "in ... Nähe"
+  },
+  {
+   "word": "WEGEN",
+   "clue": "aufgrund"
+  },
+  {
+   "word": "DABEI",
+   "clue": "zugleich"
+  },
+  {
+   "word": "DINGE",
+   "clue": "Sachen"
+  },
+  {
+   "word": "GOTT",
+   "clue": "Schöpfer"
+  },
+  {
+   "word": "HATTEN",
+   "clue": "besaßen"
+  },
+  {
+   "word": "GENAU",
+   "clue": "exakt"
+  },
+  {
+   "word": "JUNGE",
+   "clue": "Knabe"
+  },
+  {
+   "word": "SATZ",
+   "clue": "Sprung"
+  },
+  {
+   "word": "LEHRER",
+   "clue": "Dozent"
+  },
+  {
+   "word": "LEICHT",
+   "clue": "einfach"
+  },
+  {
+   "word": "GLUECK",
+   "clue": "Fortuna"
+  },
+  {
+   "word": "NEUEN",
+   "clue": "die ... Schuhe"
+  },
+  {
+   "word": "GROSS",
+   "clue": "riesig"
+  },
+  {
+   "word": "HAND",
+   "clue": "mit Fingern"
+  },
+  {
+   "word": "NAMEN",
+   "clue": "Titel"
+  },
+  {
+   "word": "WURDEN",
+   "clue": "sie ... alt"
+  },
+  {
+   "word": "WENIG",
+   "clue": "kaum"
+  },
+  {
+   "word": "ZEHN",
+   "clue": "neun plus eins"
+  },
+  {
+   "word": "FINDE",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "FERTIG",
+   "clue": "bereit"
+  },
+  {
+   "word": "KAUM",
+   "clue": "knapp"
+  },
+  {
+   "word": "SOHN",
+   "clue": "Kind (m)"
+  },
+  {
+   "word": "KENNE",
+   "clue": "ich ... ihn"
+  },
+  {
+   "word": "DANKE",
+   "clue": "merci"
+  },
+  {
+   "word": "KENNT",
+   "clue": "weiß"
+  },
+  {
+   "word": "TAGE",
+   "clue": "Woche: sieben ..."
+  },
+  {
+   "word": "FUENF",
+   "clue": "Hälfte von zehn"
+  },
+  {
+   "word": "SAG",
+   "clue": "... mal!"
+  },
+  {
+   "word": "BEVOR",
+   "clue": "ehe"
+  },
+  {
+   "word": "HIN",
+   "clue": "kaputt"
+  },
+  {
+   "word": "KOPF",
+   "clue": "Haupt"
+  },
+  {
+   "word": "BEIDE",
+   "clue": "alle zwei"
+  },
+  {
+   "word": "HALTEN",
+   "clue": "stoppen"
+  },
+  {
+   "word": "GUTEN",
+   "clue": "... Tag!"
+  },
+  {
+   "word": "FRUEH",
+   "clue": "zeitig"
+  },
+  {
+   "word": "ERSTEN",
+   "clue": "am ... Tag"
+  },
+  {
+   "word": "MUSSTE",
+   "clue": "hatte zu"
+  },
+  {
+   "word": "SOFORT",
+   "clue": "gleich"
+  },
+  {
+   "word": "KOMME",
+   "clue": "ich ... bald"
+  },
+  {
+   "word": "LAESST",
+   "clue": "erlaubt"
+  },
+  {
+   "word": "WEITER",
+   "clue": "vorwärts"
+  },
+  {
+   "word": "ERSTE",
+   "clue": "Nummer eins"
+  },
+  {
+   "word": "LEID",
+   "clue": "Kummer"
+  },
+  {
+   "word": "MUEDE",
+   "clue": "schläfrig"
+  },
+  {
+   "word": "BUS",
+   "clue": "Omnibus"
+  },
+  {
+   "word": "MACHE",
+   "clue": "ich ... das"
+  },
+  {
+   "word": "WEIT",
+   "clue": "fern"
+  },
+  {
+   "word": "SONST",
+   "clue": "oder aber"
+  },
+  {
+   "word": "NUN",
+   "clue": "jetzt"
+  },
+  {
+   "word": "TISCH",
+   "clue": "Möbel"
+  },
+  {
+   "word": "NAHM",
+   "clue": "griff"
+  },
+  {
+   "word": "ARZT",
+   "clue": "Doktor"
+  },
+  {
+   "word": "SORGEN",
+   "clue": "Nöte"
+  },
+  {
+   "word": "MACHTE",
+   "clue": "tat"
+  },
+  {
+   "word": "LEBT",
+   "clue": "atmet"
+  },
+  {
+   "word": "GUTER",
+   "clue": "ein ... Freund"
+  },
+  {
+   "word": "BEIDEN",
+   "clue": "von ... Seiten"
+  },
+  {
+   "word": "GLAUBT",
+   "clue": "meint"
+  },
+  {
+   "word": "HINTER",
+   "clue": "nicht vor"
+  },
+  {
+   "word": "EURE",
+   "clue": "... Majestät"
+  },
+  {
+   "word": "SONNE",
+   "clue": "Stern"
+  },
+  {
+   "word": "SEHE",
+   "clue": "ich ... dich"
+  },
+  {
+   "word": "MACH",
+   "clue": "... schnell!"
+  },
+  {
+   "word": "ALTE",
+   "clue": "Greisin"
+  },
+  {
+   "word": "FRAUEN",
+   "clue": "Damen"
+  },
+  {
+   "word": "KRANK",
+   "clue": "unwohl"
+  },
+  {
+   "word": "STEHEN",
+   "clue": "aufrecht sein"
+  },
+  {
+   "word": "BESTE",
+   "clue": "die Nr. 1"
+  },
+  {
+   "word": "GIB",
+   "clue": "... her!"
+  },
+  {
+   "word": "ISST",
+   "clue": "speist"
+  },
+  {
+   "word": "KOENNT",
+   "clue": "ihr ... das"
+  },
+  {
+   "word": "TAT",
+   "clue": "Handlung"
+  },
+  {
+   "word": "DEINEM",
+   "clue": "mit ... Rad"
+  },
+  {
+   "word": "NEUES",
+   "clue": "Was gibt's ...?"
+  },
+  {
+   "word": "FRAGTE",
+   "clue": "wollte wissen"
+  },
+  {
+   "word": "ALSO",
+   "clue": "folglich"
+  },
+  {
+   "word": "WARST",
+   "clue": "du ... da"
+  },
+  {
+   "word": "FILM",
+   "clue": "Streifen"
+  },
+  {
+   "word": "VIELEN",
+   "clue": "mit ... Dank"
+  },
+  {
+   "word": "ALTER",
+   "clue": "Greis"
+  },
+  {
+   "word": "MUSIK",
+   "clue": "Klänge"
+  },
+  {
+   "word": "GARTEN",
+   "clue": "Park"
+  },
+  {
+   "word": "WAGEN",
+   "clue": "riskieren"
+  },
+  {
+   "word": "WOHNT",
+   "clue": "haust"
+  },
+  {
+   "word": "KLEINE",
+   "clue": "winzige"
+  },
+  {
+   "word": "KENNEN",
+   "clue": "wissen"
+  },
+  {
+   "word": "STELLE",
+   "clue": "Ort, Platz"
+  },
+  {
+   "word": "GRUND",
+   "clue": "Ursache"
+  },
+  {
+   "word": "KEINER",
+   "clue": "niemand"
+  },
+  {
+   "word": "HERR",
+   "clue": "Gebieter"
+  },
+  {
+   "word": "LIEBT",
+   "clue": "mag sehr"
+  },
+  {
+   "word": "SACHE",
+   "clue": "Ding"
+  },
+  {
+   "word": "SPASS",
+   "clue": "Freude, Jux"
+  },
+  {
+   "word": "BESTEN",
+   "clue": "die ... Wünsche"
+  },
+  {
+   "word": "ERDE",
+   "clue": "Planet"
+  },
+  {
+   "word": "VIER",
+   "clue": "zwei mal zwei"
+  },
+  {
+   "word": "BLEIBT",
+   "clue": "verweilt"
+  },
+  {
+   "word": "TOD",
+   "clue": "Ableben"
+  },
+  {
+   "word": "JUNGEN",
+   "clue": "Knaben"
+  },
+  {
+   "word": "HIMMEL",
+   "clue": "Paradies"
+  },
+  {
+   "word": "SPIEL",
+   "clue": "Partie"
+  },
+  {
+   "word": "SPIELT",
+   "clue": "tollt"
+  },
+  {
+   "word": "ANDERS",
+   "clue": "nicht gleich"
+  },
+  {
+   "word": "KALT",
+   "clue": "frostig"
+  },
+  {
+   "word": "STUNDE",
+   "clue": "60 Minuten"
+  },
+  {
+   "word": "IDEE",
+   "clue": "Einfall"
+  },
+  {
+   "word": "JEDE",
+   "clue": "alle"
+  },
+  {
+   "word": "LICHT",
+   "clue": "Schein"
+  },
+  {
+   "word": "ALTEN",
+   "clue": "Senioren"
+  },
+  {
+   "word": "REICH",
+   "clue": "betucht"
+  },
+  {
+   "word": "LASST",
+   "clue": "... uns gehen"
+  },
+  {
+   "word": "STAND",
+   "clue": "Kiosk"
+  },
+  {
+   "word": "HOERTE",
+   "clue": "lauschte"
+  },
+  {
+   "word": "BROT",
+   "clue": "Laib"
+  },
+  {
+   "word": "HERZ",
+   "clue": "Organ"
+  },
+  {
+   "word": "HER",
+   "clue": "hierhin"
+  },
+  {
+   "word": "MACHST",
+   "clue": "du ... das"
+  },
+  {
+   "word": "LIESS",
+   "clue": "erlaubte"
+  },
+  {
+   "word": "TEE",
+   "clue": "Aufguss"
+  },
+  {
+   "word": "LIEBEN",
+   "clue": "gern haben"
+  },
+  {
+   "word": "KURZ",
+   "clue": "knapp"
+  },
+  {
+   "word": "AUSSER",
+   "clue": "bis auf"
+  },
+  {
+   "word": "KOMM",
+   "clue": "... her!"
+  },
+  {
+   "word": "DENEN",
+   "clue": "Fürwort (Dat.)"
+  },
+  {
+   "word": "SAGE",
+   "clue": "Legende"
+  },
+  {
+   "word": "WORTE",
+   "clue": "Vokabeln"
+  },
+  {
+   "word": "SEITE",
+   "clue": "Blatt"
+  },
+  {
+   "word": "MEINES",
+   "clue": "... Wissens"
+  },
+  {
+   "word": "WETTER",
+   "clue": "Klima"
+  },
+  {
+   "word": "FAEHRT",
+   "clue": "reist"
+  },
+  {
+   "word": "BAUM",
+   "clue": "Eiche"
+  },
+  {
+   "word": "MOEGEN",
+   "clue": "schätzen"
+  },
+  {
+   "word": "JEDES",
+   "clue": "... Mal"
+  },
+  {
+   "word": "STIMME",
+   "clue": "Votum"
+  },
+  {
+   "word": "SCHUHE",
+   "clue": "Treter"
+  },
+  {
+   "word": "SIEHST",
+   "clue": "du ... ihn"
+  },
+  {
+   "word": "KOMMST",
+   "clue": "du ... mit?"
+  },
+  {
+   "word": "GUTES",
+   "clue": "... tun"
+  },
+  {
+   "word": "PLATZ",
+   "clue": "Sitz, Ort"
+  },
+  {
+   "word": "ART",
+   "clue": "Sorte"
+  },
+  {
+   "word": "FAND",
+   "clue": "stieß auf"
+  },
+  {
+   "word": "DENKT",
+   "clue": "grübelt"
+  },
+  {
+   "word": "FALSCH",
+   "clue": "nicht wahr"
+  },
+  {
+   "word": "ZEIGEN",
+   "clue": "weisen"
+  },
+  {
+   "word": "MONAT",
+   "clue": "Mai, Juni"
+  },
+  {
+   "word": "SOMMER",
+   "clue": "warme Zeit"
+  },
+  {
+   "word": "KRIEG",
+   "clue": "Fehde"
+  },
+  {
+   "word": "STIMMT",
+   "clue": "ist wahr"
+  },
+  {
+   "word": "SAGTEN",
+   "clue": "sprachen"
+  },
+  {
+   "word": "BIER",
+   "clue": "Pils"
+  },
+  {
+   "word": "BRINGT",
+   "clue": "liefert"
+  },
+  {
+   "word": "DENKST",
+   "clue": "du ... nach"
+  },
+  {
+   "word": "FALL",
+   "clue": "Sturz"
+  },
+  {
+   "word": "BEREIT",
+   "clue": "parat"
+  },
+  {
+   "word": "HAELT",
+   "clue": "stoppt"
+  },
+  {
+   "word": "LEIDER",
+   "clue": "schade"
+  },
+  {
+   "word": "MILCH",
+   "clue": "von der Kuh"
+  },
+  {
+   "word": "LUST",
+   "clue": "Laune"
+  },
+  {
+   "word": "EGAL",
+   "clue": "einerlei"
+  },
+  {
+   "word": "ERFOLG",
+   "clue": "Sieg"
+  },
+  {
+   "word": "WEM",
+   "clue": "... gehört das?"
+  },
+  {
+   "word": "HOERT",
+   "clue": "lauscht"
+  },
+  {
+   "word": "JUNG",
+   "clue": "nicht alt"
+  },
+  {
+   "word": "MENGE",
+   "clue": "Masse"
+  },
+  {
+   "word": "TRAGEN",
+   "clue": "heben"
+  },
+  {
+   "word": "WOLLT",
+   "clue": "ihr ... das?"
+  },
+  {
+   "word": "PLAN",
+   "clue": "Konzept"
+  },
+  {
+   "word": "GEHST",
+   "clue": "du ... heim"
+  },
+  {
+   "word": "ZWAR",
+   "clue": "und ..."
+  },
+  {
+   "word": "SEINES",
+   "clue": "... Zeichens"
+  },
+  {
+   "word": "WERT",
+   "clue": "Preis"
+  },
+  {
+   "word": "ETWA",
+   "clue": "circa"
+  },
+  {
+   "word": "TEIL",
+   "clue": "Stück"
+  },
+  {
+   "word": "KLAR",
+   "clue": "deutlich"
+  },
+  {
+   "word": "FUSS",
+   "clue": "mit Zehen"
+  },
+  {
+   "word": "FINDET",
+   "clue": "ortet"
+  },
+  {
+   "word": "GEH",
+   "clue": "... weg!"
+  },
+  {
+   "word": "WEIN",
+   "clue": "Vino"
+  },
+  {
+   "word": "WOHIN",
+   "clue": "welche Seite?"
+  },
+  {
+   "word": "TRAEGT",
+   "clue": "schleppt"
+  },
+  {
+   "word": "BILD",
+   "clue": "Foto"
+  },
+  {
+   "word": "BAT",
+   "clue": "flehte"
+  },
+  {
+   "word": "SUCHEN",
+   "clue": "fahnden"
+  },
+  {
+   "word": "FLUSS",
+   "clue": "Strom"
+  },
+  {
+   "word": "HIELT",
+   "clue": "stoppte"
+  },
+  {
+   "word": "BLUMEN",
+   "clue": "Rosen, Tulpen"
+  },
+  {
+   "word": "WEISE",
+   "clue": "klug"
+  },
+  {
+   "word": "LEBENS",
+   "clue": "... Freude"
+  },
+  {
+   "word": "FEST",
+   "clue": "Feier"
+  },
+  {
+   "word": "SAETZE",
+   "clue": "Sprünge"
+  },
+  {
+   "word": "FAELLT",
+   "clue": "stürzt"
+  },
+  {
+   "word": "FUEHLE",
+   "clue": "ich spüre"
+  },
+  {
+   "word": "DARIN",
+   "clue": "da drinnen"
+  },
+  {
+   "word": "DARUM",
+   "clue": "deshalb"
+  },
+  {
+   "word": "SECHS",
+   "clue": "halbes Dutzend"
+  },
+  {
+   "word": "BUERO",
+   "clue": "Amt"
+  },
+  {
+   "word": "WOHER",
+   "clue": "von wo"
+  },
+  {
+   "word": "VORBEI",
+   "clue": "aus, um"
+  },
+  {
+   "word": "HAENDE",
+   "clue": "Fäuste"
+  },
+  {
+   "word": "OBWOHL",
+   "clue": "auch wenn"
+  },
+  {
+   "word": "SINN",
+   "clue": "Zweck"
+  },
+  {
+   "word": "HALTE",
+   "clue": "ich ... an"
+  },
+  {
+   "word": "FEUER",
+   "clue": "Flamme"
+  },
+  {
+   "word": "SCHULD",
+   "clue": "Sünde"
+  },
+  {
+   "word": "FREI",
+   "clue": "ledig"
+  },
+  {
+   "word": "ARM",
+   "clue": "pleite"
+  },
+  {
+   "word": "NEBEN",
+   "clue": "bei"
+  },
+  {
+   "word": "WOHNEN",
+   "clue": "hausen"
+  },
+  {
+   "word": "JEDEM",
+   "clue": "allen"
+  },
+  {
+   "word": "MONTAG",
+   "clue": "Tag nach Sonntag"
+  },
+  {
+   "word": "HOER",
+   "clue": "... zu!"
+  },
+  {
+   "word": "HOCH",
+   "clue": "nicht tief"
+  },
+  {
+   "word": "NAME",
+   "clue": "Rufwort"
+  },
+  {
+   "word": "REGEN",
+   "clue": "Niesel"
+  },
+  {
+   "word": "ALL",
+   "clue": "Weltraum"
+  },
+  {
+   "word": "REISE",
+   "clue": "Fahrt"
+  },
+  {
+   "word": "ALLER",
+   "clue": "... Anfang"
+  },
+  {
+   "word": "MEER",
+   "clue": "See, Ozean"
+  },
+  {
+   "word": "LAGE",
+   "clue": "Position"
+  },
+  {
+   "word": "SPRACH",
+   "clue": "redete"
+  },
+  {
+   "word": "STOLZ",
+   "clue": "Hochmut"
+  },
+  {
+   "word": "ALLEM",
+   "clue": "vor ..."
+  },
+  {
+   "word": "DOLLAR",
+   "clue": "Geld der USA"
+  },
+  {
+   "word": "LACHEN",
+   "clue": "kichern"
+  },
+  {
+   "word": "HAARE",
+   "clue": "Mähne"
+  },
+  {
+   "word": "FIEL",
+   "clue": "stürzte"
+  },
+  {
+   "word": "STATT",
+   "clue": "anstelle"
+  },
+  {
+   "word": "SIEBEN",
+   "clue": "Zahl nach sechs"
+  },
+  {
+   "word": "KLEIN",
+   "clue": "winzig"
+  },
+  {
+   "word": "KUCHEN",
+   "clue": "Torte"
+  },
+  {
+   "word": "STARK",
+   "clue": "kräftig"
+  },
+  {
+   "word": "ZOG",
+   "clue": "zerrte"
+  },
+  {
+   "word": "SINGEN",
+   "clue": "trällern"
+  },
+  {
+   "word": "MOMENT",
+   "clue": "Sekunde"
+  },
+  {
+   "word": "NATUR",
+   "clue": "Umwelt"
+  },
+  {
+   "word": "SELTEN",
+   "clue": "rar"
+  },
+  {
+   "word": "UNFALL",
+   "clue": "Crash"
+  },
+  {
+   "word": "NAEHE",
+   "clue": "Umkreis"
+  },
+  {
+   "word": "WINTER",
+   "clue": "kalte Zeit"
+  },
+  {
+   "word": "ESSE",
+   "clue": "Kamin"
+  },
+  {
+   "word": "REDE",
+   "clue": "Vortrag"
+  },
+  {
+   "word": "VOLLER",
+   "clue": "... Freude"
+  },
+  {
+   "word": "BODEN",
+   "clue": "Grund"
+  },
+  {
+   "word": "SOGAR",
+   "clue": "selbst"
+  },
+  {
+   "word": "MUESST",
+   "clue": "ihr ... gehen"
+  },
+  {
+   "word": "SEIEN",
+   "clue": "es ... denn"
+  },
+  {
+   "word": "SCHIEN",
+   "clue": "leuchtete"
+  },
+  {
+   "word": "WARTE",
+   "clue": "... mal!"
+  },
+  {
+   "word": "FREUDE",
+   "clue": "Glück"
+  },
+  {
+   "word": "NIMMT",
+   "clue": "greift"
+  },
+  {
+   "word": "TOT",
+   "clue": "leblos"
+  },
+  {
+   "word": "LUFT",
+   "clue": "Atem"
+  },
+  {
+   "word": "SASS",
+   "clue": "hockte"
+  },
+  {
+   "word": "NIMM",
+   "clue": "... das!"
+  },
+  {
+   "word": "LERNT",
+   "clue": "paukt"
+  },
+  {
+   "word": "EHER",
+   "clue": "lieber"
+  },
+  {
+   "word": "SOLCHE",
+   "clue": "so eine"
+  },
+  {
+   "word": "KENNST",
+   "clue": "du ... ihn?"
+  },
+  {
+   "word": "DANK",
+   "clue": "Lob, Lohn"
+  },
+  {
+   "word": "SACHEN",
+   "clue": "Dinge"
+  },
+  {
+   "word": "MANCHE",
+   "clue": "einige"
+  },
+  {
+   "word": "STARB",
+   "clue": "schied hin"
+  },
+  {
+   "word": "MAGST",
+   "clue": "du ... das?"
+  },
+  {
+   "word": "HAB",
+   "clue": "... und Gut"
+  },
+  {
+   "word": "WALD",
+   "clue": "Forst"
+  },
+  {
+   "word": "WEDER",
+   "clue": "... noch"
+  },
+  {
+   "word": "BEGANN",
+   "clue": "startete"
+  },
+  {
+   "word": "LAUFEN",
+   "clue": "rennen"
+  },
+  {
+   "word": "LAUT",
+   "clue": "nicht leise"
+  },
+  {
+   "word": "RAT",
+   "clue": "Tipp"
+  },
+  {
+   "word": "KUECHE",
+   "clue": "Kochecke"
+  },
+  {
+   "word": "FROH",
+   "clue": "heiter"
+  },
+  {
+   "word": "HOERE",
+   "clue": "ich ... zu"
+  },
+  {
+   "word": "HILFT",
+   "clue": "stützt"
+  },
+  {
+   "word": "WEN",
+   "clue": "... rufst du?"
+  },
+  {
+   "word": "PFERD",
+   "clue": "Ross"
+  },
+  {
+   "word": "SITZT",
+   "clue": "hockt"
+  },
+  {
+   "word": "TAGEN",
+   "clue": "beraten"
+  },
+  {
+   "word": "ACHT",
+   "clue": "Zahl nach sieben"
+  },
+  {
+   "word": "PERSON",
+   "clue": "Mensch"
+  },
+  {
+   "word": "RUHE",
+   "clue": "Stille"
+  },
+  {
+   "word": "TIERE",
+   "clue": "Fauna"
+  },
+  {
+   "word": "BITTEN",
+   "clue": "flehen"
+  },
+  {
+   "word": "ZIEHEN",
+   "clue": "zerren"
+  },
+  {
+   "word": "LIED",
+   "clue": "Song"
+  },
+  {
+   "word": "DAMALS",
+   "clue": "einst"
+  },
+  {
+   "word": "NEHME",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "ZIEL",
+   "clue": "Endpunkt"
+  },
+  {
+   "word": "FISCH",
+   "clue": "Hering"
+  },
+  {
+   "word": "GLAS",
+   "clue": "Pokal"
+  },
+  {
+   "word": "TRINKT",
+   "clue": "schlürft"
+  },
+  {
+   "word": "TRUG",
+   "clue": "Betrug, List"
+  },
+  {
+   "word": "KLEID",
+   "clue": "Gewand"
+  },
+  {
+   "word": "KOSTET",
+   "clue": "probiert"
+  },
+  {
+   "word": "WIND",
+   "clue": "Brise"
+  },
+  {
+   "word": "AHNUNG",
+   "clue": "Gespür"
+  },
+  {
+   "word": "MUND",
+   "clue": "Maul"
+  },
+  {
+   "word": "TRAUM",
+   "clue": "Vision"
+  },
+  {
+   "word": "LIEST",
+   "clue": "studiert"
+  },
+  {
+   "word": "HUNGER",
+   "clue": "Appetit"
+  },
+  {
+   "word": "SETZEN",
+   "clue": "stellen"
+  },
+  {
+   "word": "ZUERST",
+   "clue": "als Erstes"
+  },
+  {
+   "word": "HEISS",
+   "clue": "glühend"
+  },
+  {
+   "word": "LOESEN",
+   "clue": "klären"
+  },
+  {
+   "word": "PREIS",
+   "clue": "Kosten"
+  },
+  {
+   "word": "KOENIG",
+   "clue": "Monarch"
+  },
+  {
+   "word": "VOLL",
+   "clue": "gefüllt"
+  },
+  {
+   "word": "HERAUS",
+   "clue": "nach draußen"
+  },
+  {
+   "word": "SCHNEE",
+   "clue": "Flocken"
+  },
+  {
+   "word": "ORT",
+   "clue": "Platz"
+  },
+  {
+   "word": "HUT",
+   "clue": "Mütze"
+  },
+  {
+   "word": "CHEF",
+   "clue": "Boss"
+  },
+  {
+   "word": "BOESE",
+   "clue": "gemein"
+  },
+  {
+   "word": "FING",
+   "clue": "ergriff"
+  },
+  {
+   "word": "WOCHEN",
+   "clue": "Monat: vier ..."
+  },
+  {
+   "word": "HERUM",
+   "clue": "rundum"
+  },
+  {
+   "word": "HOTEL",
+   "clue": "Herberge"
+  },
+  {
+   "word": "EUER",
+   "clue": "euch gehörig"
+  },
+  {
+   "word": "SUCHE",
+   "clue": "ich ... dich"
+  },
+  {
+   "word": "KUNST",
+   "clue": "Malerei"
+  },
+  {
+   "word": "WEINEN",
+   "clue": "heulen"
+  },
+  {
+   "word": "HUNDE",
+   "clue": "Rüden"
+  },
+  {
+   "word": "BLIEB",
+   "clue": "verweilte"
+  },
+  {
+   "word": "GEBE",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "AELTER",
+   "clue": "nicht so jung"
+  },
+  {
+   "word": "TASCHE",
+   "clue": "Beutel"
+  },
+  {
+   "word": "DUMM",
+   "clue": "töricht"
+  },
+  {
+   "word": "HALB",
+   "clue": "zur Hälfte"
+  },
+  {
+   "word": "DESSEN",
+   "clue": "deren (m)"
+  },
+  {
+   "word": "WERDET",
+   "clue": "ihr ... sehen"
+  },
+  {
+   "word": "DORF",
+   "clue": "Weiler"
+  },
+  {
+   "word": "FREUE",
+   "clue": "ich ... mich"
+  },
+  {
+   "word": "ERNST",
+   "clue": "seriös"
+  },
+  {
+   "word": "SAGST",
+   "clue": "du ... es"
+  },
+  {
+   "word": "RAUM",
+   "clue": "Zimmer"
+  },
+  {
+   "word": "KAMEN",
+   "clue": "trafen ein"
+  },
+  {
+   "word": "STUECK",
+   "clue": "Teil"
+  },
+  {
+   "word": "LADEN",
+   "clue": "Geschäft"
+  },
+  {
+   "word": "LAEUFT",
+   "clue": "rennt"
+  },
+  {
+   "word": "WAEREN",
+   "clue": "wenn sie ..."
+  },
+  {
+   "word": "DESTO",
+   "clue": "je ... besser"
+  },
+  {
+   "word": "FUHR",
+   "clue": "reiste"
+  },
+  {
+   "word": "IHRES",
+   "clue": "eines ... Kinder"
+  },
+  {
+   "word": "SITZEN",
+   "clue": "hocken"
+  },
+  {
+   "word": "REGNET",
+   "clue": "es nieselt"
+  },
+  {
+   "word": "HERZEN",
+   "clue": "von ganzem ..."
+  },
+  {
+   "word": "LERNE",
+   "clue": "ich ... gern"
+  },
+  {
+   "word": "TAGES",
+   "clue": "eines ..."
+  },
+  {
+   "word": "KATZEN",
+   "clue": "Miezen"
+  },
+  {
+   "word": "RUHIG",
+   "clue": "still"
+  },
+  {
+   "word": "THEMA",
+   "clue": "Motiv"
+  },
+  {
+   "word": "DANACH",
+   "clue": "hinterher"
+  },
+  {
+   "word": "GINGEN",
+   "clue": "liefen"
+  },
+  {
+   "word": "KLASSE",
+   "clue": "super"
+  },
+  {
+   "word": "WISST",
+   "clue": "ihr ... es"
+  },
+  {
+   "word": "ACH",
+   "clue": "... so!"
+  },
+  {
+   "word": "NETT",
+   "clue": "lieb"
+  },
+  {
+   "word": "PARTY",
+   "clue": "Fete"
+  },
+  {
+   "word": "FIRMA",
+   "clue": "Betrieb"
+  },
+  {
+   "word": "WAHL",
+   "clue": "Auslese"
+  },
+  {
+   "word": "BLICK",
+   "clue": "Sicht"
+  },
+  {
+   "word": "EHE",
+   "clue": "Heirat"
+  },
+  {
+   "word": "FAHRE",
+   "clue": "ich ... heim"
+  },
+  {
+   "word": "KOCHEN",
+   "clue": "sieden"
+  },
+  {
+   "word": "TEUER",
+   "clue": "nicht billig"
+  },
+  {
+   "word": "WEH",
+   "clue": "Schmerz"
+  },
+  {
+   "word": "FARBE",
+   "clue": "Rot, Blau"
+  },
+  {
+   "word": "FEHLT",
+   "clue": "mangelt"
+  },
+  {
+   "word": "SCHIFF",
+   "clue": "Dampfer"
+  },
+  {
+   "word": "WARTET",
+   "clue": "harrt"
+  },
+  {
+   "word": "HASSE",
+   "clue": "ich ... das"
+  },
+  {
+   "word": "SEELE",
+   "clue": "Psyche"
+  },
+  {
+   "word": "PASST",
+   "clue": "sitzt gut"
+  },
+  {
+   "word": "FUEHRT",
+   "clue": "leitet"
+  },
+  {
+   "word": "ROT",
+   "clue": "wie Blut"
+  },
+  {
+   "word": "LEIDEN",
+   "clue": "Qual"
+  },
+  {
+   "word": "SETZTE",
+   "clue": "stellte"
+  },
+  {
+   "word": "URLAUB",
+   "clue": "Ferien"
+  },
+  {
+   "word": "SCHAU",
+   "clue": "... mal her!"
+  },
+  {
+   "word": "SUCHT",
+   "clue": "fahndet"
+  },
+  {
+   "word": "JEDOCH",
+   "clue": "aber"
+  },
+  {
+   "word": "EINS",
+   "clue": "Ziffer 1"
+  },
+  {
+   "word": "EIER",
+   "clue": "vom Huhn"
+  },
+  {
+   "word": "ANFANG",
+   "clue": "Beginn"
+  },
+  {
+   "word": "BANK",
+   "clue": "Geldhaus"
+  },
+  {
+   "word": "GEHABT",
+   "clue": "besessen"
+  },
+  {
+   "word": "ECHT",
+   "clue": "original"
+  },
+  {
+   "word": "STRAND",
+   "clue": "Ufer, Küste"
+  },
+  {
+   "word": "TANZEN",
+   "clue": "schwofen"
+  },
+  {
+   "word": "TASSE",
+   "clue": "Becher"
+  },
+  {
+   "word": "LIEGEN",
+   "clue": "ruhen"
+  },
+  {
+   "word": "NEU",
+   "clue": "frisch"
+  },
+  {
+   "word": "OBEN",
+   "clue": "droben"
+  },
+  {
+   "word": "KIRCHE",
+   "clue": "Kapelle"
+  },
+  {
+   "word": "KAUFTE",
+   "clue": "erwarb"
+  },
+  {
+   "word": "REISEN",
+   "clue": "touren"
+  },
+  {
+   "word": "LEBE",
+   "clue": "ich ... hier"
+  },
+  {
+   "word": "NENNEN",
+   "clue": "heißen"
+  },
+  {
+   "word": "OFFEN",
+   "clue": "ehrlich"
+  },
+  {
+   "word": "TUE",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "EIGENE",
+   "clue": "private"
+  },
+  {
+   "word": "BLOSS",
+   "clue": "nur"
+  },
+  {
+   "word": "LEGTE",
+   "clue": "setzte"
+  },
+  {
+   "word": "AUGE",
+   "clue": "Iris"
+  },
+  {
+   "word": "SELBER",
+   "clue": "selbst"
+  },
+  {
+   "word": "HAAR",
+   "clue": "Locke"
+  },
+  {
+   "word": "MUEHE",
+   "clue": "Plage"
+  },
+  {
+   "word": "CHANCE",
+   "clue": "Option"
+  },
+  {
+   "word": "GEIST",
+   "clue": "Gespenst"
+  },
+  {
+   "word": "LUSTIG",
+   "clue": "witzig"
+  },
+  {
+   "word": "ONKEL",
+   "clue": "Oheim"
+  },
+  {
+   "word": "DARFST",
+   "clue": "du ... gehen"
+  },
+  {
+   "word": "SOBALD",
+   "clue": "wenn"
+  },
+  {
+   "word": "AUFS",
+   "clue": "auf das"
+  },
+  {
+   "word": "TUST",
+   "clue": "du ... es"
+  },
+  {
+   "word": "FOLGEN",
+   "clue": "befolgen"
+  },
+  {
+   "word": "SEE",
+   "clue": "Teich"
+  },
+  {
+   "word": "BRILLE",
+   "clue": "Sehhilfe"
+  },
+  {
+   "word": "WOLLE",
+   "clue": "Garn"
+  },
+  {
+   "word": "FALLEN",
+   "clue": "stürzen"
+  },
+  {
+   "word": "VOGEL",
+   "clue": "Amsel"
+  },
+  {
+   "word": "APFEL",
+   "clue": "Obst"
+  },
+  {
+   "word": "BEKAM",
+   "clue": "erhielt"
+  },
+  {
+   "word": "KINO",
+   "clue": "Filmsaal"
+  },
+  {
+   "word": "ZAHLEN",
+   "clue": "blechen"
+  },
+  {
+   "word": "JEMALS",
+   "clue": "je"
+  },
+  {
+   "word": "ANS",
+   "clue": "an das"
+  },
+  {
+   "word": "NASE",
+   "clue": "Zinken"
+  },
+  {
+   "word": "EIS",
+   "clue": "Gelato"
+  },
+  {
+   "word": "LUEGEN",
+   "clue": "flunkern"
+  },
+  {
+   "word": "GEFAHR",
+   "clue": "Risiko"
+  },
+  {
+   "word": "SCHLAF",
+   "clue": "Bettruhe"
+  },
+  {
+   "word": "RAUS",
+   "clue": "... hier!"
+  },
+  {
+   "word": "RIEF",
+   "clue": "schrie"
+  },
+  {
+   "word": "TEUFEL",
+   "clue": "Satan"
+  },
+  {
+   "word": "MOND",
+   "clue": "Trabant"
+  },
+  {
+   "word": "HAENGT",
+   "clue": "baumelt"
+  },
+  {
+   "word": "ZUCKER",
+   "clue": "süß, weiß"
+  },
+  {
+   "word": "NA",
+   "clue": "... und?"
+  },
+  {
+   "word": "STILL",
+   "clue": "ruhig"
+  },
+  {
+   "word": "WENIGE",
+   "clue": "ein paar"
+  },
+  {
+   "word": "MUT",
+   "clue": "Courage"
+  },
+  {
+   "word": "REGNEN",
+   "clue": "nieseln"
+  },
+  {
+   "word": "MITTAG",
+   "clue": "12 Uhr"
+  },
+  {
+   "word": "FINGER",
+   "clue": "an der Hand"
+  },
+  {
+   "word": "BAEUME",
+   "clue": "Eichen"
+  },
+  {
+   "word": "TRINKE",
+   "clue": "ich ... Tee"
+  },
+  {
+   "word": "VOEGEL",
+   "clue": "Spatzen"
+  },
+  {
+   "word": "KOENNE",
+   "clue": "man ... es"
+  },
+  {
+   "word": "RUF",
+   "clue": "Leumund"
+  },
+  {
+   "word": "REGELN",
+   "clue": "ordnen"
+  },
+  {
+   "word": "AEPFEL",
+   "clue": "rundes Obst"
+  },
+  {
+   "word": "MESSER",
+   "clue": "Klinge"
+  },
+  {
+   "word": "LIEF",
+   "clue": "rannte"
+  },
+  {
+   "word": "TENNIS",
+   "clue": "Ballsport"
+  },
+  {
+   "word": "STELLT",
+   "clue": "setzt"
+  },
+  {
+   "word": "TRAF",
+   "clue": "zielte gut"
+  },
+  {
+   "word": "LAG",
+   "clue": "ruhte"
+  },
+  {
+   "word": "SUESS",
+   "clue": "zuckrig"
+  },
+  {
+   "word": "RUFEN",
+   "clue": "schreien"
+  },
+  {
+   "word": "KRAFT",
+   "clue": "Stärke"
+  },
+  {
+   "word": "FOTO",
+   "clue": "Abzug, Bild"
+  },
+  {
+   "word": "LEUTEN",
+   "clue": "unter ..."
+  },
+  {
+   "word": "AUTOS",
+   "clue": "Pkws"
+  },
+  {
+   "word": "TIEF",
+   "clue": "weit unten"
+  },
+  {
+   "word": "KOSTEN",
+   "clue": "Spesen"
+  },
+  {
+   "word": "OHREN",
+   "clue": "Lauscher"
+  },
+  {
+   "word": "NACHTS",
+   "clue": "im Dunkeln"
+  },
+  {
+   "word": "SCHLUG",
+   "clue": "haute"
+  },
+  {
+   "word": "WOHNE",
+   "clue": "ich ... dort"
+  },
+  {
+   "word": "GILT",
+   "clue": "zählt"
+  },
+  {
+   "word": "FEIER",
+   "clue": "Fest"
+  },
+  {
+   "word": "WIESO",
+   "clue": "warum"
+  },
+  {
+   "word": "SOLLST",
+   "clue": "du ... gehen"
+  },
+  {
+   "word": "ZEIGT",
+   "clue": "weist"
+  },
+  {
+   "word": "DEREN",
+   "clue": "dessen (f)"
+  },
+  {
+   "word": "INDEM",
+   "clue": "wodurch"
+  },
+  {
+   "word": "ALLZU",
+   "clue": "zu sehr"
+  },
+  {
+   "word": "KLUG",
+   "clue": "schlau"
+  },
+  {
+   "word": "INSEL",
+   "clue": "Eiland"
+  },
+  {
+   "word": "LISTE",
+   "clue": "Index"
+  },
+  {
+   "word": "SAHEN",
+   "clue": "blickten"
+  },
+  {
+   "word": "EBEN",
+   "clue": "flach"
+  },
+  {
+   "word": "PASS",
+   "clue": "Ausweis"
+  },
+  {
+   "word": "SUPPE",
+   "clue": "Brühe"
+  },
+  {
+   "word": "HASST",
+   "clue": "liebt nicht"
+  },
+  {
+   "word": "WARM",
+   "clue": "lau"
+  },
+  {
+   "word": "MANTEL",
+   "clue": "Jacke"
+  },
+  {
+   "word": "STETS",
+   "clue": "immer"
+  },
+  {
+   "word": "HEMD",
+   "clue": "Bluse"
+  },
+  {
+   "word": "TU",
+   "clue": "... das!"
+  },
+  {
+   "word": "BABY",
+   "clue": "Säugling"
+  },
+  {
+   "word": "HERRN",
+   "clue": "dem ... sei Dank"
+  },
+  {
+   "word": "STEIN",
+   "clue": "Fels"
+  },
+  {
+   "word": "WAND",
+   "clue": "Mauer"
+  },
+  {
+   "word": "DAHER",
+   "clue": "deshalb"
+  },
+  {
+   "word": "ZAEHNE",
+   "clue": "Gebiss"
+  },
+  {
+   "word": "FEIND",
+   "clue": "Gegner"
+  },
+  {
+   "word": "GESUND",
+   "clue": "fit"
+  },
+  {
+   "word": "SOWOHL",
+   "clue": "... als auch"
+  },
+  {
+   "word": "LUEGE",
+   "clue": "Märchen"
+  },
+  {
+   "word": "NENNT",
+   "clue": "heißt"
+  },
+  {
+   "word": "GESETZ",
+   "clue": "Paragraf"
+  },
+  {
+   "word": "FORM",
+   "clue": "Gestalt"
+  },
+  {
+   "word": "ARMEN",
+   "clue": "die ... Leute"
+  },
+  {
+   "word": "HALLO",
+   "clue": "Gruß"
+  },
+  {
+   "word": "KAPUTT",
+   "clue": "defekt"
+  },
+  {
+   "word": "LANGEN",
+   "clue": "genügen"
+  },
+  {
+   "word": "REIN",
+   "clue": "sauber"
+  },
+  {
+   "word": "LEIHEN",
+   "clue": "borgen"
+  },
+  {
+   "word": "TROTZ",
+   "clue": "obwohl"
+  },
+  {
+   "word": "ZIEHT",
+   "clue": "zerrt"
+  },
+  {
+   "word": "FAENGT",
+   "clue": "ergreift"
+  },
+  {
+   "word": "DUNKEL",
+   "clue": "finster"
+  },
+  {
+   "word": "ASS",
+   "clue": "Könner, Karte"
+  },
+  {
+   "word": "HART",
+   "clue": "fest"
+  },
+  {
+   "word": "BERG",
+   "clue": "Gipfel"
+  },
+  {
+   "word": "LEER",
+   "clue": "hohl"
+  },
+  {
+   "word": "STUHL",
+   "clue": "Sitz"
+  },
+  {
+   "word": "KOFFER",
+   "clue": "Gepäck"
+  },
+  {
+   "word": "REDET",
+   "clue": "plaudert"
+  },
+  {
+   "word": "FANGEN",
+   "clue": "fassen"
+  },
+  {
+   "word": "FORT",
+   "clue": "weg"
+  },
+  {
+   "word": "KLINGT",
+   "clue": "tönt"
+  },
+  {
+   "word": "ZEIGTE",
+   "clue": "wies"
+  },
+  {
+   "word": "EURO",
+   "clue": "Währung"
+  },
+  {
+   "word": "TAXI",
+   "clue": "Droschke"
+  },
+  {
+   "word": "WARF",
+   "clue": "schmiss"
+  },
+  {
+   "word": "GEDULD",
+   "clue": "Ausdauer"
+  },
+  {
+   "word": "SPIELE",
+   "clue": "Partien"
+  },
+  {
+   "word": "LEGEN",
+   "clue": "betten"
+  },
+  {
+   "word": "SIEH",
+   "clue": "... mal!"
+  },
+  {
+   "word": "BLUT",
+   "clue": "in den Adern"
+  },
+  {
+   "word": "GEBAUT",
+   "clue": "errichtet"
+  },
+  {
+   "word": "IDEEN",
+   "clue": "Einfälle"
+  },
+  {
+   "word": "GRUPPE",
+   "clue": "Team"
+  },
+  {
+   "word": "FERN",
+   "clue": "weit weg"
+  },
+  {
+   "word": "STERNE",
+   "clue": "Gestirne"
+  },
+  {
+   "word": "BRACH",
+   "clue": "riss, zerfiel"
+  },
+  {
+   "word": "TIER",
+   "clue": "Vieh"
+  },
+  {
+   "word": "ARME",
+   "clue": "Glieder"
+  },
+  {
+   "word": "FISCHE",
+   "clue": "Forellen"
+  },
+  {
+   "word": "JOB",
+   "clue": "Arbeit"
+  },
+  {
+   "word": "SOLLE",
+   "clue": "man ... warten"
+  },
+  {
+   "word": "VOLK",
+   "clue": "Nation"
+  },
+  {
+   "word": "DACH",
+   "clue": "Giebel"
+  },
+  {
+   "word": "NOETIG",
+   "clue": "wichtig"
+  },
+  {
+   "word": "UEBRIG",
+   "clue": "restlich"
+  },
+  {
+   "word": "WART",
+   "clue": "ihr ... da"
+  },
+  {
+   "word": "MONATE",
+   "clue": "Jahr: zwölf ..."
+  },
+  {
+   "word": "LAERM",
+   "clue": "Krach"
+  },
+  {
+   "word": "BALL",
+   "clue": "Kugel"
+  },
+  {
+   "word": "PAPIER",
+   "clue": "Bogen"
+  },
+  {
+   "word": "LESE",
+   "clue": "Ernte (Wein)"
+  },
+  {
+   "word": "WACH",
+   "clue": "munter"
+  },
+  {
+   "word": "FUEHLT",
+   "clue": "spürt"
+  },
+  {
+   "word": "KARTE",
+   "clue": "Ticket"
+  },
+  {
+   "word": "ZEITEN",
+   "clue": "Epochen"
+  },
+  {
+   "word": "MEINST",
+   "clue": "du ... das?"
+  },
+  {
+   "word": "GANZES",
+   "clue": "ein ..."
+  },
+  {
+   "word": "SORGE",
+   "clue": "Bangen"
+  },
+  {
+   "word": "BILDER",
+   "clue": "Gemälde"
+  },
+  {
+   "word": "DRAN",
+   "clue": "an der Reihe"
+  },
+  {
+   "word": "HALT",
+   "clue": "Stopp"
+  },
+  {
+   "word": "WORUM",
+   "clue": "... geht es?"
+  },
+  {
+   "word": "BLAU",
+   "clue": "wie Himmel"
+  },
+  {
+   "word": "LASSE",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "BEINE",
+   "clue": "Haxen"
+  },
+  {
+   "word": "ZAHL",
+   "clue": "Ziffer"
+  },
+  {
+   "word": "PAUSE",
+   "clue": "Rast"
+  },
+  {
+   "word": "PUNKT",
+   "clue": "Tupfen"
+  },
+  {
+   "word": "WORTEN",
+   "clue": "mit ... loben"
+  },
+  {
+   "word": "HINAUS",
+   "clue": "nach außen"
+  },
+  {
+   "word": "FALLS",
+   "clue": "sofern"
+  },
+  {
+   "word": "BLEIBE",
+   "clue": "Quartier"
+  },
+  {
+   "word": "FREUEN",
+   "clue": "sich ... auf"
+  },
+  {
+   "word": "JUGEND",
+   "clue": "Teenies"
+  },
+  {
+   "word": "NEUN",
+   "clue": "Zahl vor zehn"
+  },
+  {
+   "word": "REICHT",
+   "clue": "genügt"
+  },
+  {
+   "word": "ROLLE",
+   "clue": "Part"
+  },
+  {
+   "word": "NAHE",
+   "clue": "dicht bei"
+  },
+  {
+   "word": "SPRICH",
+   "clue": "... lauter!"
+  },
+  {
+   "word": "VERLOR",
+   "clue": "büßte ein"
+  },
+  {
+   "word": "HALF",
+   "clue": "stützte"
+  },
+  {
+   "word": "LEBTE",
+   "clue": "wohnte"
+  },
+  {
+   "word": "SCHAUT",
+   "clue": "blickt"
+  },
+  {
+   "word": "WITZ",
+   "clue": "Scherz"
+  },
+  {
+   "word": "UNTEN",
+   "clue": "drunten"
+  },
+  {
+   "word": "ZUVOR",
+   "clue": "vorher"
+  },
+  {
+   "word": "RUFE",
+   "clue": "ich ... dich"
+  },
+  {
+   "word": "ZWEITE",
+   "clue": "Vize"
+  },
+  {
+   "word": "BEIN",
+   "clue": "Glied"
+  },
+  {
+   "word": "SPORT",
+   "clue": "Fitness"
+  },
+  {
+   "word": "HEISSE",
+   "clue": "ich ... so"
+  },
+  {
+   "word": "PRO",
+   "clue": "für"
+  },
+  {
+   "word": "SOWEIT",
+   "clue": "bis hier"
+  },
+  {
+   "word": "NUTZEN",
+   "clue": "Vorteil"
+  },
+  {
+   "word": "DAHIN",
+   "clue": "dorthin"
+  },
+  {
+   "word": "HERBST",
+   "clue": "Erntezeit"
+  },
+  {
+   "word": "KAUFE",
+   "clue": "ich ... ein"
+  },
+  {
+   "word": "BAUEN",
+   "clue": "errichten"
+  },
+  {
+   "word": "KAESE",
+   "clue": "Gouda"
+  },
+  {
+   "word": "MEINT",
+   "clue": "denkt"
+  },
+  {
+   "word": "REIS",
+   "clue": "Getreide"
+  },
+  {
+   "word": "STIEG",
+   "clue": "ging hoch"
+  },
+  {
+   "word": "MEINTE",
+   "clue": "sagte"
+  },
+  {
+   "word": "SEITEN",
+   "clue": "Blätter"
+  },
+  {
+   "word": "EUREN",
+   "clue": "an ... Tisch"
+  },
+  {
+   "word": "JENER",
+   "clue": "dieser"
+  },
+  {
+   "word": "RADIO",
+   "clue": "Funk"
+  },
+  {
+   "word": "ABENDS",
+   "clue": "spät am Tag"
+  },
+  {
+   "word": "BESUCH",
+   "clue": "Gast"
+  },
+  {
+   "word": "HOLEN",
+   "clue": "bringen"
+  },
+  {
+   "word": "LINKS",
+   "clue": "nicht rechts"
+  },
+  {
+   "word": "GAESTE",
+   "clue": "Besucher"
+  },
+  {
+   "word": "PIZZA",
+   "clue": "aus Neapel"
+  },
+  {
+   "word": "REGEL",
+   "clue": "Norm"
+  },
+  {
+   "word": "RETTEN",
+   "clue": "bergen"
+  },
+  {
+   "word": "DAVOR",
+   "clue": "vor dem"
+  },
+  {
+   "word": "BRING",
+   "clue": "... es her"
+  },
+  {
+   "word": "KAMERA",
+   "clue": "Filmgerät"
+  },
+  {
+   "word": "SOFA",
+   "clue": "Couch"
+  },
+  {
+   "word": "WUNDER",
+   "clue": "Mirakel"
+  },
+  {
+   "word": "ERSTER",
+   "clue": "Sieger"
+  },
+  {
+   "word": "REIHE",
+   "clue": "Zeile"
+  },
+  {
+   "word": "ROTE",
+   "clue": "die ... Rose"
+  },
+  {
+   "word": "WAHRE",
+   "clue": "echte"
+  },
+  {
+   "word": "DAUERT",
+   "clue": "währt"
+  },
+  {
+   "word": "GELEBT",
+   "clue": "gewohnt"
+  },
+  {
+   "word": "GRUEN",
+   "clue": "wie Gras"
+  },
+  {
+   "word": "BISHER",
+   "clue": "bislang"
+  },
+  {
+   "word": "GOLD",
+   "clue": "Metall Au"
+  },
+  {
+   "word": "VATERS",
+   "clue": "des Papas"
+  },
+  {
+   "word": "SCHADE",
+   "clue": "leider"
+  },
+  {
+   "word": "TEXT",
+   "clue": "Inhalt"
+  },
+  {
+   "word": "HOLZ",
+   "clue": "Brett"
+  },
+  {
+   "word": "EBENSO",
+   "clue": "genauso"
+  },
+  {
+   "word": "HOFFEN",
+   "clue": "ersehnen"
+  },
+  {
+   "word": "TRANK",
+   "clue": "Getränk"
+  },
+  {
+   "word": "NUMMER",
+   "clue": "Nr."
+  },
+  {
+   "word": "FUESSE",
+   "clue": "Sohlen"
+  },
+  {
+   "word": "HAUT",
+   "clue": "Teint"
+  },
+  {
+   "word": "KISTE",
+   "clue": "Truhe"
+  },
+  {
+   "word": "ANWALT",
+   "clue": "Jurist"
+  },
+  {
+   "word": "FRAG",
+   "clue": "... mich!"
+  },
+  {
+   "word": "TATEN",
+   "clue": "Werke"
+  },
+  {
+   "word": "VORHER",
+   "clue": "zuvor"
+  },
+  {
+   "word": "WUNSCH",
+   "clue": "Begehren"
+  },
+  {
+   "word": "KANNTE",
+   "clue": "wusste"
+  },
+  {
+   "word": "SINGT",
+   "clue": "trällert"
+  },
+  {
+   "word": "BRIEFE",
+   "clue": "Post"
+  },
+  {
+   "word": "EURER",
+   "clue": "bei ... Mutter"
+  },
+  {
+   "word": "SALZ",
+   "clue": "Würze"
+  },
+  {
+   "word": "ROTEN",
+   "clue": "die ... Rosen"
+  },
+  {
+   "word": "SCHACH",
+   "clue": "Brettspiel"
+  },
+  {
+   "word": "TYP",
+   "clue": "Kerl"
+  },
+  {
+   "word": "WOZU",
+   "clue": "weshalb"
+  },
+  {
+   "word": "FRAGT",
+   "clue": "erkundet"
+  },
+  {
+   "word": "KAUFT",
+   "clue": "ersteht"
+  },
+  {
+   "word": "DAUERN",
+   "clue": "währen"
+  },
+  {
+   "word": "STEHE",
+   "clue": "ich ... auf"
+  },
+  {
+   "word": "TANTE",
+   "clue": "Base"
+  },
+  {
+   "word": "EINSAM",
+   "clue": "allein"
+  },
+  {
+   "word": "LAUTER",
+   "clue": "rein, ehrlich"
+  },
+  {
+   "word": "OHR",
+   "clue": "zum Hören"
+  },
+  {
+   "word": "FOTOS",
+   "clue": "Bilder"
+  },
+  {
+   "word": "LANDES",
+   "clue": "... Grenze"
+  },
+  {
+   "word": "OBST",
+   "clue": "Früchte"
+  },
+  {
+   "word": "SOVIEL",
+   "clue": "so sehr"
+  },
+  {
+   "word": "TRAT",
+   "clue": "kickte"
+  },
+  {
+   "word": "DEINES",
+   "clue": "... Vaters"
+  },
+  {
+   "word": "METER",
+   "clue": "100 cm"
+  },
+  {
+   "word": "WOVON",
+   "clue": "... lebt er?"
+  },
+  {
+   "word": "RECHTS",
+   "clue": "nicht links"
+  },
+  {
+   "word": "TEILEN",
+   "clue": "spalten"
+  },
+  {
+   "word": "WILLEN",
+   "clue": "Absicht"
+  },
+  {
+   "word": "WOLKEN",
+   "clue": "Gewölk"
+  },
+  {
+   "word": "BLEIB",
+   "clue": "... hier!"
+  },
+  {
+   "word": "GEGEND",
+   "clue": "Region"
+  },
+  {
+   "word": "MUSEUM",
+   "clue": "Galerie"
+  },
+  {
+   "word": "SCHIRM",
+   "clue": "Parasol"
+  },
+  {
+   "word": "WESEN",
+   "clue": "Gemüt"
+  },
+  {
+   "word": "SAUBER",
+   "clue": "rein"
+  },
+  {
+   "word": "NEUER",
+   "clue": "ein ... Tag"
+  },
+  {
+   "word": "UMS",
+   "clue": "um das"
+  },
+  {
+   "word": "REST",
+   "clue": "Übrige"
+  },
+  {
+   "word": "MOEGE",
+   "clue": "er ... siegen"
+  },
+  {
+   "word": "SETZT",
+   "clue": "stellt"
+  },
+  {
+   "word": "MALE",
+   "clue": "ich ... ein Bild"
+  },
+  {
+   "word": "FOLGE",
+   "clue": "Episode"
+  },
+  {
+   "word": "LIEBST",
+   "clue": "du ... mich?"
+  },
+  {
+   "word": "FREUT",
+   "clue": "beglückt"
+  },
+  {
+   "word": "JAHRES",
+   "clue": "... Ende"
+  },
+  {
+   "word": "LEISE",
+   "clue": "gedämpft"
+  },
+  {
+   "word": "MAUS",
+   "clue": "Nager"
+  },
+  {
+   "word": "HALBE",
+   "clue": "die ... Wahrheit"
+  },
+  {
+   "word": "YEN",
+   "clue": "Geld Japans"
+  },
+  {
+   "word": "HEREIN",
+   "clue": "Komm ...!"
+  },
+  {
+   "word": "MINUTE",
+   "clue": "60 Sek."
+  },
+  {
+   "word": "PER",
+   "clue": "mit, durch"
+  },
+  {
+   "word": "GEBT",
+   "clue": "ihr ... es"
+  },
+  {
+   "word": "ZWOELF",
+   "clue": "ein Dutzend"
+  },
+  {
+   "word": "HASSEN",
+   "clue": "nicht lieben"
+  },
+  {
+   "word": "OMA",
+   "clue": "Mamas Mama"
+  },
+  {
+   "word": "WEISSE",
+   "clue": "die ... Weste"
+  },
+  {
+   "word": "BLUME",
+   "clue": "Rose"
+  },
+  {
+   "word": "GOTTES",
+   "clue": "... Segen"
+  },
+  {
+   "word": "BRINGE",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "FEHLEN",
+   "clue": "mangeln"
+  },
+  {
+   "word": "STREIT",
+   "clue": "Zank"
+  },
+  {
+   "word": "LIEB",
+   "clue": "brav"
+  },
+  {
+   "word": "GAEBE",
+   "clue": "wenn es ..."
+  },
+  {
+   "word": "GRAD",
+   "clue": "Maß für Wärme"
+  },
+  {
+   "word": "STURM",
+   "clue": "Orkan"
+  },
+  {
+   "word": "WOLF",
+   "clue": "Isegrim"
+  },
+  {
+   "word": "ZUFALL",
+   "clue": "Fügung"
+  },
+  {
+   "word": "DIREKT",
+   "clue": "gerade"
+  },
+  {
+   "word": "JENE",
+   "clue": "diese"
+  },
+  {
+   "word": "LAUNE",
+   "clue": "Gemüt"
+  },
+  {
+   "word": "ROM",
+   "clue": "ewige Stadt"
+  },
+  {
+   "word": "RUFT",
+   "clue": "schreit"
+  },
+  {
+   "word": "FEINDE",
+   "clue": "Gegner"
+  },
+  {
+   "word": "OPFER",
+   "clue": "Gabe"
+  },
+  {
+   "word": "BERGE",
+   "clue": "Alpen"
+  },
+  {
+   "word": "HINEIN",
+   "clue": "nach innen"
+  },
+  {
+   "word": "STELL",
+   "clue": "... es hin"
+  },
+  {
+   "word": "HANDY",
+   "clue": "Telefon"
+  },
+  {
+   "word": "LIEBTE",
+   "clue": "mochte"
+  },
+  {
+   "word": "BERUF",
+   "clue": "Job"
+  },
+  {
+   "word": "TOTAL",
+   "clue": "völlig"
+  },
+  {
+   "word": "WIRKT",
+   "clue": "scheint"
+  },
+  {
+   "word": "PASSEN",
+   "clue": "stimmen"
+  },
+  {
+   "word": "DRIN",
+   "clue": "im Inneren"
+  },
+  {
+   "word": "ECKE",
+   "clue": "Winkel"
+  },
+  {
+   "word": "NAEHER",
+   "clue": "dichter"
+  },
+  {
+   "word": "STOCK",
+   "clue": "Stab"
+  },
+  {
+   "word": "WOFUER",
+   "clue": "... ist das?"
+  },
+  {
+   "word": "BUTTER",
+   "clue": "Aufstrich"
+  },
+  {
+   "word": "GEWALT",
+   "clue": "Wucht"
+  },
+  {
+   "word": "HINTEN",
+   "clue": "achtern"
+  },
+  {
+   "word": "HOERST",
+   "clue": "du ... zu?"
+  },
+  {
+   "word": "KULTUR",
+   "clue": "Bildung"
+  },
+  {
+   "word": "MARKT",
+   "clue": "Basar"
+  },
+  {
+   "word": "PLAENE",
+   "clue": "Entwürfe"
+  },
+  {
+   "word": "POST",
+   "clue": "Briefe"
+  },
+  {
+   "word": "ZIEHE",
+   "clue": "ich ... um"
+  },
+  {
+   "word": "SATT",
+   "clue": "nicht hungrig"
+  },
+  {
+   "word": "WEGE",
+   "clue": "Pfade"
+  },
+  {
+   "word": "HOELLE",
+   "clue": "Inferno"
+  },
+  {
+   "word": "RECHTE",
+   "clue": "die ... Hand"
+  },
+  {
+   "word": "WESSEN",
+   "clue": "... Buch?"
+  },
+  {
+   "word": "BLIND",
+   "clue": "ohne Sicht"
+  },
+  {
+   "word": "BLOED",
+   "clue": "doof"
+  },
+  {
+   "word": "EWIG",
+   "clue": "endlos"
+  },
+  {
+   "word": "WEILE",
+   "clue": "kurze Zeit"
+  },
+  {
+   "word": "WITZE",
+   "clue": "Scherze"
+  },
+  {
+   "word": "DANKEN",
+   "clue": "Dank sagen"
+  },
+  {
+   "word": "HELFE",
+   "clue": "ich ... dir"
+  },
+  {
+   "word": "TELLER",
+   "clue": "Geschirr"
+  },
+  {
+   "word": "BAHN",
+   "clue": "Gleis, Zug"
+  },
+  {
+   "word": "GELANG",
+   "clue": "glückte"
+  },
+  {
+   "word": "MITTEL",
+   "clue": "Methode"
+  },
+  {
+   "word": "SUCHTE",
+   "clue": "forschte"
+  },
+  {
+   "word": "ZUNGE",
+   "clue": "im Mund"
+  },
+  {
+   "word": "FUERS",
+   "clue": "für das"
+  },
+  {
+   "word": "HAUSES",
+   "clue": "Herr des ..."
+  },
+  {
+   "word": "LUEGT",
+   "clue": "flunkert"
+  },
+  {
+   "word": "GRAS",
+   "clue": "Rasen"
+  },
+  {
+   "word": "GEHIRN",
+   "clue": "Hirn"
+  },
+  {
+   "word": "HOSE",
+   "clue": "Jeans"
+  },
+  {
+   "word": "MUESSE",
+   "clue": "er ... gehen"
+  },
+  {
+   "word": "SPRANG",
+   "clue": "hüpfte"
+  },
+  {
+   "word": "UEBEL",
+   "clue": "schlimm"
+  },
+  {
+   "word": "WERFEN",
+   "clue": "pfeffern"
+  },
+  {
+   "word": "BOOT",
+   "clue": "Kahn"
+  },
+  {
+   "word": "EI",
+   "clue": "mit Dotter"
+  },
+  {
+   "word": "RANNTE",
+   "clue": "lief schnell"
+  },
+  {
+   "word": "MOCHTE",
+   "clue": "liebte"
+  },
+  {
+   "word": "FRISCH",
+   "clue": "neu"
+  },
+  {
+   "word": "KEINEM",
+   "clue": "nicht einem"
+  },
+  {
+   "word": "MERKEN",
+   "clue": "behalten"
+  },
+  {
+   "word": "TREPPE",
+   "clue": "Stiege"
+  },
+  {
+   "word": "VORAUS",
+   "clue": "im ..."
+  },
+  {
+   "word": "HALS",
+   "clue": "Nacken"
+  },
+  {
+   "word": "JACKE",
+   "clue": "Blazer"
+  },
+  {
+   "word": "DARAUS",
+   "clue": "aus dem"
+  },
+  {
+   "word": "LAUFE",
+   "clue": "ich ... los"
+  },
+  {
+   "word": "RENNEN",
+   "clue": "Wettlauf"
+  },
+  {
+   "word": "ROSEN",
+   "clue": "Blumen"
+  },
+  {
+   "word": "KANADA",
+   "clue": "Nachbar der USA"
+  },
+  {
+   "word": "PFERDE",
+   "clue": "Rösser"
+  },
+  {
+   "word": "STRENG",
+   "clue": "rigoros"
+  },
+  {
+   "word": "DINGEN",
+   "clue": "in allen ..."
+  },
+  {
+   "word": "KOCHT",
+   "clue": "siedet"
+  },
+  {
+   "word": "LAUTET",
+   "clue": "heißt"
+  },
+  {
+   "word": "ANGELN",
+   "clue": "fischen"
+  },
+  {
+   "word": "FOLGT",
+   "clue": "kommt nach"
+  },
+  {
+   "word": "KARTEN",
+   "clue": "Tickets"
+  },
+  {
+   "word": "LIEDER",
+   "clue": "Songs"
+  },
+  {
+   "word": "SASSEN",
+   "clue": "hockten"
+  },
+  {
+   "word": "FILME",
+   "clue": "Kinohits"
+  },
+  {
+   "word": "GEFIEL",
+   "clue": "war schön"
+  },
+  {
+   "word": "BAD",
+   "clue": "Wanne"
+  },
+  {
+   "word": "FARBEN",
+   "clue": "Rot, Gelb"
+  },
+  {
+   "word": "GIBST",
+   "clue": "du ... es"
+  },
+  {
+   "word": "SAND",
+   "clue": "am Strand"
+  },
+  {
+   "word": "TRAUEN",
+   "clue": "wagen"
+  },
+  {
+   "word": "ALTES",
+   "clue": "... Eisen"
+  },
+  {
+   "word": "SEHT",
+   "clue": "ihr ... es"
+  },
+  {
+   "word": "HEIMAT",
+   "clue": "Zuhause"
+  },
+  {
+   "word": "TOLL",
+   "clue": "super"
+  },
+  {
+   "word": "TRIFFT",
+   "clue": "stößt auf"
+  },
+  {
+   "word": "ANZUG",
+   "clue": "Sakko"
+  },
+  {
+   "word": "GELEGT",
+   "clue": "platziert"
+  },
+  {
+   "word": "LEGT",
+   "clue": "stellt hin"
+  },
+  {
+   "word": "MAUER",
+   "clue": "Wall"
+  },
+  {
+   "word": "STAAT",
+   "clue": "Republik"
+  },
+  {
+   "word": "STECKT",
+   "clue": "sitzt fest"
+  },
+  {
+   "word": "FAUL",
+   "clue": "träge"
+  },
+  {
+   "word": "FAHRER",
+   "clue": "Pilot"
+  },
+  {
+   "word": "KAMPF",
+   "clue": "Gefecht"
+  },
+  {
+   "word": "SCHATZ",
+   "clue": "Liebling"
+  },
+  {
+   "word": "STIRBT",
+   "clue": "geht ein"
+  },
+  {
+   "word": "FEIERN",
+   "clue": "Party machen"
+  },
+  {
+   "word": "HOHEN",
+   "clue": "die ... Berge"
+  },
+  {
+   "word": "MITTE",
+   "clue": "Zentrum"
+  },
+  {
+   "word": "LACHTE",
+   "clue": "kicherte"
+  },
+  {
+   "word": "LERNTE",
+   "clue": "paukte"
+  },
+  {
+   "word": "ZIEH",
+   "clue": "... dich an!"
+  },
+  {
+   "word": "DIEB",
+   "clue": "Räuber"
+  },
+  {
+   "word": "NOT",
+   "clue": "Elend"
+  },
+  {
+   "word": "SAUER",
+   "clue": "nicht süß"
+  },
+  {
+   "word": "AUTOR",
+   "clue": "Dichter"
+  },
+  {
+   "word": "KEKSE",
+   "clue": "Gebäck"
+  },
+  {
+   "word": "MITTEN",
+   "clue": "im Zentrum"
+  },
+  {
+   "word": "TODE",
+   "clue": "zu ... betrübt"
+  },
+  {
+   "word": "WORAUF",
+   "clue": "... wartest du?"
+  },
+  {
+   "word": "BLAUE",
+   "clue": "der ... Planet"
+  },
+  {
+   "word": "DURST",
+   "clue": "Brand"
+  },
+  {
+   "word": "STOERT",
+   "clue": "nervt"
+  },
+  {
+   "word": "TOETEN",
+   "clue": "die Zeit ..."
+  },
+  {
+   "word": "TUEREN",
+   "clue": "Pforten"
+  },
+  {
+   "word": "FERIEN",
+   "clue": "Urlaub"
+  },
+  {
+   "word": "KUSS",
+   "clue": "Bussi"
+  },
+  {
+   "word": "HOHE",
+   "clue": "die ... See"
+  },
+  {
+   "word": "ZOO",
+   "clue": "Tierpark"
+  },
+  {
+   "word": "EINST",
+   "clue": "früher"
+  },
+  {
+   "word": "FERNE",
+   "clue": "Weite"
+  },
+  {
+   "word": "MANNES",
+   "clue": "des Gatten"
+  },
+  {
+   "word": "UEBEN",
+   "clue": "proben"
+  },
+  {
+   "word": "STROM",
+   "clue": "Energie"
+  },
+  {
+   "word": "TERMIN",
+   "clue": "Frist"
+  },
+  {
+   "word": "BART",
+   "clue": "Kinnhaar"
+  },
+  {
+   "word": "KAELTE",
+   "clue": "Frost"
+  },
+  {
+   "word": "SPAREN",
+   "clue": "horten"
+  },
+  {
+   "word": "KUNDEN",
+   "clue": "Käufer"
+  },
+  {
+   "word": "LOHNT",
+   "clue": "zahlt sich aus"
+  },
+  {
+   "word": "MAIL",
+   "clue": "E-Brief"
+  },
+  {
+   "word": "NIMMST",
+   "clue": "du ... es"
+  },
+  {
+   "word": "KERL",
+   "clue": "Typ"
+  },
+  {
+   "word": "STARKE",
+   "clue": "kräftige"
+  },
+  {
+   "word": "TAETE",
+   "clue": "es ... gut"
+  },
+  {
+   "word": "TEST",
+   "clue": "Prüfung"
+  },
+  {
+   "word": "WAFFE",
+   "clue": "Schwert"
+  },
+  {
+   "word": "FAHRT",
+   "clue": "Reise"
+  },
+  {
+   "word": "HERVOR",
+   "clue": "heraus"
+  },
+  {
+   "word": "HILF",
+   "clue": "... mir!"
+  },
+  {
+   "word": "WAERST",
+   "clue": "wenn du ..."
+  },
+  {
+   "word": "DECKE",
+   "clue": "Plaid"
+  },
+  {
+   "word": "HITZE",
+   "clue": "Glut"
+  },
+  {
+   "word": "HUMOR",
+   "clue": "Komik"
+  },
+  {
+   "word": "NORMAL",
+   "clue": "üblich"
+  },
+  {
+   "word": "SIEG",
+   "clue": "Triumph"
+  },
+  {
+   "word": "VIELES",
+   "clue": "manches"
+  },
+  {
+   "word": "VORNE",
+   "clue": "an der Spitze"
+  },
+  {
+   "word": "AERGER",
+   "clue": "Verdruss"
+  },
+  {
+   "word": "DOKTOR",
+   "clue": "Arzt"
+  },
+  {
+   "word": "HONIG",
+   "clue": "von Bienen"
+  },
+  {
+   "word": "KELLER",
+   "clue": "unten im Haus"
+  },
+  {
+   "word": "AERZTE",
+   "clue": "Heiler"
+  },
+  {
+   "word": "LACHT",
+   "clue": "kichert"
+  },
+  {
+   "word": "STIFT",
+   "clue": "Kuli"
+  },
+  {
+   "word": "WOMIT",
+   "clue": "... malst du?"
+  },
+  {
+   "word": "STILLE",
+   "clue": "Ruhe"
+  },
+  {
+   "word": "ACHTEN",
+   "clue": "würdigen"
+  },
+  {
+   "word": "MAGEN",
+   "clue": "Bauch"
+  },
+  {
+   "word": "TEILE",
+   "clue": "Stücke"
+  },
+  {
+   "word": "TRAGE",
+   "clue": "Bahre"
+  },
+  {
+   "word": "EHRE",
+   "clue": "Würde"
+  },
+  {
+   "word": "FLUG",
+   "clue": "Luftreise"
+  },
+  {
+   "word": "GENIE",
+   "clue": "Talent"
+  },
+  {
+   "word": "BEWEGT",
+   "clue": "gerührt"
+  },
+  {
+   "word": "HOB",
+   "clue": "stemmte"
+  },
+  {
+   "word": "KUH",
+   "clue": "Rind"
+  },
+  {
+   "word": "RAD",
+   "clue": "Velo"
+  },
+  {
+   "word": "RATE",
+   "clue": "ich ... mal"
+  },
+  {
+   "word": "SETZ",
+   "clue": "... dich!"
+  },
+  {
+   "word": "PREISE",
+   "clue": "Tarife"
+  },
+  {
+   "word": "SOCKEN",
+   "clue": "Strümpfe"
+  },
+  {
+   "word": "WAFFEN",
+   "clue": "Speere"
+  },
+  {
+   "word": "DENK",
+   "clue": "... nach!"
+  },
+  {
+   "word": "ERNEUT",
+   "clue": "wieder"
+  },
+  {
+   "word": "PARTEI",
+   "clue": "Fraktion"
+  },
+  {
+   "word": "RIET",
+   "clue": "empfahl"
+  },
+  {
+   "word": "ZAEHLT",
+   "clue": "gilt"
+  },
+  {
+   "word": "ENGEL",
+   "clue": "Cherub"
+  },
+  {
+   "word": "RIECHT",
+   "clue": "duftet"
+  },
+  {
+   "word": "BAEREN",
+   "clue": "Grizzlys"
+  },
+  {
+   "word": "NASS",
+   "clue": "feucht"
+  },
+  {
+   "word": "OPA",
+   "clue": "Papas Papa"
+  },
+  {
+   "word": "RUND",
+   "clue": "kugelig"
+  },
+  {
+   "word": "LERNST",
+   "clue": "du ... gut"
+  },
+  {
+   "word": "KAEME",
+   "clue": "wenn er ..."
+  },
+  {
+   "word": "WEINTE",
+   "clue": "heulte"
+  },
+  {
+   "word": "WORAN",
+   "clue": "... denkst du?"
+  },
+  {
+   "word": "FASSEN",
+   "clue": "greifen"
+  },
+  {
+   "word": "KAUF",
+   "clue": "Erwerb"
+  },
+  {
+   "word": "ZWECK",
+   "clue": "Ziel"
+  },
+  {
+   "word": "BAND",
+   "clue": "Kapelle"
+  },
+  {
+   "word": "EILIG",
+   "clue": "hastig"
+  },
+  {
+   "word": "LIPPEN",
+   "clue": "Mund"
+  },
+  {
+   "word": "NERVEN",
+   "clue": "stören"
+  },
+  {
+   "word": "MUELL",
+   "clue": "Abfall"
+  },
+  {
+   "word": "ESEL",
+   "clue": "Grautier"
+  },
+  {
+   "word": "LANGER",
+   "clue": "ein ... Weg"
+  },
+  {
+   "word": "LANGEM",
+   "clue": "seit ..."
+  },
+  {
+   "word": "TALENT",
+   "clue": "Gabe"
+  },
+  {
+   "word": "ZEIG",
+   "clue": "... her!"
+  },
+  {
+   "word": "BESTES",
+   "clue": "sein ... geben"
+  },
+  {
+   "word": "IRGEND",
+   "clue": "... etwas"
+  },
+  {
+   "word": "KRIEGE",
+   "clue": "Fehden"
+  },
+  {
+   "word": "BETRAT",
+   "clue": "ging hinein"
+  },
+  {
+   "word": "EUREM",
+   "clue": "in ... Haus"
+  },
+  {
+   "word": "HIESS",
+   "clue": "nannte sich"
+  },
+  {
+   "word": "STERN",
+   "clue": "Gestirn"
+  },
+  {
+   "word": "FUCHS",
+   "clue": "Reineke"
+  },
+  {
+   "word": "GOLF",
+   "clue": "Bucht"
+  },
+  {
+   "word": "BOESEN",
+   "clue": "die ... Buben"
+  },
+  {
+   "word": "KURZE",
+   "clue": "knappe"
+  },
+  {
+   "word": "OEFTER",
+   "clue": "häufiger"
+  },
+  {
+   "word": "BUCHES",
+   "clue": "Titel des ..."
+  },
+  {
+   "word": "GELB",
+   "clue": "wie Zitronen"
+  },
+  {
+   "word": "KEHRTE",
+   "clue": "fegte"
+  },
+  {
+   "word": "SCHRIE",
+   "clue": "brüllte"
+  },
+  {
+   "word": "STEIGT",
+   "clue": "klettert"
+  },
+  {
+   "word": "ZUVIEL",
+   "clue": "zu sehr"
+  },
+  {
+   "word": "BAUCH",
+   "clue": "Wanst"
+  },
+  {
+   "word": "ERGIBT",
+   "clue": "macht"
+  },
+  {
+   "word": "GERUCH",
+   "clue": "Duft"
+  },
+  {
+   "word": "HUEGEL",
+   "clue": "Anhöhe"
+  },
+  {
+   "word": "RISIKO",
+   "clue": "Wagnis"
+  },
+  {
+   "word": "KRITIK",
+   "clue": "Tadel"
+  },
+  {
+   "word": "NETZ",
+   "clue": "Web"
+  },
+  {
+   "word": "ARMUT",
+   "clue": "Mangel"
+  },
+  {
+   "word": "BILDEN",
+   "clue": "formen"
+  },
+  {
+   "word": "KNOPF",
+   "clue": "Taste"
+  },
+  {
+   "word": "MASSE",
+   "clue": "Menge"
+  },
+  {
+   "word": "SOEHNE",
+   "clue": "Kinder (m)"
+  },
+  {
+   "word": "MEIST",
+   "clue": "fast immer"
+  },
+  {
+   "word": "ZIELE",
+   "clue": "Pläne"
+  },
+  {
+   "word": "AKZENT",
+   "clue": "Betonung"
+  },
+  {
+   "word": "NEBEL",
+   "clue": "Dunst"
+  },
+  {
+   "word": "OFEN",
+   "clue": "Herd"
+  },
+  {
+   "word": "AFRIKA",
+   "clue": "Kontinent"
+  },
+  {
+   "word": "FIEBER",
+   "clue": "erhöhte Temp."
+  },
+  {
+   "word": "GEMEIN",
+   "clue": "fies"
+  },
+  {
+   "word": "HINZU",
+   "clue": "dazu"
+  },
+  {
+   "word": "JENEM",
+   "clue": "diesem"
+  },
+  {
+   "word": "LIES",
+   "clue": "... vor!"
+  },
+  {
+   "word": "ZEUG",
+   "clue": "Kram"
+  },
+  {
+   "word": "BAR",
+   "clue": "Kneipe"
+  },
+  {
+   "word": "FREMDE",
+   "clue": "Ausland"
+  },
+  {
+   "word": "GRAB",
+   "clue": "Gruft"
+  },
+  {
+   "word": "LEIDET",
+   "clue": "klagt"
+  },
+  {
+   "word": "MAI",
+   "clue": "5. Monat"
+  },
+  {
+   "word": "DRAUF",
+   "clue": "... und dran"
+  },
+  {
+   "word": "GRUNDE",
+   "clue": "im ...: eigentlich"
+  },
+  {
+   "word": "HALBEN",
+   "clue": "zum ... Preis"
+  },
+  {
+   "word": "HOF",
+   "clue": "Gehöft"
+  },
+  {
+   "word": "IRREN",
+   "clue": "täuschen"
+  },
+  {
+   "word": "TUGEND",
+   "clue": "Moral"
+  },
+  {
+   "word": "WUT",
+   "clue": "Zorn"
+  },
+  {
+   "word": "FLOG",
+   "clue": "segelte"
+  },
+  {
+   "word": "VIDEO",
+   "clue": "Clip"
+  },
+  {
+   "word": "FREIEN",
+   "clue": "im ...: draußen"
+  },
+  {
+   "word": "GARAGE",
+   "clue": "Carport"
+  },
+  {
+   "word": "LINKEN",
+   "clue": "die ... Hand"
+  },
+  {
+   "word": "LOEWEN",
+   "clue": "Raubtiere"
+  },
+  {
+   "word": "RASCH",
+   "clue": "schnell"
+  },
+  {
+   "word": "SALAT",
+   "clue": "Rohkost"
+  },
+  {
+   "word": "WERK",
+   "clue": "Fabrik"
+  },
+  {
+   "word": "BLATT",
+   "clue": "Laub"
+  },
+  {
+   "word": "FALLE",
+   "clue": "Schlinge"
+  },
+  {
+   "word": "FLIEGE",
+   "clue": "Insekt"
+  },
+  {
+   "word": "GRIFF",
+   "clue": "Henkel"
+  },
+  {
+   "word": "MIETE",
+   "clue": "Pacht"
+  },
+  {
+   "word": "TEAM",
+   "clue": "Crew"
+  },
+  {
+   "word": "BLAUEN",
+   "clue": "ins ... fahren"
+  },
+  {
+   "word": "NIEDER",
+   "clue": "runter"
+  },
+  {
+   "word": "SOLCH",
+   "clue": "derart"
+  },
+  {
+   "word": "HOLE",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "NAHMEN",
+   "clue": "griffen"
+  },
+  {
+   "word": "ERLEBT",
+   "clue": "erfahren"
+  },
+  {
+   "word": "REIFEN",
+   "clue": "Pneu"
+  },
+  {
+   "word": "RING",
+   "clue": "Reif"
+  },
+  {
+   "word": "KLANG",
+   "clue": "Ton"
+  },
+  {
+   "word": "LEITER",
+   "clue": "Direktor"
+  },
+  {
+   "word": "WETTE",
+   "clue": "Einsatz"
+  },
+  {
+   "word": "ESST",
+   "clue": "ihr ... Brot"
+  },
+  {
+   "word": "MODE",
+   "clue": "Trend"
+  },
+  {
+   "word": "DUMME",
+   "clue": "alberne"
+  },
+  {
+   "word": "GRENZE",
+   "clue": "Limit"
+  },
+  {
+   "word": "KOCH",
+   "clue": "Smutje"
+  },
+  {
+   "word": "BOT",
+   "clue": "gab an"
+  },
+  {
+   "word": "GEBURT",
+   "clue": "Start ins Leben"
+  },
+  {
+   "word": "HELL",
+   "clue": "licht"
+  },
+  {
+   "word": "HOEHER",
+   "clue": "oberhalb"
+  },
+  {
+   "word": "ZAUN",
+   "clue": "Gatter"
+  },
+  {
+   "word": "BIETET",
+   "clue": "offeriert"
+  },
+  {
+   "word": "FELD",
+   "clue": "Acker"
+  },
+  {
+   "word": "SELBEN",
+   "clue": "am ... Tag"
+  },
+  {
+   "word": "TRITT",
+   "clue": "Kick"
+  },
+  {
+   "word": "FABRIK",
+   "clue": "Werk"
+  },
+  {
+   "word": "FURCHT",
+   "clue": "Angst"
+  },
+  {
+   "word": "HILFST",
+   "clue": "du ... mir?"
+  },
+  {
+   "word": "PAKET",
+   "clue": "Sendung"
+  },
+  {
+   "word": "SCHAFE",
+   "clue": "Lämmer"
+  },
+  {
+   "word": "BEDARF",
+   "clue": "Wunsch, Soll"
+  },
+  {
+   "word": "FRISST",
+   "clue": "mampft"
+  },
+  {
+   "word": "HALTET",
+   "clue": "ihr ... an"
+  },
+  {
+   "word": "LEG",
+   "clue": "... los!"
+  },
+  {
+   "word": "SYSTEM",
+   "clue": "Ordnung"
+  },
+  {
+   "word": "DREHT",
+   "clue": "rotiert"
+  },
+  {
+   "word": "MUTIG",
+   "clue": "tapfer"
+  },
+  {
+   "word": "TIEFE",
+   "clue": "Abgrund"
+  },
+  {
+   "word": "GEBIET",
+   "clue": "Zone"
+  },
+  {
+   "word": "JUNGS",
+   "clue": "Buben"
+  },
+  {
+   "word": "SCHARF",
+   "clue": "spitz"
+  },
+  {
+   "word": "TITEL",
+   "clue": "Rang, Name"
+  },
+  {
+   "word": "WOHNTE",
+   "clue": "lebte"
+  },
+  {
+   "word": "BRENNT",
+   "clue": "glüht"
+  },
+  {
+   "word": "FLIEGT",
+   "clue": "segelt"
+  },
+  {
+   "word": "HOEHE",
+   "clue": "Niveau"
+  },
+  {
+   "word": "KURZEM",
+   "clue": "seit ..."
+  },
+  {
+   "word": "MOTOR",
+   "clue": "Antrieb"
+  },
+  {
+   "word": "NEHMT",
+   "clue": "ihr ... es"
+  },
+  {
+   "word": "WONACH",
+   "clue": "... suchst du?"
+  },
+  {
+   "word": "BILLIG",
+   "clue": "günstig"
+  },
+  {
+   "word": "KILO",
+   "clue": "1000 Gramm"
+  },
+  {
+   "word": "KURS",
+   "clue": "Lehrgang"
+  },
+  {
+   "word": "ENDET",
+   "clue": "hört auf"
+  },
+  {
+   "word": "FROSCH",
+   "clue": "Lurch"
+  },
+  {
+   "word": "GEIRRT",
+   "clue": "sich vertan"
+  },
+  {
+   "word": "HASS",
+   "clue": "Abscheu"
+  },
+  {
+   "word": "HOBBY",
+   "clue": "Passion"
+  },
+  {
+   "word": "AFFEN",
+   "clue": "Gorillas"
+  },
+  {
+   "word": "ELF",
+   "clue": "Zahl nach zehn"
+  },
+  {
+   "word": "ERDEN",
+   "clue": "auf ..."
+  },
+  {
+   "word": "GERAET",
+   "clue": "Apparat"
+  },
+  {
+   "word": "JUNGER",
+   "clue": "ein ... Hund"
+  },
+  {
+   "word": "KLIMA",
+   "clue": "Wetter"
+  },
+  {
+   "word": "KNIE",
+   "clue": "Gelenk"
+  },
+  {
+   "word": "RUNTER",
+   "clue": "hinab"
+  },
+  {
+   "word": "WEITEM",
+   "clue": "von ..."
+  },
+  {
+   "word": "EILE",
+   "clue": "Hast"
+  },
+  {
+   "word": "LEBTEN",
+   "clue": "wohnten"
+  },
+  {
+   "word": "LEGE",
+   "clue": "ich ... es hin"
+  },
+  {
+   "word": "NULL",
+   "clue": "nichts"
+  },
+  {
+   "word": "WEINT",
+   "clue": "heult"
+  },
+  {
+   "word": "ZEIGE",
+   "clue": "ich ... es"
+  },
+  {
+   "word": "ARTEN",
+   "clue": "Sorten"
+  },
+  {
+   "word": "AUFZUG",
+   "clue": "Lift"
+  },
+  {
+   "word": "LATEIN",
+   "clue": "alte Sprache"
+  },
+  {
+   "word": "RAUCHT",
+   "clue": "qualmt"
+  },
+  {
+   "word": "STEUER",
+   "clue": "Lenkrad"
+  },
+  {
+   "word": "TRETEN",
+   "clue": "kicken"
+  },
+  {
+   "word": "ENDEN",
+   "clue": "aufhören"
+  },
+  {
+   "word": "ROCK",
+   "clue": "Kilt"
+  },
+  {
+   "word": "SATZES",
+   "clue": "Ende des ..."
+  },
+  {
+   "word": "STAMMT",
+   "clue": "kommt her"
+  },
+  {
+   "word": "STRAFE",
+   "clue": "Buße"
+  },
+  {
+   "word": "WAHREN",
+   "clue": "hüten"
+  },
+  {
+   "word": "ATEM",
+   "clue": "Hauch"
+  },
+  {
+   "word": "HUHN",
+   "clue": "Henne"
+  },
+  {
+   "word": "MEINS",
+   "clue": "das ist ..."
+  },
+  {
+   "word": "RASEN",
+   "clue": "flitzen"
+  },
+  {
+   "word": "TOTEN",
+   "clue": "die ... ehren"
+  },
+  {
+   "word": "FUHREN",
+   "clue": "reisten"
+  },
+  {
+   "word": "INDIEN",
+   "clue": "Land am Ganges"
+  },
+  {
+   "word": "PARKEN",
+   "clue": "abstellen"
+  },
+  {
+   "word": "REGAL",
+   "clue": "Bord"
+  },
+  {
+   "word": "GABEN",
+   "clue": "Präsente"
+  },
+  {
+   "word": "JUNI",
+   "clue": "6. Monat"
+  },
+  {
+   "word": "SCHUTZ",
+   "clue": "Obhut"
+  },
+  {
+   "word": "SUCHST",
+   "clue": "du ... es?"
+  },
+  {
+   "word": "BEWEIS",
+   "clue": "Beleg"
+  },
+  {
+   "word": "KM",
+   "clue": "1000 Meter"
+  },
+  {
+   "word": "KNAPP",
+   "clue": "eng"
+  },
+  {
+   "word": "LANDE",
+   "clue": "auf dem ..."
+  },
+  {
+   "word": "BORD",
+   "clue": "an ..."
+  },
+  {
+   "word": "HOL",
+   "clue": "... es!"
+  },
+  {
+   "word": "MANGEL",
+   "clue": "Defizit"
+  },
+  {
+   "word": "SCHOSS",
+   "clue": "traf ins Tor"
+  },
+  {
+   "word": "TEURER",
+   "clue": "nicht billiger"
+  },
+  {
+   "word": "TREFFE",
+   "clue": "ich ... ihn"
+  },
+  {
+   "word": "JENES",
+   "clue": "dieses"
+  },
+  {
+   "word": "SCHLAU",
+   "clue": "clever"
+  },
+  {
+   "word": "TAUB",
+   "clue": "gehörlos"
+  },
+  {
+   "word": "ATMEN",
+   "clue": "Luft holen"
+  },
+  {
+   "word": "BESTER",
+   "clue": "der ... Freund"
+  },
+  {
+   "word": "CAFE",
+   "clue": "Lokal"
+  },
+  {
+   "word": "WOHNST",
+   "clue": "du ... hier?"
+  },
+  {
+   "word": "BERGEN",
+   "clue": "retten"
+  },
+  {
+   "word": "DURCHS",
+   "clue": "durch das"
+  },
+  {
+   "word": "FAEHIG",
+   "clue": "begabt"
+  },
+  {
+   "word": "OEL",
+   "clue": "Fett"
+  },
+  {
+   "word": "REIST",
+   "clue": "fährt"
+  },
+  {
+   "word": "SCHAUE",
+   "clue": "ich ... hin"
+  },
+  {
+   "word": "BAUERN",
+   "clue": "Landvolk"
+  },
+  {
+   "word": "JANUAR",
+   "clue": "1. Monat"
+  },
+  {
+   "word": "MOEBEL",
+   "clue": "Tisch, Stuhl"
+  },
+  {
+   "word": "SPITZE",
+   "clue": "Zacke"
+  },
+  {
+   "word": "BAUER",
+   "clue": "Landwirt"
+  },
+  {
+   "word": "BLITZ",
+   "clue": "Gewitter"
+  },
+  {
+   "word": "FRUCHT",
+   "clue": "Obst"
+  },
+  {
+   "word": "GAST",
+   "clue": "Fremder"
+  },
+  {
+   "word": "WECKEN",
+   "clue": "rütteln"
+  },
+  {
+   "word": "TEICH",
+   "clue": "Weiher"
+  },
+  {
+   "word": "TOKYO",
+   "clue": "Stadt in Japan"
+  },
+  {
+   "word": "WESTEN",
+   "clue": "Okzident"
+  },
+  {
+   "word": "WUESTE",
+   "clue": "Sahara"
+  },
+  {
+   "word": "ARMEE",
+   "clue": "Heer"
+  },
+  {
+   "word": "DUSCHE",
+   "clue": "Brause"
+  },
+  {
+   "word": "LEHREN",
+   "clue": "dozieren"
+  },
+  {
+   "word": "MOEGT",
+   "clue": "ihr ... es"
+  },
+  {
+   "word": "SUEDEN",
+   "clue": "Mittag (Richt.)"
+  },
+  {
+   "word": "DIENST",
+   "clue": "Schicht"
+  },
+  {
+   "word": "KALTE",
+   "clue": "... Füße"
+  },
+  {
+   "word": "REDEST",
+   "clue": "du ... viel"
+  },
+  {
+   "word": "SACK",
+   "clue": "Tüte"
+  },
+  {
+   "word": "BIETEN",
+   "clue": "vorlegen"
+  },
+  {
+   "word": "JULI",
+   "clue": "7. Monat"
+  },
+  {
+   "word": "SICHT",
+   "clue": "Fernblick"
+  },
+  {
+   "word": "BIENEN",
+   "clue": "Drohnen"
+  },
+  {
+   "word": "GEWISS",
+   "clue": "bestimmt"
+  },
+  {
+   "word": "HOFFT",
+   "clue": "ersehnt"
+  },
+  {
+   "word": "NAMENS",
+   "clue": "genannt"
+  },
+  {
+   "word": "NATION",
+   "clue": "Volk"
+  },
+  {
+   "word": "QUELLE",
+   "clue": "Born"
+  },
+  {
+   "word": "GIPFEL",
+   "clue": "Spitze"
+  },
+  {
+   "word": "KATER",
+   "clue": "Kopfweh, Tier"
+  },
+  {
+   "word": "LAUF",
+   "clue": "Rennen"
+  },
+  {
+   "word": "LEHNTE",
+   "clue": "wies ab"
+  },
+  {
+   "word": "RAUCH",
+   "clue": "Qualm"
+  },
+  {
+   "word": "STRICH",
+   "clue": "Linie"
+  },
+  {
+   "word": "FANDEN",
+   "clue": "stießen auf"
+  },
+  {
+   "word": "FOLGTE",
+   "clue": "kam nach"
+  },
+  {
+   "word": "MIST",
+   "clue": "Dung"
+  },
+  {
+   "word": "REICHE",
+   "clue": "die ... Leute"
+  },
+  {
+   "word": "ERSTES",
+   "clue": "als ..."
+  },
+  {
+   "word": "OEFFNE",
+   "clue": "... die Tür!"
+  },
+  {
+   "word": "TRINK",
+   "clue": "... aus!"
+  },
+  {
+   "word": "WIRKEN",
+   "clue": "aussehen"
+  },
+  {
+   "word": "LANGES",
+   "clue": "ein ... Leben"
+  },
+  {
+   "word": "NARREN",
+   "clue": "Toren"
+  },
+  {
+   "word": "OSTEN",
+   "clue": "Orient"
+  },
+  {
+   "word": "WIEGT",
+   "clue": "schaukelt"
+  },
+  {
+   "word": "ZUMUTE",
+   "clue": "wie ist dir ...?"
+  },
+  {
+   "word": "HEIM",
+   "clue": "Hort"
+  },
+  {
+   "word": "OKAY",
+   "clue": "in Ordnung"
+  },
+  {
+   "word": "REGION",
+   "clue": "Gebiet"
+  },
+  {
+   "word": "STEINE",
+   "clue": "Felsen"
+  },
+  {
+   "word": "BIBEL",
+   "clue": "Heilige Schrift"
+  },
+  {
+   "word": "BRICHT",
+   "clue": "knickt"
+  },
+  {
+   "word": "FRAGST",
+   "clue": "du ... mich?"
+  },
+  {
+   "word": "IRRTUM",
+   "clue": "Fehler"
+  },
+  {
+   "word": "SUMME",
+   "clue": "Betrag"
+  },
+  {
+   "word": "WERKE",
+   "clue": "Fabriken"
+  },
+  {
+   "word": "BAER",
+   "clue": "Petz"
+  },
+  {
+   "word": "ECHTE",
+   "clue": "wahre"
+  },
+  {
+   "word": "HERREN",
+   "clue": "Männer"
+  },
+  {
+   "word": "PUTZEN",
+   "clue": "reinigen"
+  },
+  {
+   "word": "ROMANE",
+   "clue": "Bücher"
+  },
+  {
+   "word": "BEZUG",
+   "clue": "Relation"
+  },
+  {
+   "word": "HOEHLE",
+   "clue": "Grotte"
+  },
+  {
+   "word": "KNEIPE",
+   "clue": "Pinte"
+  },
+  {
+   "word": "SCHLAG",
+   "clue": "Hieb"
+  },
+  {
+   "word": "SKI",
+   "clue": "Brett für Schnee"
+  },
+  {
+   "word": "STAUB",
+   "clue": "Dreck"
+  },
+  {
+   "word": "UFER",
+   "clue": "Gestade"
+  },
+  {
+   "word": "VORAN",
+   "clue": "nach vorn"
+  },
+  {
+   "word": "ACHTE",
+   "clue": "ich ... darauf"
+  }
+ ]
+}

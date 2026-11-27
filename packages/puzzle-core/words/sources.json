@@ -133,6 +133,14 @@
       "attribution": "Ink Tools",
       "bundled": "theme names and words, folded",
       "use": "PT word-search themes"
+    },
+    "ink-tools-clues": {
+      "name": "Ink Tools arrowword clues",
+      "path": "clues/",
+      "licence": "CC BY-NC-SA 4.0",
+      "attribution": "Ink Tools",
+      "bundled": "clue text written for this package",
+      "use": "arrowword clue banks, clues/arrowword-<lang>.json (#454)"
     }
   }
 }
