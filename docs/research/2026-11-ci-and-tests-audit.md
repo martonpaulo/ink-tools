@@ -26,9 +26,11 @@ Measured for [#301](https://github.com/martonpaulo/ink-tools/issues/301) from `g
 | Window | Pushes | Runs per push | Run minutes per push |
 | :--- | ---: | ---: | ---: |
 | The 50 pushes before the fix landed (2026-11-25, 16:43 to 23:10 UTC) | 50 | 4.5 | 3.9 |
-| The 50 pushes after it | not yet measured | | |
+| The 50 pushes after it (2026-11-26, 00:03 to 03:48 UTC, from 9a07b55, the first push after 11b376e) | 50 | 5.4 | 5.5 |
 
-That day's pushes were mostly documents, so the window before is already under the audit's 7.3; the row after is filled once 50 pushes have followed the landing.
+That day's pushes were mostly documents, so the window before is already under the audit's 7.3. The window after held more plugin and package code, so more validate workflows ran per push and the totals rose; the two rows compare different change mixes, not the fix alone.
+
+The fix shows in the prerelease runs: the last 50 pushes before 23:10 UTC started 33 prerelease runs (0.66 per push), the 50 after started 13 (0.26 per push), each one a version change. Every after push ran Scan once.
 
 ## Tests
 
