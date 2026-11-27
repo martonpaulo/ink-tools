@@ -1,7 +1,7 @@
 /**
- * Tests of plugin-version.cjs's identity, pin, versionCode (#295) and reuse (#410) checks, over fixture trees:
- * each fails once and passes once. The version and tag rules are tested in each plugin's
- * __tests__/version.test.ts.
+ * Tests of plugin-version.cjs over fixture trees: the version (#155), tag and icon rules, and the identity,
+ * pin, versionCode (#295) and reuse (#410) checks; each fails once and passes once. One root suite
+ * replaces the plugins' copied __tests__/version.test.ts (#302).
  */
 const assert = require('node:assert/strict');
 const {execFileSync} = require('node:child_process');
@@ -10,7 +10,18 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
-const {identityProblems, pinProblems, codeProblems, allIdentityProblems, allReuseProblems} = require('./plugin-version.cjs');
+const {
+  versionName,
+  allVersionProblems,
+  workflowProblems,
+  allWorkflowProblems,
+  iconProblems,
+  identityProblems,
+  pinProblems,
+  codeProblems,
+  allIdentityProblems,
+  allReuseProblems,
+} = require('./plugin-version.cjs');
 
 const roots = [];
 test.after(() => roots.forEach(root => fs.rmSync(root, {recursive: true, force: true})));
@@ -115,6 +126,61 @@ test('a shallow clone fails, since its history cannot show every earlier version
   execFileSync('git', ['clone', '-q', '--depth', '1', `file://${root}`, shallow], {stdio: 'ignore'});
   assert.deepEqual(allReuseProblems(shallow), [
     `${shallow} is a shallow clone; run git fetch --unshallow --tags to read every earlier version`,
+  ]);
+});
+
+test('a numbered beta reads «0.2.0 beta 3» on the tablet, a release «0.2.0» (#155)', () => {
+  assert.equal(versionName('0.2.0-beta.3'), '0.2.0 beta 3');
+  assert.equal(versionName('0.2.0'), '0.2.0');
+  assert.equal(versionName('0.2.1'), '0.2.1');
+});
+
+test('any other version form is refused: no -dev.N, no unnumbered beta (#155)', () => {
+  for (const version of ['0.1.0-dev.19', '0.2.0-beta', '0.2', '0.2.0-beta.0']) {
+    assert.throws(() => versionName(version));
+  }
+});
+
+test("every plugin's PluginConfig.json versionName follows its package.json version (#155, #302)", () => {
+  const drifted = plugin();
+  drifted['package.json'] = {...drifted['package.json'], version: '0.2.0-beta.3'};
+  drifted['PluginConfig.json'] = {...drifted['PluginConfig.json'], versionName: '0.2.0 beta 2'};
+  const kept = plugin();
+  kept['package.json'] = {...kept['package.json'], version: '0.1.0'};
+  assert.deepEqual(allVersionProblems(tree({a: drifted, b: kept})), [
+    'plugins/a: PluginConfig.json versionName is "0.2.0 beta 2"; package.json 0.2.0-beta.3 gives "0.2.0 beta 3"',
+  ]);
+});
+
+test('a prerelease tag carries its plugin name (#155)', () => {
+  const good = "on:\n  push:\n    tags: ['other-v*-dev.*']\n          tag=\"lookup-v$version\"\n";
+  assert.deepEqual(workflowProblems('lookup', good.replace('other-v*-dev.*', 'lookup-v*')), []);
+  assert.deepEqual(workflowProblems('lookup', good), ['tag trigger "other-v*-dev.*" does not start with lookup-v']);
+  assert.deepEqual(workflowProblems('relay', '          tag="v$version"\n'), [
+    'computed tag v$version does not start with relay-v',
+  ]);
+  assert.equal(workflowProblems('relay', 'on: push\n').length, 1);
+});
+
+test('a hyphenated plugin name is checked too, such as ink-tools-helper (#215)', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'versions-'));
+  roots.push(root);
+  fs.mkdirSync(path.join(root, '.github', 'workflows'), {recursive: true});
+  fs.writeFileSync(path.join(root, '.github', 'workflows', 'prerelease-ink-tools-helper.yml'), '          tag="v$version"\n');
+  assert.deepEqual(allWorkflowProblems(root), [
+    'prerelease-ink-tools-helper.yml: computed tag v$version does not start with ink-tools-helper-v',
+  ]);
+});
+
+test('an empty or missing iconPath is a problem (#248)', () => {
+  const root = tree({
+    empty: {'PluginConfig.json': {iconPath: ''}},
+    missing: {'PluginConfig.json': {iconPath: 'assets/icon.png'}},
+    present: {'PluginConfig.json': {iconPath: 'icon.png'}, 'icon.png': 'png'},
+  });
+  assert.deepEqual(iconProblems(root), [
+    'plugins/empty/PluginConfig.json: iconPath is empty',
+    'plugins/missing/PluginConfig.json: iconPath assets/icon.png is not a file',
   ]);
 });
 

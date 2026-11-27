@@ -8,7 +8,7 @@
  *   node scripts/plugin-version.cjs plugins/<name>   prints the tag version, or fails on a mismatch
  *   node scripts/plugin-version.cjs --workflows .      fails when a prerelease tag lacks its plugin name
  *   node scripts/plugin-version.cjs --icons .          fails when a plugin's iconPath is empty or missing
- *   node scripts/plugin-version.cjs --identity .       fails when a plugin's names, versionCode or pins drift (#295),
+ *   node scripts/plugin-version.cjs --identity .       fails when a plugin's versionName, names, versionCode or pins drift (#155, #295),
  *                                                      or its version was used under an earlier folder (#410)
  *   node scripts/plugin-version.cjs --published plugins/<name>   fails when that version was used under
  *                                                      an earlier folder name, naming the earlier tag (#410)
@@ -358,8 +358,16 @@ function allReuseProblems(root, names = pluginFolders(root)) {
 }
 
 /** Every identity, pin, versionCode and reuse problem under `root`. */
+/** Each plugin's version problems (#155): its versionName follows package.json, its versionCode is a number (#302). */
+function allVersionProblems(root) {
+  return pluginFolders(root).flatMap(name =>
+    problems(path.join(root, 'plugins', name)).map(line => `plugins/${name}: ${line}`),
+  );
+}
+
 function allIdentityProblems(root) {
   return [
+    ...allVersionProblems(root),
     ...identityProblems(root),
     ...pinProblems(root),
     ...pluginFolders(root).flatMap(name =>
@@ -411,6 +419,7 @@ if (require.main === module) {
 
 module.exports = {
   versionName,
+  allVersionProblems,
   problems,
   workflowProblems,
   allWorkflowProblems,
