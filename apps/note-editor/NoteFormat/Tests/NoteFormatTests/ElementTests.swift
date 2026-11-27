@@ -67,8 +67,8 @@ import Testing
         Self.expect(elements[25].bounds, near: CGRect(x: 200, y: 1300, width: 900, height: 54))
     }
 
-    /// Each element names its place in the page's block, for the tablet's element number (#325):
-    /// in order, and past a left-out Heading or eraser record.
+    /// Each element names the tablet's element number less one (#325, #471): on a page the tablet
+    /// wrote in order, its place in the block, past a left-out Heading or eraser record.
     @Test func eachElementNamesItsRecord() throws {
         let elements = try Self.note("elements-tablet").elements(page: 0)
         #expect(elements.map(\.record) == Array(0..<26))
@@ -77,6 +77,19 @@ import Testing
             let records = try headed.elements(page: page).map(\.record)
             #expect(zip(records, records.dropFirst()).allSatisfy { $0 < $1 })
         }
+    }
+
+    /// An edit on the tablet moves the record it changes to the end of the block and keeps its
+    /// number (#471): the element still reads its own number, never its new place.
+    @Test func aRecordTheTabletMovedKeepsItsNumber() throws {
+        var bytes = try Self.bytes("elements-tablet")
+        let records = Self.records(bytes, from: try Self.block(bytes))
+        let last = try #require(records.last)
+        let end = last + 4 + NoteFile.word(bytes, at: last)
+        let first = Array(bytes[records[0]..<records[1]])
+        bytes.replaceSubrange(records[0]..<end, with: Array(bytes[records[1]..<end]) + first)
+        let elements = try NoteFile(bytes: bytes).elements(page: 0)
+        #expect(elements.map(\.record) == Array(1..<26) + [0])
     }
 
     /// Without its ink, a page draws its template alone: what a lifted selection leaves (#325).

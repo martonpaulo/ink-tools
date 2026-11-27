@@ -41,16 +41,16 @@ public struct PageElement: Sendable, Equatable {
     public let bounds: CGRect
     /// The path a stroke follows; the corners of a picture's or a text box's frame.
     public let points: [CGPoint]
-    /// The element's place in the page's element block, from 0, erasers and Headings counted:
-    /// the tablet's element number less one (#325).
-    /// shortcut: the tablet's numbering is read as the block's order, not yet measured on the
-    /// tablet; the device round of #325 checks it.
+    /// The tablet's element number less one, as the record stores it (#471): what names the
+    /// element to the tablet's helper. It is not the record's place in the page's block: an edit
+    /// on the tablet moves the record it changes to the end and keeps its number, and a delete
+    /// leaves a gap.
     public let record: Int
 }
 
 /// A record of a page the reader steps over: its kind is none it knows (#459).
 public struct SkippedElement: Sendable, Equatable {
-    /// The record's place in the page's element block, from 0, as `PageElement.record`.
+    /// The tablet's element number less one, as `PageElement.record`.
     public let record: Int
     /// The kind name the record carries.
     public let kind: String
@@ -105,6 +105,8 @@ enum ElementRecord {
     /// The arrays after the points, each a count then its items: pressures, angles, draw flags,
     /// smoothed points and their greys, by the size of one item. The record's trail status follows.
     static let arraysAfterPoints = [2, 4, 1, 8, 4]
+    /// The tablet's element number, from the trail status's start (#471).
+    static let numberAfterTrail = 8
     /// A record ends with its data, a length-prefixed text of comma-separated Base64 fields
     /// (`none` for a stroke), then one more length-prefixed text and this many bytes. Read from
     /// the end, since the arrays between the trail status and the data vary by kind; measured on
@@ -129,7 +131,7 @@ enum ElementRecord {
             let record = Reader(bytes: Array(bytes[offset..<(offset + word + length)]), page: page)
             switch try record.element(pageHeight: pageHeight, number: number) {
             case .element(let element): elements.append(element)
-            case .unknown(let kind): skipped.append(SkippedElement(record: number, kind: kind))
+            case .unknown(let kind, let stored): skipped.append(SkippedElement(record: stored, kind: kind))
             case .none: break
             }
             offset += word + length
@@ -140,8 +142,9 @@ enum ElementRecord {
     /// What one record reads to.
     enum Read {
         case element(PageElement)
-        /// A record of a kind the reader does not know, by its kind name.
-        case unknown(String)
+        /// A record of a kind the reader does not know, by its kind name and its stored number
+        /// less one.
+        case unknown(String, record: Int)
     }
 
     struct Reader {
@@ -165,8 +168,11 @@ enum ElementRecord {
             return String(decoding: field.prefix { $0 != 0 }, as: UTF8.self)
         }
 
-        /// The signed trail status that follows the arrays after the points, which start at `offset`.
-        func trailStatus(after offset: Int) throws -> Int32 {
+        /// The signed trail status that follows the arrays after the points, which start at
+        /// `offset`, and the tablet's element number, the third word from the trail status: 1 to 3
+        /// on a page the tablet wrote in order, 3, 1, 2 after it moved number 3 (measured on every
+        /// record of every fixture and on notes edited through the tablet's helper, #471).
+        func trail(after offset: Int) throws -> (status: Int32, number: Int) {
             var at = offset
             for itemLength in arraysAfterPoints {
                 let items = try word(at: at)
@@ -175,7 +181,8 @@ enum ElementRecord {
                 }
                 at += ElementRecord.word + items * itemLength
             }
-            return Int32(bitPattern: UInt32(truncatingIfNeeded: try word(at: at)))
+            let status = Int32(bitPattern: UInt32(truncatingIfNeeded: try word(at: at)))
+            return (status, try word(at: at + numberAfterTrail))
         }
 
         func element(pageHeight: Int, number: Int) throws -> Read? {
@@ -202,9 +209,10 @@ enum ElementRecord {
             // deleted by the lasso, moved (the moved copy is a later record) or replaced by
             // Real-Time Text. It is no element (community documentation, measured on
             // `realtime-text-tablet.note`, #362).
-            guard try trailStatus(after: pointsAt + ElementRecord.word + count * pointLength) >= 0 else {
-                return nil
-            }
+            let ending = try trail(after: pointsAt + ElementRecord.word + count * pointLength)
+            guard ending.status >= 0 else { return nil }
+            guard ending.number >= 1 else { throw failure("element \(number + 1) has no element number") }
+            let stored = ending.number - 1
             let content: PageElement.Content
             // The kind names come first: a text box that Real-Time Text inserts carries the
             // stroke document name too (#324, device round 8).
@@ -223,7 +231,7 @@ enum ElementRecord {
                 content = .stroke(penColor: try word(at: colour), thickness: try word(at: thickness))
             } else {
                 // One record of a kind the reader does not know is stepped over, never the page.
-                return .unknown(named)
+                return .unknown(named, record: stored)
             }
             let bounds: CGRect
             if case .stroke = content {
@@ -244,7 +252,7 @@ enum ElementRecord {
             }
             return .element(
                 PageElement(
-                    content: content, layer: try word(at: layer), bounds: bounds, points: points, record: number))
+                    content: content, layer: try word(at: layer), bounds: bounds, points: points, record: stored))
         }
 
         /// The start of the length-prefixed text that ends at `end`: the last place whose word

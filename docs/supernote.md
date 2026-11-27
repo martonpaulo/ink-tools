@@ -1055,9 +1055,11 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   16 named a stroke on the 15-record page. Neither a Device Link reinstall nor opening and closing
   the note closed the gap, and neither did a delete on the open note and a save. A stroke written
   later took the free number 1. On the open note, after a delete through the open-note calls that was
-  not yet saved, number 2 still named the same stroke. On records of the same layout, the number is the 32-bit word 441 bytes
-  before the record's end; other layouts keep it elsewhere. So a reader that numbers elements
-  by their place matches the tablet only on a page with no edit since its last save on the tablet
+  not yet saved, number 2 still named the same stroke. The number is the 32-bit word 8 bytes after the record's trail status, the word that
+  follows the arrays after the points, on every record of every fixture and on the notes edited
+  in the round; on strokes of one layout that word is also 441 bytes before the record's end. So a
+  reader that numbers elements by their place matches the tablet only on a page with no edit since
+  its last save on the tablet, and the Note Editor reads the stored number
   [measured, Manta, 2026-11-27, [#317](https://github.com/martonpaulo/ink-tools/issues/317),
   [#471](https://github.com/martonpaulo/ink-tools/issues/471)].
 - The file of a note open on the tablet holds only what the tablet saved: 16 strokes written by

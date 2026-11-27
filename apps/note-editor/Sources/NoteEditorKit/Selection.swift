@@ -13,7 +13,7 @@ public struct Selectable: Sendable, Equatable {
     public let isArea: Bool
     /// A picture: a copy keeps its own greys, its paper too (#323).
     public let isPicture: Bool
-    /// The element's place in the page's element block, which names it to the tablet (#325).
+    /// The element's tablet number less one, as its record stores it (`PageElement.record`, #471).
     public let record: Int
 
     public init(id: Int, bounds: CGRect, points: [CGPoint], isArea: Bool, isPicture: Bool = false, record: Int? = nil) {

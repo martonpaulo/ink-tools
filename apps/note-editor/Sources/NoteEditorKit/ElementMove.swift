@@ -3,7 +3,7 @@
 import CoreGraphics
 import Foundation
 
-/// One element of a move: its place in the page's element block, its box and its path before the
+/// One element of a move: its tablet number less one (`PageElement.record`), its box and its path before the
 /// move (a picture's or a text box's corners), so the Mac can draw it lifted off the page.
 public struct MovedElement: Sendable, Equatable {
     public let record: Int

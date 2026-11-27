@@ -5,7 +5,7 @@
 import Foundation
 
 /// A note's pages as a re-target reads them: each page's `PAGEID` and the box of each element by
-/// its number on the page, from 1 (the tablet's numbering: the record's place plus one, #325).
+/// its number on the page, from 1: the tablet's number, which the record stores (`PageElement.record`, #471).
 public struct NoteOutline: Sendable, Equatable {
     public struct Page: Sendable, Equatable {
         /// nil for a page with no `PAGEID`, which is never found in another note.
