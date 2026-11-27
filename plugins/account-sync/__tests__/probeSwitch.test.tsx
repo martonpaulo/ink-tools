@@ -129,3 +129,13 @@ test('a device that matches the descriptor leaves every module on', async () => 
   const modules = await rows(device());
   expect(modules.map(m => m.status.state)).toEqual(['waiting', 'waiting']);
 });
+
+test('with every probe passing, Settings shows no device-check message (#492)', async () => {
+  const modules = await rows(device());
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = renderer.create(<SettingsForm settings={settings} onChange={() => {}} modules={modules} />);
+  });
+  const shown = tree.root.findAllByType(Text).map(node => String(node.props.children)).join('\n');
+  expect(shown).not.toMatch(/paused|did not answer|refused|changed|device check|did not pass/i);
+});
