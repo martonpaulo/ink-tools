@@ -329,6 +329,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   centre), and Back leaves the note and drops the pasted sticker [measured,
   [#165](https://github.com/martonpaulo/ink-tools/issues/165)].
 - A finger drag (`adb shell input swipe`) on a lassoed selection does not move it [measured].
+  Paste needs the pen too: after the lasso toolbar's Cut, the lasso tool's menu shows only «Clear
+  clipboard», and a finger or `input stylus` tap or long press in lasso mode pastes nothing. So
+  moving or resizing a selection on the tablet stays a pen step; the toolbar's Edit Text Box opens
+  with `inkctl click`, and `input text` types into it [measured, 2026-11-27, Manta,
+  [#264](https://github.com/martonpaulo/ink-tools/issues/264)].
 - The Back key does not close a plugin's full view (Lookup and Relay Settings, Relay «Receive»):
   the view stays until the plugin calls `closePluginView` or the host restarts [measured,
   2026-11-16]. A plugin's own Settings view, a host window, stays over Settings after
