@@ -463,8 +463,6 @@ struct PageScroll: View {
     @State private var inView: Int?
     /// The share of a page that counts it as on screen: any part of it.
     static let visibleShare = 0.001
-    /// The pages on screen, as the scroll reports them.
-    @State private var visible: Set<Int> = []
     /// The magnification a pinch started at, and where in the window.
     @State private var pinchBase: Double?
     @State private var pinchAnchor: CGPoint?
@@ -518,7 +516,12 @@ struct PageScroll: View {
             ScrollView([.vertical, .horizontal]) {
                 // Each page carries half the margin above and below it, so a page scrolled to the top
                 // keeps a margin above it, and two pages keep a whole margin between them.
-                LazyVStack(spacing: 0) {
+                // An eager stack, so every page sits where `PageStack` puts it: a lazy one laid the
+                // pages it had not drawn out at an estimate, and a zoom kept its place pages away
+                // while the title still named the page (#534). Only the pages in view draw.
+                // shortcut: measured on a 54-page note only; a lazy stack with known row heights is
+                // the upgrade if a long note opens slowly.
+                VStack(spacing: 0) {
                     ForEach(pages.pageSizes, id: \.index) { page in
                         let index = page.index
                         PageView(
@@ -544,10 +547,13 @@ struct PageScroll: View {
             // A page scrolled under the toolbar stops at a hard edge, as a document does in Preview,
             // so a white page never sits behind the toolbar's controls.
             .scrollEdgeEffectStyle(.hard, for: .top)
-            .onScrollTargetVisibilityChange(idType: Int.self, threshold: Self.visibleShare) { visible = Set($0) }
+            .onScrollTargetVisibilityChange(idType: Int.self, threshold: Self.visibleShare) {
+                viewer.pagesInView = Set($0)
+            }
             // The pages in view and their neighbours draw, and no other page stays drawn. Before the
             // scroll reports its pages, the current page draws.
-            .task(id: VisibleKey(pages: visible, generation: pages.generation)) {
+            .task(id: VisibleKey(pages: viewer.pagesInView, generation: pages.generation)) {
+                let visible = viewer.pagesInView
                 await pages.show(visible.isEmpty ? Set([navigator.index ?? 0]) : visible)
             }
             .onChange(of: position.viewID(type: Int.self)) { _, page in
@@ -565,6 +571,9 @@ struct PageScroll: View {
             .onAppear {
                 if let page = navigator.index { scroll(to: page) }
             }
+            // The viewer outlives the scroll (the grid replaces it), so the next scroll starts
+            // from the current page, not from the pages this one last showed.
+            .onDisappear { viewer.pagesInView = [] }
             // A new zoom keeps the place under the fingers of a pinch, else at the middle of the
             // window, where it was, and the same share of the width, as Preview zooms.
             .onChange(of: viewer.zoom) { old, new in

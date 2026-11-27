@@ -50,6 +50,8 @@ final class PageViewer {
     var offset: CGPoint = .zero
     var visible: CGSize = .zero
     var content: CGSize = .zero
+    /// The pages on screen, as the scroll reports them, from 0.
+    var pagesInView: Set<Int> = []
     /// How many pages one row of the grid holds, for the Up and Down arrows there.
     var gridColumns = 1
     /// Whether the pages hold the keyboard focus, which the page keys, Select All and Escape need;
