@@ -178,6 +178,9 @@ enum Fixtures {
             return
         }
         #expect(opened.pages.count == 4)
+        // The refusal bar's Open Conflict Note copies a named note the same way (#475).
+        let conflict = "Note/Sample conflict 2026-11-27 09.00.00.note"
+        #expect(try await browser.copy(conflict) == copies.localURL(for: conflict))
         let lines = try String(contentsOfFile: calls, encoding: .utf8).split(separator: "\n")
         #expect(lines.allSatisfy { $0.hasPrefix("--json --read-only files ") })
     }

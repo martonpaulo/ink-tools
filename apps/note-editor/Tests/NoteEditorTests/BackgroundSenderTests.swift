@@ -105,7 +105,9 @@ import Testing
                     message: WriteFailure.tablet(.failed("device-link edit: no-element: operation 1")).message),
             ])
         #expect(
-            outcomes.all.last.map { if case .refused(_, let text) = $0 { text.contains("no-element") } else { false } }
+            outcomes.all.last.map {
+                if case .refused(_, let text, _) = $0 { text.contains("no-element") } else { false }
+            }
                 == true)
     }
 
@@ -195,7 +197,8 @@ import Testing
         #expect(message != WriteFailure.restoreConflict(conflict).message)
         #expect(
             outcomes.all == [
-                .started(1), .refused(undo: 1, message: message), .started(2), .refused(undo: 2, message: message),
+                .started(1), .refused(undo: 1, message: message, conflict: conflict), .started(2),
+                .refused(undo: 2, message: message, conflict: conflict),
             ])
     }
 

@@ -72,15 +72,10 @@ final class TabletBrowser {
             await load()
             return nil
         }
-        let tabletPath = "\(path)/\(entry.name)"
-        guard let local = copies.localURL(for: tabletPath) else {
-            phase = .copyFailed(.failed(Copy.cannotCopy(tabletPath)))
-            return nil
-        }
         let listed = phase
         phase = .copying(entry.name)
         do {
-            try await inkctl.pull(tabletPath, to: local)
+            let local = try await copy("\(path)/\(entry.name)")
             phase = listed
             return local
         } catch .cancelled {
@@ -91,6 +86,14 @@ final class TabletBrowser {
             phase = .copyFailed(error)
             return nil
         }
+    }
+
+    /// Copies the tablet's note at `tabletPath` to its local copy and returns it, read-only on the
+    /// tablet: File › Open from Tablet and the refusal bar's Open Conflict Note (#475).
+    func copy(_ tabletPath: String) async throws(InkctlFailure) -> URL {
+        guard let local = copies.localURL(for: tabletPath) else { throw .failed(Copy.cannotCopy(tabletPath)) }
+        try await inkctl.pull(tabletPath, to: local)
+        return local
     }
 
     /// The copy arrived but the document did not open.

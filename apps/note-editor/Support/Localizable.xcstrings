@@ -1034,6 +1034,17 @@
         }
       }
     },
+    "Open Conflict Note" : {
+      "comment" : "Refusal bar button (#475)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Conflict Note"
+          }
+        }
+      }
+    },
     "Open another .note file, or copy the note from the tablet again." : {
       "localizations" : {
         "en" : {
@@ -1080,6 +1091,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open the note from the tablet to edit it."
+          }
+        }
+      }
+    },
+    "Opening…" : {
+      "comment" : "Refusal bar button while the note copies",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opening…"
           }
         }
       }
@@ -1551,6 +1573,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The app opens a copy; the note on the tablet stays as it is."
+          }
+        }
+      }
+    },
+    "The conflict note “%@” could not be opened: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The conflict note “%1$@” could not be opened: %2$@"
           }
         }
       }

@@ -33,7 +33,9 @@ by the write path of [`AGENTS.md`](AGENTS.md#the-write-path).
   the Mac's copy with every edit still on its way applied in order, so a refusal or an undo of a
   waiting edit only leaves that list; Edit › Undo and Redo follow `EditHistory`
   ([#328](https://github.com/martonpaulo/ink-tools/issues/328)), File › Revert to Backup lists the
-  note's backups, and a refusal shows its sentence in a bar over the pages. Page moves, by a drag
+  note's backups, and a refusal shows its sentence in a bar over the pages; when an edit or a
+  revert went to a conflict note instead, the bar's Open Conflict Note copies and opens that note
+  in its own window ([#475](https://github.com/martonpaulo/ink-tools/issues/475)). Page moves, by a drag
   in the page list or Edit › Move Page Up and Down, are the first edit
   ([#330](https://github.com/martonpaulo/ink-tools/issues/330)).
 - Pages are added and deleted by the helper ([#329](https://github.com/martonpaulo/ink-tools/issues/329)); the Mac draws them at once from

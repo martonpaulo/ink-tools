@@ -500,6 +500,21 @@ import Testing
         #expect(TextPreview.lines("", width: 1200, fontSize: 40) == 1)
     }
 
+    @Test func onlyAConflictRefusalNamesItsNoteAndDismissForgetsIt() throws {
+        let editor = try editor()
+        let conflict = "Note/Tests/Edit conflict 2026-11-27 09.00.00.note"
+        editor.refuse(WriteFailure.conflict(conflict).message, conflict: conflict)
+        #expect(editor.conflictNote == conflict)
+        editor.refusal = nil
+        #expect(editor.conflictNote == nil)
+        editor.refuse(WriteFailure.openOnTablet.message)
+        #expect(editor.conflictNote == nil && editor.refusal == WriteFailure.openOnTablet.message)
+        // A later plain refusal after a conflict drops the button.
+        editor.refuse(WriteFailure.conflict(conflict).message, conflict: conflict)
+        editor.refusal = Copy.refusal(.tooLarge)
+        #expect(editor.conflictNote == nil)
+    }
+
     @Test func aBlankTextBoxIsNeverSent() throws {
         let editor = try editor()
         let element = MovedElement(try textBox().item)

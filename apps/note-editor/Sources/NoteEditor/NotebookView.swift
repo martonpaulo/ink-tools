@@ -157,9 +157,7 @@ struct NotebookView: View {
                             FindBar(text: text) { pageFocused = true }
                         }
                         // A refused edit is taken back, and the bar says why until dismissed (#314).
-                        if let editor, let refusal = editor.refusal {
-                            RefusalBar(message: refusal) { editor.refusal = nil }
-                        }
+                        if let editor { EditorRefusalBar(editor: editor, live: live) }
                         // Insert › Shape waits for its drag, and says how (#350).
                         if let kind = viewer.shapeTool {
                             RefusalBar(message: Copy.shapeHint(kind), systemImage: kind.symbol, button: Copy.cancel) {

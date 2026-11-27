@@ -33,7 +33,18 @@ final class NoteEditor {
     private(set) var history = EditHistory()
     private(set) var pending: [Pending] = []
     /// The plain message of the newest refusal, until dismissed.
-    var refusal: String?
+    var refusal: String? {
+        didSet { conflictNote = nil }
+    }
+    /// The conflict note the newest refusal names, by its tablet path, for the bar's Open
+    /// Conflict Note (#475); nil for any other refusal, and once the bar is dismissed.
+    private(set) var conflictNote: String?
+
+    /// Shows `message` in the refusal bar, with the conflict note it names, if any (#475).
+    func refuse(_ message: String, conflict: String? = nil) {
+        refusal = message
+        conflictNote = conflict
+    }
     /// The backups of the note, newest first, for File › Revert to Backup.
     private(set) var backups: [URL] = []
     /// The backup File › Revert to Backup picked, waiting for the window's confirmation.
@@ -582,7 +593,11 @@ final class NoteEditor {
             history = EditHistory()
             reloadBase()
         } catch {
-            refusal = error.message
+            if case .restoreConflict(let note) = error {
+                refuse(error.message, conflict: note)
+            } else {
+                refusal = error.message
+            }
         }
         refreshBackups()
     }
@@ -690,7 +705,7 @@ final class NoteEditor {
             reloadBase()
             liftUnlifted()
             refreshBackups()
-        case .refused(let ticket, let message):
+        case .refused(let ticket, let message, let conflict):
             guard let refused = pending.first(where: { $0.ticket == ticket }) else { return }
             pending.removeAll { $0.ticket == ticket }
             lifts[ticket] = nil
@@ -712,7 +727,7 @@ final class NoteEditor {
             }
             // The same words again change nothing the bar watches, so they are said aloud here.
             if refusal == message { AccessibilityNotification.Announcement(message).post() }
-            refusal = message
+            refuse(message, conflict: conflict)
             redraw()
         }
     }
@@ -781,35 +796,6 @@ extension FocusedValues {
     /// The edits of the notebook window in front, for Edit › Undo and Redo, Move Page and
     /// File › Revert to Backup.
     @Entry var noteEditor: NoteEditor?
-}
-
-/// The bar over the pages that says why an edit was taken back (#314), as the find bar stands:
-/// one sentence and Dismiss, said aloud when it shows.
-struct RefusalBar: View {
-    let message: String
-    /// The bar's symbol: a warning for a refusal, the shape for Insert › Shape's hint (#350).
-    var systemImage = "exclamationmark.triangle.fill"
-    var button = Copy.dismiss
-    let dismiss: () -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Label(message, systemImage: systemImage)
-                .symbolRenderingMode(.multicolor)
-                .lineLimit(2)
-                .help(message)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                // A narrow window cuts the sentence: the whole of it shows under the pointer.
-                .help(message)
-            Button(button, action: dismiss)
-        }
-        .controlSize(.small)
-        .padding(FindBar.inset)
-        .background(.bar)
-        .overlay(alignment: .bottom) { Divider() }
-        .onAppear { AccessibilityNotification.Announcement(message).post() }
-        .onChange(of: message) { _, message in AccessibilityNotification.Announcement(message).post() }
-    }
 }
 
 /// One selection's moves and transforms on their way, drawn at once (#325, #326): the ink lifted

@@ -191,11 +191,13 @@ final class RenderTests {
             NotebookView(pages: moved, page: 2, live: live, editor: editor)
         }
         // An edit the tablet's newer note could not take goes to a conflict note beside it (#317).
-        editor.refusal = WriteFailure.conflict("Note/Garden conflict 2026-11-27 08.30.00.note").message
+        // Its bar opens that note (#475); any other refusal's bar holds Dismiss only.
+        let conflict = "Note/Garden conflict 2026-11-27 08.30.00.note"
+        editor.refuse(WriteFailure.conflict(conflict).message, conflict: conflict)
         try await render("edit-conflict", Self.sizes) {
             NotebookView(pages: moved, page: 2, live: live, editor: editor)
         }
-        editor.refusal = WriteFailure.restoreConflict("Note/Garden conflict 2026-11-27 08.30.00.note").message
+        editor.refuse(WriteFailure.restoreConflict(conflict).message, conflict: conflict)
         try await render("edit-conflict-restore", Self.sizes) {
             NotebookView(pages: moved, page: 2, live: live, editor: editor)
         }

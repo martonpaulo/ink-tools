@@ -194,6 +194,13 @@ nonisolated enum Copy {
     static let noBackups = String(localized: "No Backups Yet")
     static let revert = String(localized: "Revert")
     static let dismiss = String(localized: "Dismiss")
+    static let openConflictNote = String(localized: "Open Conflict Note", comment: "Refusal bar button (#475)")
+
+    static let openingConflictNote = String(localized: "Opening…", comment: "Refusal bar button while the note copies")
+
+    static func cannotOpenConflict(_ name: String, _ reason: String) -> String {
+        String(localized: "The conflict note “\(name)” could not be opened: \(reason)")
+    }
 
     static func revertTitle(_ date: String) -> String {
         String(localized: "Revert the note to the backup of \(date)?")

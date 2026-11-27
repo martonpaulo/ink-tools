@@ -18,8 +18,9 @@ public enum SendOutcome<Undo: Sendable & Equatable>: Sendable, Equatable {
     /// The tablet applied the edit: draw these pages again, from 0; nil when pages were added,
     /// removed or moved: all of them.
     case applied(Undo, redraw: Set<Int>?, backup: URL)
-    /// Draw `undo` to take the edit back, and show `message`.
-    case refused(undo: Undo, message: String)
+    /// Draw `undo` to take the edit back, and show `message`; `conflict` names the conflict note
+    /// the edit went to instead, by its tablet path, so the bar can open it (#475).
+    case refused(undo: Undo, message: String, conflict: String? = nil)
 }
 
 /// The queue between the editor and the write path; pure, so the sender's rules are tested alone.
@@ -262,7 +263,8 @@ public actor BackgroundSender<Undo: Sendable & Equatable> {
                     outcome(.applied(edit.undo, redraw: redraw, backup: backup))
                 case .kept(let conflict):
                     conflicts[operation.baseHash] = conflict
-                    outcome(.refused(undo: edit.undo, message: WriteFailure.conflict(conflict).message))
+                    outcome(
+                        .refused(undo: edit.undo, message: WriteFailure.conflict(conflict).message, conflict: conflict))
                 }
             } catch {
                 outcome(.refused(undo: edit.undo, message: error.message))
