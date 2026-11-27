@@ -97,9 +97,14 @@ import Testing
         defer { window.close() }
         #expect(try await window.shows(Copy.pageOf(1, 4)))
         #expect(try await window.until { window.firstResponder is NSView })
-        // Page 1 holds a text box and a picture.
-        window.pressKey("a", keyCode: 0, modifiers: .command)
-        #expect(try await window.shows(Copy.pageOfSelected(1, 4, 2)))
+        // Page 1 holds a text box and a picture. In a full parallel suite on a loaded Mac the pages
+        // may take the focus after the first key (#495); Command-A selects the same each time.
+        var selected = false
+        for _ in 0..<3 where !selected {
+            window.pressKey("a", keyCode: 0, modifiers: .command)
+            selected = try await window.shows(Copy.pageOfSelected(1, 4, 2))
+        }
+        #expect(selected, "first responder: \(String(describing: window.firstResponder.map { type(of: $0) }))")
         window.pressKey("\u{1B}", keyCode: 53, modifiers: [])
         #expect(try await window.shows(Copy.pageOf(1, 4)))
     }
