@@ -119,6 +119,41 @@ describe('resolving a written line (#87)', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('resolves a line the tablet recognised in lower case, by the title a word redirects to', async () => {
+    // Measured on the Manta, 2026-11-27: the recognition answered «quem foi miguel de cervantes»;
+    // pt.wikipedia has no «Miguel de cervantes», and «Cervantes» redirects to the article.
+    const fetch = jest.fn().mockResolvedValue(
+      ok(
+        JSON.stringify({
+          query: {
+            normalized: [
+              {from: 'miguel de cervantes', to: 'Miguel de cervantes'},
+              {from: 'de cervantes', to: 'De cervantes'},
+              {from: 'cervantes', to: 'Cervantes'},
+            ],
+            redirects: [{from: 'Cervantes', to: 'Miguel de Cervantes'}],
+            pages: [
+              {title: 'De cervantes', missing: true},
+              {title: 'Miguel de cervantes', missing: true},
+              {title: 'Miguel de Cervantes', pageprops: {wikibase_item: 'Q5682'}},
+            ],
+          },
+        }),
+      ),
+    );
+    const chosen = await resolvePhrase('quem foi miguel de cervantes', ctx(fetch, ALL));
+    expect(chosen).toMatchObject({query: 'Miguel de Cervantes', words: 3});
+    expect(chosen?.groups).toEqual(['miguel de cervantes', 'de cervantes', 'cervantes']);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(knownHit('Miguel de Cervantes', 'pt')).toMatchObject({item: 'Q5682'});
+  });
+
+  it('keeps the word that won when the title does not end with more of the line', async () => {
+    const fetch = jest.fn().mockResolvedValue(ok(titlesAnswer({Banana: 'Q503'})));
+    const chosen = await resolvePhrase('eu comi uma banana', ctx(fetch, ALL));
+    expect(chosen).toMatchObject({query: 'banana', words: 1});
+  });
+
   it('searches the last word with no request when no group can be a name', async () => {
     const fetch = jest.fn();
     const chosen = await resolvePhrase('ontem eu viajei até a China', ctx(fetch, ALL));

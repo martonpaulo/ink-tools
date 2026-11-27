@@ -302,19 +302,22 @@ export const MAX_PHRASE_WORDS = 4;
 /**
  * The line's trailing word groups, longest first, ending with the last word (#87): «Miguel de
  * Cervantes», then «Cervantes». A group of two words or more starts with a capital letter, so
- * «de Cervantes», «uma banana» and «a China» are never tried. shortcut: the capital marks a name
- * only in scripts with case, and only when the recognition keeps it; read the device logs when a
- * name is missed.
+ * «de Cervantes», «uma banana» and «a China» are never tried. A line with no capital letter at all
+ * tries every group: the tablet's recognition answers in lower case («quem foi miguel de
+ * cervantes», measured on the Manta, 2026-11-27), so its capitals mark nothing, and the one titles
+ * request decides. shortcut: the capital marks a name only in scripts with case; read the device
+ * logs when a name is missed.
  */
 export function trailingGroups(line: string): string[] {
   const tokens = normalise(line)
     .split(' ')
     .map(token => normalise(token))
     .filter(Boolean);
+  const cased = /\p{Lu}/u.test(line);
   const groups: string[] = [];
   for (let n = Math.min(tokens.length, MAX_PHRASE_WORDS); n > 1; n--) {
     const group = tokens.slice(-n);
-    if (/^\p{Lu}/u.test(group[0])) {
+    if (!cased || /^\p{Lu}/u.test(group[0])) {
       groups.push(group.join(' '));
     }
   }

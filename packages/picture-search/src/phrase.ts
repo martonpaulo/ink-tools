@@ -134,7 +134,32 @@ export async function resolvePhrase(
     ctx.log(`phrase "${asked}": no title among ${groups.length} groups`);
     return fallback;
   }
-  known = {key: keyOf(found.group, language), hit: found.hit};
-  ctx.log(`phrase "${asked}": "${found.group}" is ${found.hit.item}`);
-  return {query: found.group, words: found.group.split(' ').length, groups};
+  const {query, words} = named(asked, found.group, found.hit.title);
+  known = {key: keyOf(query, language), hit: found.hit};
+  ctx.log(`phrase "${asked}": "${query}" is ${found.hit.item}`);
+  return {query, words, groups};
+}
+
+/**
+ * The words that name the article: the group that won, or more of the line's last words when the
+ * article's title ends with them. Wikipedia titles are case-sensitive after the first letter, so a
+ * lower-case «miguel de cervantes» is no title, while «cervantes» redirects to «Miguel de
+ * Cervantes»: the line's last three words are that title, so they are searched, in its spelling.
+ */
+function named(line: string, group: string, title: string): {query: string; words: number} {
+  const fold = (text: string) => normalise(text).toLocaleLowerCase().split(' ');
+  const said = fold(line);
+  const titled = normalise(title).split(' ');
+  const titledFolded = fold(title);
+  let words = 0;
+  while (
+    words < Math.min(said.length, titled.length) &&
+    said[said.length - 1 - words] === titledFolded[titledFolded.length - 1 - words]
+  ) {
+    words++;
+  }
+  const own = group.split(' ').length;
+  return words > own
+    ? {query: titled.slice(-words).join(' '), words}
+    : {query: group, words: own};
 }
