@@ -7,7 +7,7 @@
 import { type Maze } from './maze';
 import { DIFFICULTY_LABELS, puzzleCode } from './code';
 import { densePoints, pathCells, innerCellAt, type InkStroke } from './check';
-import { copyRaster, drawInk, drawPolyline, drawRings, VIEW_ANSWER_PX, VIEW_MARK_SHARE } from './page/view';
+import { copyRaster, drawPointCheck, drawPolyline, VIEW_ANSWER_PX, VIEW_MARK_SHARE } from './page/view';
 import {
   createPage,
   drawFooter,
@@ -237,10 +237,7 @@ export const mazeMarkRadius = (grid: Grid): number => grid.cell * VIEW_MARK_SHAR
 
 /** The page with the player's ink and mistakes ringed, for the plugin's view only. */
 export function drawMazeCheck(maze: Maze, layout: PageLayout, page: Raster, strokes: readonly InkStroke[], check: MazeCheck): Raster {
-  const marked = copyRaster(page);
-  drawInk(marked, strokes);
-  drawRings(marked, mazeMarks(maze, layout.grid, check), mazeMarkRadius(layout.grid));
-  return marked;
+  return drawPointCheck(page, strokes, mazeMarks(maze, layout.grid, check), mazeMarkRadius(layout.grid));
 }
 
 /** The page with the route drawn, for the plugin's view only: the note never gets it. */

@@ -232,6 +232,16 @@ describe('the player lines', () => {
     expect(() => inkedEdges({ ...grid, lattice: 'hex' }, [loop])).toThrow('square grid');
   });
 
+  test('inkedEdges draws no edge from a cross marked on it to rule it out, at any size a hand writes it', () => {
+    for (const arm of [0.1, 0.15, 0.2]) {
+      const cross = [stroke(line(at(2.5 - arm, 2 - arm), at(2.5 + arm, 2 + arm))), stroke(line(at(2.5 - arm, 2 + arm), at(2.5 + arm, 2 - arm)))];
+      expect([arm, inkedEdges(grid, cross).size]).toEqual([arm, 0]);
+    }
+    // A line drawn along the edge with a hand's small wobble still draws it.
+    const wobble = stroke(Array.from({ length: 41 }, (_, i) => at(2.05 + (i / 40) * 0.9, 2 + 0.05 * Math.sin(i))));
+    expect([...inkedEdges(grid, [wobble])]).toEqual(['h:2,2']);
+  });
+
   test('pathCells follows a maze path with no jitter along a border', () => {
     const wobble = Array.from({ length: 41 }, (_, i) => at(0.5 + (i / 40) * 2, i % 2 ? 0.48 : 0.52));
     const down = line(at(2.5, 0.5), at(2.5, 2.5));

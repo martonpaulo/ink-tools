@@ -14,12 +14,20 @@ export const EDGE_TOLERANCE = 0.2;
 export const EDGE_MIN_COVER = 0.6;
 export const PATH_MARGIN = 0.2;
 export const STRIKE_MAX_BOW = 0.4;
+/**
+ * [inference] a point counts for an edge only while the pen runs along it: its step across the edge
+ * is at most this share of its step along it, so a cross marked on an edge to rule it out draws
+ * no edge (#391).
+ */
+export const EDGE_MAX_SLOPE = 0.5;
 /** An edge's ends this near a lattice dot are left out, so a corner never draws two edges. */
 const EDGE_END = 0.2;
 /** The edge's middle is measured in this many parts. */
 const EDGE_PARTS = 6;
 /** Points are filled in at this share of the cell before they are measured. */
 const LINE_STEP = 1 / 20;
+/** The pen's way at a point is read over this many filled-in points on each side: the edge's tolerance. */
+const SLOPE_REACH = Math.round(EDGE_TOLERANCE / LINE_STEP);
 
 function requireSquare(grid: Grid, what: string): void {
   if (grid.lattice !== 'square') throw new Error(`${what} needs a square grid, not a ${grid.lattice} one`);
@@ -41,20 +49,24 @@ export function inkedEdges(grid: Grid, strokes: readonly InkStroke[]): Set<strin
     parts.set(key, set);
   };
   for (const stroke of strokes) {
-    for (const { x, y } of densePoints(stroke.points, cell * LINE_STEP)) {
+    const points = densePoints(stroke.points, cell * LINE_STEP);
+    points.forEach(({ x, y }, i) => {
+      // The pen's way at this point, over the points an edge's tolerance away on each side, so a hand's wobble averages out.
+      const [a, b] = [points[Math.max(0, i - SLOPE_REACH)], points[Math.min(points.length - 1, i + SLOPE_REACH)]];
+      const [dx, dy] = [Math.abs(b.x - a.x), Math.abs(b.y - a.y)];
       const u = (x - grid.x) / cell;
       const v = (y - grid.y) / cell;
       const line = Math.round(v);
       const column = Math.floor(u);
-      if (Math.abs(v - line) <= EDGE_TOLERANCE && line >= 0 && line <= rows && column >= 0 && column < columns) {
+      if (dy <= dx * EDGE_MAX_SLOPE && Math.abs(v - line) <= EDGE_TOLERANCE && line >= 0 && line <= rows && column >= 0 && column < columns) {
         mark(`h:${column},${line}`, u - column);
       }
       const across = Math.round(u);
       const row = Math.floor(v);
-      if (Math.abs(u - across) <= EDGE_TOLERANCE && across >= 0 && across <= columns && row >= 0 && row < rows) {
+      if (dx <= dy * EDGE_MAX_SLOPE && Math.abs(u - across) <= EDGE_TOLERANCE && across >= 0 && across <= columns && row >= 0 && row < rows) {
         mark(`v:${across},${row}`, v - row);
       }
-    }
+    });
   }
   const drawn = new Set<string>();
   for (const [key, set] of parts) if (set.size >= EDGE_MIN_COVER * EDGE_PARTS) drawn.add(key);

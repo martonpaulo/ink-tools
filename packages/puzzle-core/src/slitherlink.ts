@@ -14,7 +14,7 @@
  * value when that breaks one), `hard` many of them. A puzzle the solver finishes has one solution:
  * every step it takes is forced.
  */
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
 
 export interface SlitherlinkSize {
@@ -37,6 +37,8 @@ export interface Slitherlink {
 export const SLITHERLINK_BANDS: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 /** shortcut: sides past 10 take seconds on the tablet's engine; raise it after a measured device round. */
 export const SLITHERLINK_LIMITS = { minSide: 4, maxSide: 10 } as const;
+/** The square sides the Puzzles view offers: each one's every band is found for every seed the tests try. */
+export const SLITHERLINK_SIDES: readonly number[] = [5, 7, 10];
 /** [inference] a medium puzzle needs 1 to this many trials, a hard one more; tuned so every band is found. */
 export const MEDIUM_MAX_TRIALS = 3;
 /** The region that draws the loop covers this share of the cells, in percent: a base and a seeded spread. */
@@ -508,4 +510,12 @@ export function generateSlitherlink(seed: string, size: SlitherlinkSize, difficu
     };
   }
   throw new Error(`no ${difficulty} ${width} x ${height} slitherlink from seed «${seed}» in ${ATTEMPTS} attempts`);
+}
+
+/** The slitherlink a puzzle code names (`SL-7X7-M-7K2Q9X`), the same one every time (#391). */
+export function slitherlinkFromCode(code: string): Slitherlink {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'slitherlink') throw new RangeError(`«${code}» is not a slitherlink code`);
+  const [width, height] = id.size.split('X').map(Number);
+  return generateSlitherlink(id.seed, { width, height }, id.difficulty);
 }

@@ -58,12 +58,13 @@ import {SUDOKU} from '../../../plugins/puzzles/src/games/sudoku';
 import {KILLER} from '../../../plugins/puzzles/src/games/killer';
 import {CALCUDOKU} from '../../../plugins/puzzles/src/games/calcudoku';
 import {KAKURO} from '../../../plugins/puzzles/src/games/kakuro';
+import {SLITHERLINK} from '../../../plugins/puzzles/src/games/slitherlink';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -322,6 +323,19 @@ const kakuroInk = () => {
   const puzzle = kakuroFromCode(KAKURO_CODE);
   return cellInk(drawKakuroPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout.grid, [...kakuroAnswers(puzzle)], 40, 9);
 };
+/** The largest slitherlink, its loop drawn but for two edges, and one edge drawn off it (#391). */
+const SLITHERLINK_CODE = 'SL-10X10-M-1';
+const slitherlinkInk = () => {
+  const puzzle = slitherlinkFromCode(SLITHERLINK_CODE);
+  const text = {game: 'Slitherlink', difficulty: 'Medium', rule: ''};
+  const {grid} = drawSlitherlinkPage(puzzle, {orientation: 'portrait', hand: 'right', text}).layout;
+  const loop = slitherlinkLoop(puzzle);
+  const off = slitherlinkEdgeKeys(puzzle.width, puzzle.height).find(key => !loop.includes(key)) as string;
+  return [...loop.slice(2), off].map(key => {
+    const [[x0, y0], [x1, y1]] = edgeEnds(grid, key);
+    return {points: [{x: x0 + (x1 - x0) / 10, y: y0 + (y1 - y0) / 10}, {x: x1 - (x1 - x0) / 10, y: y1 - (y1 - y0) / 10}], element: {}};
+  });
+};
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
@@ -352,6 +366,7 @@ const puzzlesSudoku = (code: string | null, steps: string[] = []) => puzzlesGame
 const puzzlesKiller = (code: string | null, steps: string[] = []) => puzzlesGame(KILLER, killerInk, code, steps);
 const puzzlesCalcudoku = (code: string | null, steps: string[] = []) => puzzlesGame(CALCUDOKU, calcudokuInk, code, steps);
 const puzzlesKakuro = (code: string | null, steps: string[] = []) => puzzlesGame(KAKURO, kakuroInk, code, steps);
+const puzzlesSlitherlink = (code: string | null, steps: string[] = []) => puzzlesGame(SLITHERLINK, slitherlinkInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -400,6 +415,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-kakuro-page', render: () => puzzlesKakuro(KAKURO_CODE)},
   {name: 'puzzles-kakuro-check', render: () => puzzlesKakuro(KAKURO_CODE, ['Check'])},
   {name: 'puzzles-kakuro-solution', render: () => puzzlesKakuro(KAKURO_CODE, ['Show Solution'])},
+  {name: 'puzzles-slitherlink', render: () => puzzlesSlitherlink(null)},
+  {name: 'puzzles-slitherlink-page', render: () => puzzlesSlitherlink(SLITHERLINK_CODE)},
+  {name: 'puzzles-slitherlink-check', render: () => puzzlesSlitherlink(SLITHERLINK_CODE, ['Check'])},
+  {name: 'puzzles-slitherlink-solution', render: () => puzzlesSlitherlink(SLITHERLINK_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

@@ -9,6 +9,7 @@ import {
   drawArrowword,
   generateArrowword,
   drawCellText,
+  drawEdgeAnswers,
   drawFooter,
   drawHitoriPage,
   drawHexLattice,
@@ -38,6 +39,7 @@ import {
   layoutStarBattle,
   puzzleCode,
   renderBoardPage,
+  slitherlinkLoop,
   type PageLayout,
   type Raster,
 } from '../src';
@@ -119,6 +121,12 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     const puzzle = generateSlitherlink('P1', { width: 10, height: 10 }, 'medium');
     const text = { game: 'Slitherlink', difficulty: 'Medium', rule: 'Draw one loop along the dots; each number counts its sides on the loop.' };
     return drawSlitherlinkPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10, text }).raster;
+  }],
+  ['slitherlink-answer-10mm-portrait-right', () => {
+    const puzzle = generateSlitherlink('P1', { width: 10, height: 10 }, 'medium');
+    const text = { game: 'Slitherlink', difficulty: 'Medium', rule: 'Draw one loop along the dots; each number counts its sides on the loop.' };
+    const { layout, raster } = drawSlitherlinkPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10, text });
+    return drawEdgeAnswers(raster, layout.grid, slitherlinkLoop(puzzle));
   }],
   ['hitori-15mm-portrait-right', () => drawHitoriPage(generateHitori('P1', 8, 'medium'), { orientation: 'portrait', hand: 'right' }).raster],
   ['page-binairo-10mm-portrait-right', () => {

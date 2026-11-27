@@ -18,6 +18,11 @@ export const VIEW_ANSWER_PX = 8;
 /** The ring around a wrong cell, as a share of the cell: most of it, so it never hides the next cell's ink. */
 export const VIEW_MARK_SHARE = 0.4;
 /**
+ * The mark around a wrong edge: a capsule along it as long as a cell's ring is wide and half as
+ * wide, so it is as easy to find as a cell's ring and the counts beside the edge stay clear (#391).
+ */
+export const VIEW_EDGE_MARK = { length: 2 * VIEW_MARK_SHARE, width: VIEW_MARK_SHARE } as const;
+/**
  * A cell whose top-left corner holds a label (a cage's sum or sign): its answer and its ring sit
  * this share of the cell lower and further right, at this scale, so they never cover the label (#388).
  */
@@ -84,6 +89,24 @@ function ringCells(raster: Raster, grid: Grid, cells: readonly number[], labelle
 }
 
 /**
+ * The page a game's «Check» shows over points of its own (#391): the player's ink, a ring of
+ * `radius` around each wrong point and a dashed one around each point it could not read.
+ */
+export function drawPointCheck(
+  page: Raster,
+  strokes: readonly InkStroke[],
+  wrong: readonly (readonly [number, number])[],
+  radius: number,
+  unread: readonly (readonly [number, number])[] = [],
+): Raster {
+  const marked = copyRaster(page);
+  drawInk(marked, strokes);
+  drawRings(marked, wrong, radius);
+  drawRings(marked, unread, radius, true);
+  return marked;
+}
+
+/**
  * The page a cell game's «Check» shows (#397): the player's ink, a ring around each wrong cell and
  * a dashed ring around each cell it could not read. Both hold cell indexes, as `checkCells` names them;
  * `labelled` names the cells whose corner label a ring must leave clear (#388).
@@ -96,8 +119,7 @@ export function drawCellCheck(
   unread: readonly number[] = [],
   labelled: ReadonlySet<number> = new Set(),
 ): Raster {
-  const marked = copyRaster(page);
-  drawInk(marked, strokes);
+  const marked = drawPointCheck(page, strokes, [], 0);
   ringCells(marked, grid, wrong, labelled, false);
   ringCells(marked, grid, unread, labelled, true);
   return marked;
@@ -115,5 +137,57 @@ export function drawCellAnswers(page: Raster, grid: Grid, answers: ReadonlyMap<n
     const style = { size: Math.round(grid.cell * TEXT_SIZE.given * scaleAt(cell, labelled)), weight: FONT_WEIGHTS.regular, tone: 'line' } as const;
     drawCentredText(answer, text, x, y, style);
   }
+  return answer;
+}
+
+/**
+ * The two lattice points of a square grid's edge, as `inkedEdges` names it: `h:c,r`, the top of
+ * cell c, r, or `v:c,r`, its left side.
+ */
+export function edgeEnds(grid: Grid, key: string): [[number, number], [number, number]] {
+  const match = /^([hv]):(\d+),(\d+)$/.exec(key);
+  if (!match) throw new RangeError(`«${key}» is not an edge key`);
+  const [column, row] = [Number(match[2]), Number(match[3])];
+  const at = (c: number, r: number): [number, number] => [grid.x + c * grid.cell, grid.y + r * grid.cell];
+  return match[1] === 'h' ? [at(column, row), at(column + 1, row)] : [at(column, row), at(column, row + 1)];
+}
+
+/** A capsule around an edge, as a closed polyline: a half ring at each end, joined along the edge. */
+function edgeCapsule(grid: Grid, key: string): [number, number][] {
+  const [[x0, y0], [x1, y1]] = edgeEnds(grid, key);
+  const [cx, cy] = [(x0 + x1) / 2, (y0 + y1) / 2];
+  const axis = Math.atan2(y1 - y0, x1 - x0);
+  const radius = (grid.cell * VIEW_EDGE_MARK.width) / 2;
+  const reach = (grid.cell * VIEW_EDGE_MARK.length) / 2 - radius;
+  const half = RING_CHORDS / 2;
+  const points: [number, number][] = [];
+  for (const side of [1, -1]) {
+    const [ex, ey] = [cx + side * reach * Math.cos(axis), cy + side * reach * Math.sin(axis)];
+    const from = axis - (side * Math.PI) / 2;
+    for (let i = 0; i <= half; i++) {
+      const angle = from + (i / half) * Math.PI;
+      points.push([ex + radius * Math.cos(angle), ey + radius * Math.sin(angle)]);
+    }
+  }
+  return [...points, points[0]];
+}
+
+/**
+ * The page an edges game's «Check» shows (#391): the player's ink and a capsule around each wrong
+ * edge, named as `inkedEdges` names it.
+ */
+export function drawEdgeCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly string[]): Raster {
+  const marked = drawPointCheck(page, strokes, [], 0);
+  for (const key of wrong) drawPolyline(marked, edgeCapsule(grid, key), VIEW_MARK_PX);
+  return marked;
+}
+
+/**
+ * The page with an edges game's answer drawn (#391), for the plugin's view only: each edge as a
+ * line as wide as the maze's answer, so it never reads as the player's ink.
+ */
+export function drawEdgeAnswers(page: Raster, grid: Grid, edges: readonly string[]): Raster {
+  const answer = copyRaster(page);
+  for (const key of edges) drawPolyline(answer, edgeEnds(grid, key), VIEW_ANSWER_PX);
   return answer;
 }

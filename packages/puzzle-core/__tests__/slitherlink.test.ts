@@ -2,14 +2,19 @@ import {
   assertNativeGreys,
   checkSlitherlink,
   countSlitherlinkSolutions,
+  drawEdgeAnswers,
+  drawEdgeCheck,
   drawSlitherlinkPage,
+  edgeEnds,
   generateSlitherlink,
   layoutPage,
   parsePuzzleCode,
   puzzleCode,
   rateSlitherlink,
   SLITHERLINK_BANDS,
+  SLITHERLINK_SIDES,
   slitherlinkEdgeKeys,
+  slitherlinkFromCode,
   slitherlinkLoop,
   type Grid,
   type InkPoint,
@@ -17,11 +22,8 @@ import {
   type Slitherlink,
 } from '../src';
 
-const SIZES = [
-  [5, 5],
-  [7, 7],
-  [10, 10],
-] as const;
+/** The sides the Puzzles view offers: every band of each is tried here. */
+const SIZES = SLITHERLINK_SIDES.map(side => [side, side] as const);
 
 /** The count of each cell from the loop: its sides the loop takes. */
 function countsFromLoop(puzzle: Slitherlink): number[] {
@@ -159,5 +161,39 @@ describe('the slitherlink page and its check', () => {
     expect(result.wrong).toEqual([]);
     expect(result.missing).toHaveLength(slitherlinkLoop(puzzle).length);
     expect(() => checkSlitherlink(puzzle, { ...layout.grid, columns: 8 }, [])).toThrow('8 x 7');
+  });
+
+  test('a code gives its puzzle back, and another game\'s code is refused', () => {
+    expect(slitherlinkFromCode(puzzleCode(puzzle.id))).toEqual(puzzle);
+    const wide = generateSlitherlink('7K2Q', { width: 10, height: 7 }, 'medium');
+    expect(slitherlinkFromCode(puzzleCode(wide.id))).toEqual(wide);
+    expect(() => slitherlinkFromCode('KK-6-E-7K2Q9X')).toThrow('not a slitherlink code');
+  });
+
+  test('an edge key names its two dots, and a wrong key is refused', () => {
+    const grid: Grid = { lattice: 'square', x: 100, y: 200, cell: 10, columns: 3, rows: 3 };
+    expect(edgeEnds(grid, 'h:1,3')).toEqual([[110, 230], [120, 230]]);
+    expect(edgeEnds(grid, 'v:3,0')).toEqual([[130, 200], [130, 210]]);
+    expect(() => edgeEnds(grid, 'd:1,1')).toThrow('not an edge key');
+  });
+
+  test('the check and answer pictures are copies in native greys: the page stays as inserted', () => {
+    const { layout, raster } = drawSlitherlinkPage(puzzle, { orientation: 'portrait', hand: 'right', cellMm: 10, text: TEXT });
+    const grid = layout.grid;
+    const before = Buffer.from(raster.pixels);
+    const loop = slitherlinkLoop(puzzle);
+    const off = slitherlinkEdgeKeys(puzzle.width, puzzle.height).find(key => !loop.includes(key)) as string;
+    const checked = drawEdgeCheck(raster, grid, [along(grid, off)], [off]);
+    const answered = drawEdgeAnswers(raster, grid, loop);
+    expect(Buffer.from(raster.pixels).equals(before)).toBe(true);
+    for (const picture of [checked, answered]) {
+      assertNativeGreys(picture);
+      expect(Buffer.from(picture.pixels).equals(before)).toBe(false);
+    }
+    // The answer draws on the loop's edges only: a count's cell centre keeps its page pixel.
+    const counted = puzzle.clues.findIndex(clue => clue !== null);
+    const [cx, cy] = [grid.x + (counted % puzzle.width + 0.5) * grid.cell, grid.y + (Math.floor(counted / puzzle.width) + 0.5) * grid.cell];
+    const at = Math.round(cy) * raster.width + Math.round(cx);
+    expect(answered.pixels[at]).toBe(raster.pixels[at]);
   });
 });
