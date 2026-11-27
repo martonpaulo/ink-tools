@@ -305,14 +305,26 @@ async function readPreview(deps: EditorDeps): Promise<string | null> {
   return preview.value;
 }
 
-/** The «Image Editing» button: reads the lassoed picture and shows it with every edit. */
+/**
+ * The «Image Editing» button: reads the lassoed picture and shows it with every edit. A press
+ * while the editor still shows an earlier picture reads the lasso again: the view's × closes it
+ * without Close, so the next press showed the old picture, and an edit on it said the picture was
+ * no longer on the page (measured on the Manta, 2026-11-27, #132, #522). Its strokes and preview
+ * go, as Cancel and Close drop them; nothing while an edit runs.
+ */
 export async function openEditor(
   deps: EditorDeps = EDITOR_DEVICE,
 ): Promise<void> {
-  if (state.phase === 'opening' || state.phase === 'ready') {
+  const before = state;
+  if (before.phase === 'opening' || (before.phase === 'ready' && before.busy !== null)) {
     return;
   }
   setState({phase: 'opening'});
+  if (before.phase === 'ready') {
+    deps.log('editor: pressed again: reading the lasso again');
+    await deps.remove(before.preview);
+    await dropStrokes(before, deps);
+  }
   deps.log('editor: open');
   const missing = await deps.missing();
   if (missing.length > 0) {

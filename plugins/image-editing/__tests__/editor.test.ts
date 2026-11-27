@@ -127,6 +127,37 @@ test('the editor opens on the lassoed picture with its preview', async () => {
   expect(deps.recycle).toHaveBeenCalledTimes(1);
 });
 
+test('a press after the view closed with × reads the new lasso, never the old picture (#132, #522)', async () => {
+  const lassoed: object[] = [picture()];
+  const f = fakeDeps(lassoed);
+  await openEditor(f.deps);
+  // × closes the view without Close: the editor still holds the first picture.
+  lassoed.splice(0, 1, picture(MOVED));
+  await openEditor(f.deps);
+  expect(editorState()).toMatchObject({phase: 'ready', rect: MOVED, preview: '/w/editor-1.png'});
+  expect(f.removed).toEqual(['/w/editor-0.png']);
+});
+
+test('a press while an edit runs changes nothing', async () => {
+  const f = fakeDeps();
+  await openEditor(f.deps);
+  let release!: () => void;
+  f.deps.press = jest.fn(
+    () =>
+      new Promise(resolve => {
+        release = () => resolve({kind: 'edited', edit: 'enhance', ms: 1, rect: MOVED});
+      }),
+  );
+  const running = runEditorEdit(editOf('enhance'), close, f.deps);
+  for (let i = 0; i < 20; i += 1) {
+    await Promise.resolve();
+  }
+  await openEditor(f.deps);
+  expect(editorState()).toMatchObject({phase: 'ready', busy: 'enhance'});
+  release();
+  await running;
+});
+
 test('a lasso that is not one picture says so, and a missing permission asks', async () => {
   const two = fakeDeps([picture(), picture(MOVED)]);
   await openEditor(two.deps);
