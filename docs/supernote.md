@@ -376,6 +376,22 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   2026-11-26, [#289](https://github.com/martonpaulo/ink-tools/issues/289),
   [#249](https://github.com/martonpaulo/ink-tools/issues/249)]. `isBackground` in the plugin list
   stays 0 for Device Link.
+- Device Link's LocalSend receiver goes on taking items with its view closed [measured, Manta,
+  firmware 2559, Device Link 0.2.0 beta 1, 2026-11-27, tablet queue rows 45 and 47,
+  [#289](https://github.com/martonpaulo/ink-tools/issues/289)]:
+  - «Receive», then the view closed with × or with Back: a picture and a text the Mac sends within
+    the window both land in the open note. A second Receive tap shows the running receive with Stop.
+  - «Receive in the background» on, the view never opened: the receiver starts with the plugin, and
+    a text or a picture sent to an open note lands with its toast. After an update over itself it
+    listens again with no tap; the Wi-Fi radio off for 10 s and on leaves its port open and the
+    switch on. Stop in the Receive view ends it, and Settings then reads off.
+  - With no note open, a text was lost and the receive hung: every later send got the receiver's
+    500 (no JavaScript answer in `RelayModule.DECIDE_MS`) and Stop did nothing, until PluginHost
+    restarted. No «no note open» line was logged, so the page-size read is the likely call that
+    never answered (an inference). Device Link now gives a page read `PAGE_READ_MS` (4.5 s, on the
+    native tick) and keeps the item for the next open note; its device check is tablet queue row 58.
+  - Not measured: the receiver after 10 min idle with the screen off, an iPhone send, and the
+    battery cost over one hour (the cable charges the tablet).
 - A plugin's detail page in Settings › Apps › Plugins has a «Settings» row only when the plugin has
   a config button: on Probe's page, which has none, «Uninstall» sits where Account Sync's page has
   «Settings» (y about 920), and a blind tap there opened the uninstall dialog [measured, 2026-11-17,
