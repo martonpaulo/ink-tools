@@ -7,6 +7,7 @@
  */
 import type {Rect} from '@ink-tools/ink-core';
 import {
+  edgeDistance,
   getCurrentFilePath,
   getCurrentPageNum,
   getLassoElements,
@@ -17,6 +18,7 @@ import {
   PICTURE_TYPE,
   Result,
 } from '@ink-tools/sn-adapter/official';
+import {REGISTRY} from '@ink-tools/sn-adapter/registry';
 import {copy} from './copy';
 import {EditId} from './edits';
 import {
@@ -115,9 +117,11 @@ export type Marks = {points: number[]; ends: number[]};
 
 /**
  * A style's two options (#133), the box Crop cuts to (#132) and the marks Erase clears (#134); the
- * other edits ignore them.
+ * other edits ignore them. `target` is the picture the editor view shows (#522): the edit takes
+ * that picture out of whatever the lasso holds, so ink or another picture in its rect never stops
+ * it; without it the lasso must hold one picture alone.
  */
-export type EditOptions = StyleOptions & {box?: Box; marks?: Marks};
+export type EditOptions = StyleOptions & {box?: Box; marks?: Marks; target?: Rect};
 
 /**
  * What a press did, for the log and the tests. An edit gives the picture's new place on the page,
@@ -152,6 +156,48 @@ const PIXEL_EDITS: Record<string, PixelEdit> = {
 /** Why a press changed nothing; src/press.ts turns each into its toast (#170). */
 export const NOT_ONE_PICTURE = 'the lasso is not one picture';
 export const NOT_EDITED = 'Retouch has not edited this picture';
+/** The editor's picture is not in its lasso any more (#522). */
+export const PICTURE_GONE = 'the picture was deleted or moved';
+/**
+ * Ink or shapes lie on the picture and no clean copy of its pixels exists (#522): the lasso preview
+ * would draw them into the edited picture (docs/supernote.md › Plugins, #130).
+ */
+export const INK_ON_PICTURE = 'ink or shapes lie on the picture';
+
+/**
+ * Page pixels a picture's reported rect may lie from the rect the editor remembered and still be
+ * that picture: a picture's stored box reaches up to this far past its drawn frame (registry
+ * `plugin-api.crop-erase-elements`, measured for #324 and #522).
+ */
+export const FRAME_TOLERANCE: number =
+  REGISTRY.pluginApiCropEraseElements.frameTolerance;
+
+/**
+ * The picture among `elements` whose rect lies nearest `rect`, within `tolerance` page pixels on
+ * every edge, else null: of two overlapping pictures the one that matches is taken, never the
+ * first (#522).
+ */
+export function pictureAt(
+  elements: object[],
+  rect: Rect,
+  tolerance: number = FRAME_TOLERANCE,
+): PictureElement | null {
+  let best: PictureElement | null = null;
+  let bestDistance = Infinity;
+  for (const each of elements) {
+    const element = each as Partial<PictureElement>;
+    const at = element.picture?.rect;
+    if (element.type !== PICTURE_TYPE || !at) {
+      continue;
+    }
+    const distance = edgeDistance(at, rect);
+    if (distance <= tolerance && distance < bestDistance) {
+      best = element as PictureElement;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
 
 /** The lassoed elements when they are exactly one picture, else null. */
 export function onePicture(elements: object[]): PictureElement | null {
@@ -210,10 +256,13 @@ async function editOnce(
   if (!lassoed.ok) {
     return {kind: 'failed', why: why('getLassoElements', lassoed)};
   }
-  const element = onePicture(lassoed.value);
+  const element = options.target
+    ? pictureAt(lassoed.value, options.target)
+    : onePicture(lassoed.value);
   if (!element) {
-    return {kind: 'nothing', why: NOT_ONE_PICTURE};
+    return {kind: 'nothing', why: options.target ? PICTURE_GONE : NOT_ONE_PICTURE};
   }
+  const alone = lassoed.value.length === 1;
   const note = await deps.notePath();
   if (!note.ok) {
     return {kind: 'failed', why: why('getCurrentFilePath', note)};
@@ -244,7 +293,7 @@ async function editOnce(
   };
   const pixel = PIXEL_EDITS[edit];
   if (pixel) {
-    return pixelEdit(pixel, edit, element, place, history, work.value, deps, options);
+    return pixelEdit(pixel, edit, element, alone, place, history, work.value, deps, options);
   }
   const step =
     edit === 'undo' ? undoStep(history, place) : restoreStep(history, place);
@@ -258,6 +307,7 @@ async function pixelEdit(
   pixel: PixelEdit,
   edit: EditId | StyleId,
   element: PictureElement,
+  alone: boolean,
   place: Place,
   history: History,
   work: string,
@@ -277,15 +327,23 @@ async function pixelEdit(
     return {kind: 'failed', why: why('getPageSize', width)};
   }
   const stamp = deps.now();
-  const previewPath = `${work}/preview-${stamp}.png`;
   const known = findEntry(history, place);
+  // With ink or another element in the lasso, the preview would draw them into the picture, so
+  // the pixels come from the state Retouch itself put on the page, if any (#522).
+  const shown = known ? known.states[known.states.length - 1].path : null;
+  if (!alone && shown === null) {
+    return {kind: 'nothing', why: INK_ON_PICTURE};
+  }
   const originalPath = known ? '' : `${work}/${stamp}-original.png`;
   const resultPath = `${work}/${stamp}-${pixel}.png`;
-  const preview = await deps.preview(previewPath);
+  const preview: Result<string> = alone
+    ? await deps.preview(`${work}/preview-${stamp}.png`)
+    : {ok: true, value: shown as string};
   if (!preview.ok) {
     return {kind: 'failed', why: why('generateLassoPreview', preview)};
   }
-  const keep = new Set<string>();
+  // The state file stays: the history lists it.
+  const keep = new Set<string>(alone ? [] : [preview.value]);
   try {
     const size = sizeOf(place.rect);
     const edited = marks

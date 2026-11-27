@@ -1201,9 +1201,12 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
   another note [measured on the Mac, 2026-11-27,
   [#522](https://github.com/martonpaulo/ink-tools/issues/522)]. So a plugin that can read the
   saved `.note` can take a picture's own pixels from it, without the ink a lasso preview draws in.
-  Whether a plugin can read a `.note` (`Note/` is on the plugin file whitelist) is
-  [unverified], and `inkctl note digest` measures it; whether a picture larger than the page is
-  stored at its source size or scaled is [unverified].
+  A plugin can read a saved `.note` in `Note/` with File read: Probe's `FileUtils.getFileMD5` of
+  `Note/Tests/Image 522 2026-11-27.note` equalled the tablet's own `md5sum`, with no refusal and no
+  whitelist line in the log. A 1920 x 2560 PNG Note Editor inserted is not stored at its source
+  size: the note keeps it scaled to its placed rect, 800 x 1067, 8-bit grey [measured on the
+  Manta, firmware 2559, 2026-11-27, `inkctl note digest` and the note pulled to the Mac,
+  [#522](https://github.com/martonpaulo/ink-tools/issues/522)].
 - Mac OCR with Apple Vision, against the tablet's recognition of the same 25 handwriting pages:
   [`research/2026-11-handwriting-ocr.md`](research/2026-11-handwriting-ocr.md).
 

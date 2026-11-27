@@ -7,6 +7,19 @@ import type {Rect} from './model';
 export type {Rect};
 
 /**
+ * The largest distance between two rects' matching edges, in page units: how far a rect read back
+ * lies from one written or remembered (#522).
+ */
+export function edgeDistance(a: Rect, b: Rect): number {
+  return Math.max(
+    Math.abs(a.left - b.left),
+    Math.abs(a.top - b.top),
+    Math.abs(a.right - b.right),
+    Math.abs(a.bottom - b.bottom),
+  );
+}
+
+/**
  * The host's answer to a lasso call while no lasso is on the page: «No lasso action has been
  * performed. Cannot call the API!» (measured, Manta, 2026-11-25, #248; docs/supernote.md).
  */

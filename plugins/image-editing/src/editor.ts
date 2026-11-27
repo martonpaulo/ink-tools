@@ -3,7 +3,10 @@
  * and every edit is a button there. Each edit keeps its own code: a tap runs the same `pressEdit`
  * a lasso row ran before, with the view's status line in place of the toast and the view's own
  * «Loading…» line in place of the strip. Before each edit the picture is lassoed again by its rect,
- * as src/page.ts does, since an edit replaces the element; the preview is read again after it.
+ * as src/page.ts does, since an edit replaces the element; the preview is read again after it. The
+ * edit then takes the picture whose rect matches out of whatever that lasso holds, so ink or another
+ * picture in its rect never stops it, and a picture that is gone, or a note or page that changed,
+ * says so and changes nothing (#522).
  *
  * Erase and Crop take the pen on the picture in the view: the person draws over the preview, and
  * the marks, mapped to page pixels, run through the same `eraseMarks` and `cropBox` as the marks
@@ -30,8 +33,10 @@ import {cropBox, GUIDE_OUTSIDE} from './crop';
 import {
   DEVICE as EDIT_DEVICE,
   Done,
+  FRAME_TOLERANCE,
   Marks,
   onePicture,
+  pictureAt,
   removeFile,
   runEdit,
   sizeOf,
@@ -86,6 +91,9 @@ export const EDITOR_GROUPS: readonly {
   {heading: 'editor.page', edits: PAGE_WIDE},
 ];
 
+/** The note and page the editor opened on (#522). */
+export type Where = {note: string; page: number};
+
 export type EditorState =
   | {phase: 'idle'}
   | {phase: 'opening'}
@@ -96,6 +104,8 @@ export type EditorState =
       phase: 'ready';
       /** The picture's place on the page now, in page pixels. */
       rect: Rect;
+      /** The note and page it is on; null when the host did not answer at the open. */
+      opened: Where | null;
       /** The lasso preview shown in the view. */
       preview: string;
       /** The lasso held pen marks with the picture when the view opened. */
@@ -123,6 +133,8 @@ export type EditorDeps = {
   lassoed: () => Promise<Result<object[]>>;
   recycle: (element: object) => Promise<unknown>;
   lasso: (rect: Rect) => Promise<Result<boolean>>;
+  /** The open note and page now; null when the host does not answer. */
+  where: () => Promise<Where | null>;
   workDir: () => Promise<Result<string>>;
   preview: (pngPath: string) => Promise<Result<string>>;
   remove: (path: string) => Promise<void>;
@@ -136,6 +148,8 @@ export type EditorDeps = {
   styles: () => Promise<void>;
   /** A pen edit with the marks drawn in the view. */
   drawn: (edit: DrawEdit, picture: Rect, marks: PenPoint[][]) => Promise<Done>;
+  /** One edit's run on the editor's picture, found at `target` (#522). */
+  run: (edit: EditId, target: Rect) => Promise<Done>;
   /** Erases `marks` from the image at `src` into `dest`, for the view only (#278). */
   eraseView: (
     src: string,
@@ -148,7 +162,10 @@ export type EditorDeps = {
   log: (line: string) => void;
 };
 
-/** What a pen edit drawn in the view runs: the same marks and box the page-drawn path makes. */
+/**
+ * What a pen edit drawn in the view runs: the same marks and box the page-drawn path makes, on the
+ * picture at `picture` (#522).
+ */
 export async function runDrawn(
   edit: DrawEdit,
   picture: Rect,
@@ -157,12 +174,12 @@ export async function runDrawn(
   if (edit === 'erase') {
     const found = eraseMarks(picture, marks);
     return found
-      ? runEdit('erase', undefined, {...NO_OPTIONS, marks: found})
+      ? runEdit('erase', undefined, {...NO_OPTIONS, marks: found, target: picture})
       : {kind: 'nothing', why: MARKS_OUTSIDE};
   }
   const box = cropBox(picture, marks.flat());
   return box
-    ? runEdit('crop', undefined, {...NO_OPTIONS, box})
+    ? runEdit('crop', undefined, {...NO_OPTIONS, box, target: picture})
     : {kind: 'nothing', why: GUIDE_OUTSIDE};
 }
 
@@ -177,6 +194,11 @@ export const EDITOR_DEVICE: EditorDeps = {
   lassoed: getLassoElements,
   recycle: recycleElement,
   lasso: lassoElements,
+  where: async () => {
+    const note = await EDIT_DEVICE.notePath();
+    const page = await EDIT_DEVICE.pageNum();
+    return note.ok && page.ok ? {note: note.value, page: page.value} : null;
+  },
   workDir: EDIT_DEVICE.workDir,
   preview: lassoImage,
   remove: path => removeFile(path, EDIT_DEVICE),
@@ -191,6 +213,7 @@ export const EDITOR_DEVICE: EditorDeps = {
     return pressEdit(edit, deps);
   },
   drawn: runDrawn,
+  run: (edit, target) => runPress(edit, target),
   // The page edit's own Java erase, on the shown image, with no original to keep.
   eraseView: (src, dest, picture, marks) => {
     const {width, height} = sizeOf(picture);
@@ -312,9 +335,14 @@ export async function openEditor(
     setState({phase: 'failed', message: copy['editor.noPreview']});
     return;
   }
+  const opened = await deps.where();
+  if (opened === null) {
+    deps.log('editor: the open note or page did not answer');
+  }
   setState({
     phase: 'ready',
     ...read,
+    opened,
     preview,
     busy: null,
     draw: null,
@@ -326,16 +354,63 @@ export async function openEditor(
 
 const ready = (): Ready | null => (state.phase === 'ready' ? state : null);
 
-/** Lassoes the picture again by its rect, so the next edit reads it (an edit replaces it). */
-async function relasso(rect: Rect, deps: EditorDeps): Promise<boolean> {
-  const lassoed = await deps.lasso(rect);
-  if (!lassoed.ok || lassoed.value !== true) {
-    deps.log(
-      lassoed.ok ? 'editor: lasso: false' : describe('editor: lasso', lassoed),
-    );
-    return false;
+/** The picture found again: its rect now, and whether the lasso holds it alone. */
+type Found = {rect: Rect; alone: boolean};
+
+/** `rect` grown by `by` page pixels on every side, never past the page's top left. */
+const grown = (rect: Rect, by: number): Rect => ({
+  left: Math.max(0, rect.left - by),
+  top: Math.max(0, rect.top - by),
+  right: rect.right + by,
+  bottom: rect.bottom + by,
+});
+
+/** The picture at `rect` among what the lasso holds now, or null; the elements are recycled. */
+async function matchLassoed(rect: Rect, deps: EditorDeps): Promise<Found | null> {
+  const lassoed = await deps.lassoed();
+  if (!lassoed.ok) {
+    deps.log(describe('editor: getLassoElements', lassoed));
+    return null;
   }
-  return true;
+  try {
+    const picture = pictureAt(lassoed.value, rect);
+    return picture
+      ? {rect: {...picture.picture.rect}, alone: lassoed.value.length === 1}
+      : null;
+  } finally {
+    await Promise.all(lassoed.value.map(element => deps.recycle(element)));
+  }
+}
+
+/**
+ * Lassoes the picture at `at.rect` again, so the next edit reads it (an edit replaces it), and
+ * finds it in that lasso (#522). A picture's reported rect may lie up to {@link FRAME_TOLERANCE}
+ * from its drawn frame, so when the rect itself lassoes nothing it is tried grown by that much.
+ * The value is the picture found, or the line that says why it is not.
+ */
+async function relasso(at: Ready, deps: EditorDeps): Promise<Found | string> {
+  if (at.opened !== null) {
+    const now = await deps.where();
+    if (now !== null && (now.note !== at.opened.note || now.page !== at.opened.page)) {
+      deps.log(`editor: the note or page changed: ${now.note} page ${now.page}`);
+      return copy['editor.changed'];
+    }
+  }
+  for (const rect of [at.rect, grown(at.rect, FRAME_TOLERANCE)]) {
+    const lassoed = await deps.lasso(rect);
+    if (!lassoed.ok || lassoed.value !== true) {
+      deps.log(
+        lassoed.ok ? 'editor: lasso: false' : describe('editor: lasso', lassoed),
+      );
+      continue;
+    }
+    const found = await matchLassoed(at.rect, deps);
+    if (found) {
+      return found;
+    }
+    deps.log('editor: no picture at its rect in the lasso');
+  }
+  return copy['editor.gone'];
 }
 
 /**
@@ -363,7 +438,7 @@ export async function runEditorEdit(
     });
     return;
   }
-  await runOnPicture(at, edit, id => runPress(id), closeView, deps);
+  await runOnPicture(at, edit, deps.run, closeView, deps);
 }
 
 /** «Apply» while drawing: the pen edit runs with the marks drawn in the view. */
@@ -376,39 +451,50 @@ export async function applyDrawing(
   if (!at || at.busy !== null || at.draw === null) {
     return;
   }
-  const {draw, marks, rect} = at;
+  const {draw, marks} = at;
   await runOnPicture(
     // Erase's last stroke image stays on screen while the page edit runs: no flash back (#278).
     {...at, draw: null, marks: []},
     edit,
-    () => deps.drawn(draw, rect, marks),
+    (_, target) => deps.drawn(draw, target, marks),
     closeView,
     deps,
   );
 }
 
 async function runOnPicture(
-  at: Ready,
+  before: Ready,
   edit: EditDefinition,
-  run: (edit: EditId) => Promise<Done>,
+  run: (edit: EditId, target: Rect) => Promise<Done>,
   closeView: () => void,
   deps: EditorDeps,
 ): Promise<void> {
-  setState({...at, busy: edit.id, message: null});
-  if (!(await relasso(at.rect, deps))) {
-    setState({...at, busy: null, strokes: [], message: copy['editor.lost']});
+  setState({...before, busy: edit.id, message: null});
+  const found = await relasso(before, deps);
+  if (typeof found === 'string') {
+    setState({...before, busy: null, strokes: [], message: found});
     return;
   }
+  const at: Ready = {...before, rect: found.rect};
   if (edit.id === 'styles') {
+    // The grid renders every style from the lasso preview, which would draw the ink in (#522).
+    if (!found.alone) {
+      setState({...at, busy: null, message: copy['editor.inkOnPicture']});
+      return;
+    }
     // The grid shows over the editor; a picked style comes back through `stylesDone`.
     setState({...at, busy: null});
     await deps.styles();
     return;
   }
   let message: string | null = null;
-  const done = await deps.press(edit, run, text => {
-    message = text;
-  });
+  const done = await deps.press(
+    edit,
+    id => run(id, found.rect),
+    text => {
+      message = text;
+    },
+  );
   if (PAGE_WIDE.includes(edit.id)) {
     setState({phase: 'idle'});
     await deps.remove(at.preview);
@@ -431,7 +517,7 @@ async function showAfter(
   const edited = done !== null && done.kind === 'edited' ? done : null;
   const rect = edited?.rect ? {...edited.rect} : at.rect;
   let preview = at.preview;
-  if (edited && (await relasso(rect, deps))) {
+  if (edited && typeof (await relasso({...at, rect}, deps)) !== 'string') {
     const fresh = await readPreview(deps);
     if (fresh !== null) {
       await deps.remove(at.preview);

@@ -77,17 +77,17 @@
     },
     {
       "id": "plugin-api.crop-erase-elements",
-      "title": "Image Editing's facts about picture elements for Crop and Erase",
+      "title": "Image Editing's facts about picture elements: their fields after an edit, and how far a reported rect may lie from the drawn picture",
       "level": 5,
       "impact": "user",
       "owner": "image-editing",
       "readers": [
         "image-editing"
       ],
-      "reason": "the SDK does not describe a picture element's fields after an edit; device rounds showed them",
+      "reason": "the SDK does not describe a picture element's fields after an edit, nor whether its rect is the drawn frame; device rounds and the saved file showed them",
       "evidence": {
-        "source": "Image Editing device rounds (#136)",
-        "date": "2026-11-24"
+        "source": "Image Editing device rounds (#136); the record box of a picture and a text box against their five points, measured on the Mac on content.note (#324, #522)",
+        "date": "2026-11-27"
       },
       "upgradePath": "an SDK picture-edit API",
       "lastVerified": "unverified",
@@ -97,9 +97,12 @@
       },
       "active": "image-editing src/edit.ts",
       "issues": [
-        136
+        136,
+        522
       ],
-      "values": {}
+      "values": {
+        "frameTolerance": 228
+      }
     },
     {
       "id": "plugin-api.inserted-picture-copy",

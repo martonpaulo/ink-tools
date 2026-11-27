@@ -15,6 +15,7 @@ import {copy} from '../src/copy';
 const READY: EditorState = {
   phase: 'ready',
   rect: {left: 100, top: 200, right: 300, bottom: 400},
+  opened: null,
   preview: '/w/editor-1.png',
   guided: false,
   busy: null,

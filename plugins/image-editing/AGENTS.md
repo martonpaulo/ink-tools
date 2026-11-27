@@ -14,7 +14,11 @@ Settings as a button: **Enhance**, **Lighter**, **Darker**, **Undo**, **Restore 
 **Rotate 90°**, **Mirror**, **Flip**, **Invert** ([#131](https://github.com/martonpaulo/supernote-tools/issues/131)), **Trim** ([#132](https://github.com/martonpaulo/supernote-tools/issues/132)),
 **Remove background**, **Make sticker** ([#134](https://github.com/martonpaulo/ink-tools/issues/134)) and **Document** ([#137](https://github.com/martonpaulo/supernote-tools/issues/137)). A tap
 lassoes the picture again by its rect, runs the same `pressEdit` a lasso row ran, with the view's
-status line in place of the toast, and shows the picture again from a fresh lasso preview.
+status line in place of the toast, and shows the picture again from a fresh lasso preview. The edit
+takes the picture whose rect matches, within the registry's `frameTolerance`, out of whatever that
+lasso holds; with ink or shapes in it, the pixels come from the state Image Editing put on the page,
+and a picture never edited before is refused with why, as is a deleted picture or a turned page
+([#522](https://github.com/martonpaulo/ink-tools/issues/522)).
 **Crop** ([#132](https://github.com/martonpaulo/ink-tools/issues/132)) and **Erase** ([#134](https://github.com/martonpaulo/ink-tools/issues/134)) take the pen in the editor: the marks
 drawn over the preview, mapped to page pixels, go through `cropBox` and `eraseMarks`. A pen move
 draws nothing; when the pen lifts, Crop shows the stroke's dots, and Erase shows the picture with

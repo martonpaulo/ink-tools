@@ -5,7 +5,15 @@ import {
   PICTURE_TYPE,
   THROWN_CODE,
 } from '@ink-tools/sn-adapter/official';
-import {EditDeps, historyPath, runEdit} from '../src/edit';
+import {
+  EditDeps,
+  FRAME_TOLERANCE,
+  historyPath,
+  INK_ON_PICTURE,
+  PICTURE_GONE,
+  pictureAt,
+  runEdit,
+} from '../src/edit';
 import {parseHistory} from '../src/history';
 import {NO_OPTIONS, RetouchNative} from '../src/native';
 
@@ -396,3 +404,58 @@ test.each(['enhance', 'undo'] as const)(
     expect(pages.every(page => page === 9)).toBe(true);
   },
 );
+
+describe('an edit on the editor picture, found among what the lasso holds (#522)', () => {
+  const ink = {type: 0, numInPage: 9};
+
+  test('ink in the lasso: a picture Retouch edited before is edited from its own state, ink left alone', async () => {
+    const w = world();
+    await runEdit('enhance', w.deps);
+    const shown = w.modified[0].path;
+    (w.deps.lassoElements as jest.Mock).mockResolvedValue(ok([ink, w.element]));
+    (w.deps.preview as jest.Mock).mockClear();
+    const done = await runEdit('invert', w.deps, {...NO_OPTIONS, target: RECT});
+    expect(done.kind).toBe('edited');
+    // No lasso preview: it would draw the ink into the picture (#130).
+    expect(w.deps.preview).not.toHaveBeenCalled();
+    expect(w.native.edit).toHaveBeenLastCalledWith(
+      'invert', shown, '', expect.stringMatching(/-invert\.png$/), 400, 300, 1920, false, false,
+    );
+    const written = (w.deps.modify as jest.Mock).mock.calls[1][0] as object[];
+    expect(written).toHaveLength(1);
+    expect((written[0] as {type: number}).type).toBe(PICTURE_TYPE);
+    // The state the edit read stays: the history still lists it for Undo.
+    expect(w.files.has(shown)).toBe(true);
+    expect(w.history().entries[0].states.map(s => s.path)).toContain(shown);
+  });
+
+  test('ink in the lasso on a picture never edited: nothing runs and it says why', async () => {
+    const w = world();
+    (w.deps.lassoElements as jest.Mock).mockResolvedValue(ok([w.element, ink]));
+    const done = await runEdit('invert', w.deps, {...NO_OPTIONS, target: RECT});
+    expect(done).toEqual({kind: 'nothing', why: INK_ON_PICTURE});
+    expect(w.deps.preview).not.toHaveBeenCalled();
+    expect(w.modified).toEqual([]);
+  });
+
+  test('no picture at the target: the picture is gone and nothing runs', async () => {
+    const w = world();
+    (w.deps.lassoElements as jest.Mock).mockResolvedValue(ok([ink]));
+    const done = await runEdit('enhance', w.deps, {...NO_OPTIONS, target: RECT});
+    expect(done).toEqual({kind: 'nothing', why: PICTURE_GONE});
+    expect(w.modified).toEqual([]);
+  });
+
+  test('of two overlapping pictures the one that matches the target is taken, never the first', () => {
+    const other = {type: PICTURE_TYPE, picture: {rect: {left: 150, top: 250, right: 450, bottom: 450}}};
+    const mine = {type: PICTURE_TYPE, picture: {rect: {...RECT}}};
+    expect(pictureAt([other, ink, mine], RECT)).toBe(mine);
+    // A Mac-inserted picture's stored box reaches past its frame (registry, #324).
+    const frame = {left: 720, top: 1120, right: 1200, bottom: 1440};
+    const box = {left: 720, top: 1120, right: 1428, bottom: 1668};
+    const stored = {type: PICTURE_TYPE, picture: {rect: box}};
+    expect(pictureAt([stored], frame)).toBe(stored);
+    expect(FRAME_TOLERANCE).toBeGreaterThanOrEqual(1428 - 1200);
+    expect(pictureAt([stored], {left: 0, top: 0, right: 100, bottom: 100})).toBeNull();
+  });
+});

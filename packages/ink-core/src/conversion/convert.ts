@@ -10,6 +10,7 @@
  */
 import type {Rect, Size} from '../lasso';
 import {
+  edgeDistance,
   type EmrRange,
   emrToPage,
   fail,
@@ -567,16 +568,6 @@ export const LOG_MATCH_SHAPES = true;
 
 function uuidIn(page: readonly object[], uuid: string): boolean {
   return (page as HostElement[]).some(each => each.uuid === uuid && each.numInPage !== undefined);
-}
-
-/** The largest distance between two rects' matching edges. */
-export function edgeDistance(a: Rect, b: Rect): number {
-  return Math.max(
-    Math.abs(a.left - b.left),
-    Math.abs(a.top - b.top),
-    Math.abs(a.right - b.right),
-    Math.abs(a.bottom - b.bottom),
-  );
 }
 
 /**

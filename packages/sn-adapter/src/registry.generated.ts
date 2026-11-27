@@ -75,6 +75,9 @@ export const REGISTRY = {
   pluginApiElementReads: {
     maxConcurrent: 4,
   },
+  pluginApiCropEraseElements: {
+    frameTolerance: 228,
+  },
   pluginApiBatchNoRedraw: {
     redrawCode: 0,
   },

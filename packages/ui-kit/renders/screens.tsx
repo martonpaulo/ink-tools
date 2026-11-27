@@ -126,6 +126,7 @@ export function settle() {}
 const IMAGE_EDITOR: ImageEditorState = {
   phase: 'ready',
   rect: {left: 100, top: 200, right: 1060, bottom: 1070},
+  opened: null,
   preview: '/w/editor-1.png',
   guided: false,
   busy: null,

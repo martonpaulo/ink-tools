@@ -6,8 +6,13 @@ export const copy = {
   'editor.opening': 'Reading the picture…',
   'editor.working': 'Loading…',
   'editor.noPreview': 'Image Editing could not read the lassoed picture.',
-  'editor.lost':
-    'The picture is no longer on the page here. Close, lasso it again and press Image Editing.',
+  /** Why an edit in the editor found no picture to change (#522); nothing was applied. */
+  'editor.gone':
+    'The picture was deleted or moved. Close, lasso it again and press Image Editing.',
+  'editor.changed':
+    'The note or the page changed. Close, lasso the picture again and press Image Editing.',
+  'editor.inkOnPicture':
+    'Ink or shapes lie on this picture, so it cannot be edited alone. Move them off the picture, then press again.',
   'editor.picture': 'The lassoed picture',
   /** A press with no lasso, from the toolbar button (#248): the Needs state. */
   'needs.lasso': 'Lasso a picture first',

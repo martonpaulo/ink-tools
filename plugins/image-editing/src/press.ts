@@ -15,9 +15,19 @@ import {
 import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE, runCrop} from './crop';
-import {DEVICE as EDIT_DEVICE, Done, NOT_EDITED, NOT_ONE_PICTURE, runEdit} from './edit';
+import type {Rect} from '@ink-tools/ink-core';
+import {
+  DEVICE as EDIT_DEVICE,
+  Done,
+  INK_ON_PICTURE,
+  NOT_EDITED,
+  NOT_ONE_PICTURE,
+  PICTURE_GONE,
+  runEdit,
+} from './edit';
 import {MARKS_OUTSIDE, NO_MARKS, NOT_PICTURE_AND_MARKS, runErase} from './erase';
 import {EditDefinition, EditId} from './edits';
+import {NO_OPTIONS} from './native';
 import {PAGE_EDITS, PageDone, runPageEdit} from './page';
 import {sweepOrphans} from './orphans';
 import {askFilePermissions} from './permissions';
@@ -49,9 +59,16 @@ export type PressDeps = {
   log: (line: string) => void;
 };
 
-/** The edits whose guide the pen drew over the picture (#132, #134); the others run as they are. */
-export const runPress = (edit: EditId): Promise<Done> =>
-  edit === 'crop' ? runCrop() : edit === 'erase' ? runErase() : runEdit(edit);
+/**
+ * The edits whose guide the pen drew over the picture (#132, #134); the others run as they are, on
+ * `target`, the editor's picture, when the editor runs them (#522).
+ */
+export const runPress = (edit: EditId, target?: Rect): Promise<Done> =>
+  edit === 'crop'
+    ? runCrop()
+    : edit === 'erase'
+    ? runErase()
+    : runEdit(edit, EDIT_DEVICE, {...NO_OPTIONS, target});
 
 export const PRESS_DEVICE: PressDeps = {
   missing: async () => {
@@ -84,6 +101,8 @@ export const PRESS_DEVICE: PressDeps = {
 const NOTHING_TOAST: Record<string, string> = {
   [NOT_ONE_PICTURE]: copy['press.notPicture'],
   [NOT_EDITED]: copy['press.notEdited'],
+  [PICTURE_GONE]: copy['editor.gone'],
+  [INK_ON_PICTURE]: copy['editor.inkOnPicture'],
   [NO_GUIDE]: copy['press.cropNoGuide'],
   [NOT_PICTURE_AND_GUIDE]: copy['press.cropNotPicture'],
   [GUIDE_OUTSIDE]: copy['press.cropOutside'],

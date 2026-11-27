@@ -31,6 +31,7 @@ import {
 } from '../src/editor';
 import {EDITS, editOf, EditId} from '../src/edits';
 import * as edit from '../src/edit';
+import {runPress} from '../src/press';
 
 const RECT: Rect = {left: 100, top: 200, right: 300, bottom: 400};
 const MOVED: Rect = {left: 100, top: 200, right: 280, bottom: 380};
@@ -57,6 +58,7 @@ function fakeDeps(
       lassoes.push(rect);
       return ok(true);
     }),
+    where: jest.fn(async () => ({note: '/n.note', page: 0})),
     workDir: async () => ok('/w'),
     preview: jest.fn(async path => {
       previews += 1;
@@ -77,6 +79,8 @@ function fakeDeps(
       return result;
     }),
     drawn: jest.fn(async () => done),
+    // The real press, so a spy on an edit's own code sees the run (#522).
+    run: jest.fn((id, target) => runPress(id, target)),
     eraseView: jest.fn(async (src, dest, _picture, marks) => {
       erased.push({src, dest, marks});
       return ok(null);
@@ -244,7 +248,88 @@ test('a picture no longer on the page says so and runs nothing', async () => {
   expect(f.presses).toEqual([]);
   expect(editorState()).toMatchObject({
     busy: null,
-    message: copy['editor.lost'],
+    message: copy['editor.gone'],
+  });
+});
+
+describe('the editor finds its picture again by its rect, within the measured tolerance (#522)', () => {
+  // A Mac-inserted picture: its stored box reaches past its drawn frame (content.note, #324).
+  const BOX: Rect = {left: 720, top: 1120, right: 1428, bottom: 1668};
+  const FRAME: Rect = {left: 720, top: 1120, right: 1200, bottom: 1440};
+
+  test('a rect that lassoes nothing is tried grown, and the edit runs on the picture found', async () => {
+    const lassoed: object[] = [picture(BOX)];
+    const f = fakeDeps(lassoed);
+    await openEditor(f.deps);
+    // The reported rect lassoes nothing; the picture is drawn at its frame.
+    f.deps.lasso = jest.fn(async (rect: Rect) => ok(rect.left < BOX.left));
+    lassoed.splice(0, 1, picture(FRAME));
+    const runs: Rect[] = [];
+    f.deps.press = jest.fn(async (_edit, run) => {
+      const spy = jest.spyOn(edit, 'runEdit').mockImplementation(async (_e, _d, options) => {
+        runs.push(options!.target!);
+        return {kind: 'edited', edit: 'invert', ms: 1, rect: FRAME};
+      });
+      const done = await run('invert');
+      spy.mockRestore();
+      return done;
+    });
+    await runEditorEdit(editOf('invert'), close, f.deps);
+    expect(f.deps.lasso).toHaveBeenCalledWith(BOX);
+    expect(f.deps.lasso).toHaveBeenCalledWith(
+      expect.objectContaining({left: BOX.left - edit.FRAME_TOLERANCE}),
+    );
+    expect(runs).toEqual([FRAME]);
+    expect(editorState()).toMatchObject({rect: FRAME, message: null, busy: null});
+  });
+
+  test('a deleted picture says so, and no edit runs', async () => {
+    const lassoed: object[] = [picture()];
+    const f = fakeDeps(lassoed);
+    await openEditor(f.deps);
+    lassoed.splice(0, 1, stroke);
+    await runEditorEdit(editOf('enhance'), close, f.deps);
+    expect(f.presses).toEqual([]);
+    expect(editorState()).toMatchObject({busy: null, message: copy['editor.gone']});
+  });
+
+  test('a page turned under the editor says so, and no edit runs', async () => {
+    const f = fakeDeps();
+    await openEditor(f.deps);
+    f.deps.where = async () => ({note: '/n.note', page: 1});
+    await runEditorEdit(editOf('enhance'), close, f.deps);
+    expect(f.presses).toEqual([]);
+    expect(f.lassoes).toEqual([]);
+    expect(editorState()).toMatchObject({busy: null, message: copy['editor.changed']});
+  });
+
+  test('of two pictures in the lasso the edit runs on the one at its rect', async () => {
+    const lassoed: object[] = [picture()];
+    const f = fakeDeps(lassoed);
+    await openEditor(f.deps);
+    lassoed.splice(0, 1, picture({left: 150, top: 250, right: 350, bottom: 450}), stroke, picture());
+    let target: Rect | undefined;
+    f.deps.press = jest.fn(async (_edit, run) => {
+      const spy = jest.spyOn(edit, 'runEdit').mockImplementation(async (_e, _d, options) => {
+        target = options!.target;
+        return {kind: 'edited', edit: 'enhance', ms: 1, rect: RECT};
+      });
+      const done = await run('enhance');
+      spy.mockRestore();
+      return done;
+    });
+    await runEditorEdit(editOf('enhance'), close, f.deps);
+    expect(target).toEqual(RECT);
+  });
+
+  test('Styles with ink on the picture says why: its grid would draw the ink in', async () => {
+    const lassoed: object[] = [picture()];
+    const f = fakeDeps(lassoed);
+    await openEditor(f.deps);
+    lassoed.push(stroke);
+    await runEditorEdit(editOf('styles'), close, f.deps);
+    expect(f.deps.styles).not.toHaveBeenCalled();
+    expect(editorState()).toMatchObject({busy: null, message: copy['editor.inkOnPicture']});
   });
 });
 
@@ -552,8 +637,10 @@ test('Close and Back keep the edited picture on the page and remove the preview;
       }),
   );
   const running = runEditorEdit(editOf('enhance'), close, f.deps);
-  await Promise.resolve();
-  await Promise.resolve();
+  // The relasso's host calls settle first (#522).
+  for (let i = 0; i < 20; i += 1) {
+    await Promise.resolve();
+  }
   await closeEditor(close, f.deps);
   expect(close).not.toHaveBeenCalled();
   release();
