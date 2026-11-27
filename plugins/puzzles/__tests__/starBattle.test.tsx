@@ -1,6 +1,6 @@
 /** Star Battle in the Puzzles view (#392): a size, the stars per line and a band, «Check» of the starred cells and «Show Solution». */
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
-import {cellCenter, generateStarBattle, layoutStarBattle, puzzleCode, starBattleFromCode, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {cellCenter, generateStarBattle, layoutStarBattle, newStarBattle, puzzleCode, starBattleFromCode, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 import {GAMES} from '../src/games';
 import {STAR_BATTLE, starBattleCopy} from '../src/games/starBattle';
 import {playCopy} from '../src/play/copy';
@@ -75,7 +75,7 @@ describe('the Star Battle game (#392)', () => {
     await press(tree, `${playCopy.size}: ${playCopy.sizeLabel(8)}`);
     await press(tree, `${starBattleCopy.stars}: ${starBattleCopy.starsLabel(2)}`);
     await press(tree, `${playCopy.difficulty}: ${playCopy.bands.medium}`);
-    const code = puzzleCode(generateStarBattle(SEED, {side: 8, stars: 2}, 'medium').id);
+    const code = puzzleCode(newStarBattle(SEED, {side: 8, stars: 2}, 'medium').id);
     await expectAdded(tree, fake, STAR_BATTLE, code, {size: '8', stars: '2', band: 'medium'});
   });
 

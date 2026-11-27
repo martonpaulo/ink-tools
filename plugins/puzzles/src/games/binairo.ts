@@ -12,8 +12,8 @@ import {
   drawBinairoPage,
   drawCellFrameCheck,
   drawCellMarks,
-  generateBinairo,
   layoutBinairoPage,
+  newBinairo,
   puzzleCode,
   type Binairo,
   type CellMark,
@@ -66,6 +66,6 @@ export const BINAIRO: PuzzleGame = {
       initial: BINAIRO_BANDS[0],
     },
   ],
-  create: (choices, seed, shape) => board(generateBinairo(seed, Number(choices.size), choices.band as Difficulty), shape),
+  create: (choices, seed, shape) => board(newBinairo(seed, Number(choices.size), choices.band as Difficulty), shape),
   open: (code, shape) => board(binairoFromCode(code), shape),
 };

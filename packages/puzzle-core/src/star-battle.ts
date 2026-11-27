@@ -14,10 +14,15 @@
  * of that row, and the other way round). `medium` also needs confinement over sets of units (m
  * regions inside m rows or columns), `hard` also needs probing (a star whose consequences break a
  * unit). A grid that still needs a guess is never offered.
+ *
+ * A new page of a slow size and band comes from `star-battle-bank.ts` (#552): a 10 x 10 hard with
+ * two stars took 8.4 s on the tablet.
  */
 
 import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
+import { bankPair, findInBank, pickFromBank, type SeedBankEntry } from './seed-bank';
+import { STAR_BATTLE_BANK } from './star-battle-bank';
 
 export interface StarBattleSize {
   /** Cells per side, which is also the number of regions. */
@@ -538,10 +543,33 @@ export function generateStarBattle(seed: string, size: StarBattleSize, difficult
   throw new Error(`no ${difficulty} ${side} x ${side} star battle with ${stars} stars from seed «${seed}» in ${STAR_BATTLE_ATTEMPTS} attempts`);
 }
 
-/** The star battle a puzzle code names (`SB-8S2-H-7K2Q9X`), the same one every time (#392). */
+/** A seed bank entry's text (#552): each cell's region row by row, then each cell as 1 for a star or 0, joined by «/». */
+export function encodeStarBattle(puzzle: Pick<StarBattle, 'regions' | 'solution'>): string {
+  return [puzzle.regions.join(''), puzzle.solution.map(star => (star ? '1' : '0')).join('')].join('/');
+}
+
+function starBattleOfEntry(entry: SeedBankEntry, size: StarBattleSize, difficulty: Difficulty): StarBattle {
+  const [regionText, starText] = entry.text.split('/');
+  const cells = size.side * size.side;
+  if (regionText?.length !== cells || starText?.length !== cells) throw new RangeError(`a ${sizeToken(size)} star battle entry has ${cells} regions and cells`);
+  return { id: { game: 'star-battle', size: sizeToken(size), difficulty, seed: entry.seed }, side: size.side, stars: size.stars, regions: [...regionText].map(Number), solution: [...starText].map(ch => ch === '1') };
+}
+
+/**
+ * The star battle a new page shows: at a size and band in the bank, the entry the seed picks, ready
+ * at once and named by its own seed (#552); elsewhere `generateStarBattle`'s, made live.
+ */
+export function newStarBattle(seed: string, size: StarBattleSize, difficulty: Difficulty): StarBattle {
+  const entry = pickFromBank(STAR_BATTLE_BANK, bankPair(sizeToken(size), difficulty), seed);
+  return entry ? starBattleOfEntry(entry, size, difficulty) : generateStarBattle(seed, size, difficulty);
+}
+
+/** The star battle a puzzle code names (`SB-8S2-H-7K2Q9X`), the same one every time (#392), banked or not. */
 export function starBattleFromCode(code: string): StarBattle {
   const id = parsePuzzleCode(code);
   const match = /^(\d+)S([12])$/.exec(id.size);
   if (id.game !== 'star-battle' || !match) throw new RangeError(`«${code}» is not a star battle code`);
-  return generateStarBattle(id.seed, { side: Number(match[1]), stars: Number(match[2]) as 1 | 2 }, id.difficulty);
+  const size: StarBattleSize = { side: Number(match[1]), stars: Number(match[2]) as 1 | 2 };
+  const entry = findInBank(STAR_BATTLE_BANK, bankPair(sizeToken(size), id.difficulty), id.seed);
+  return entry ? starBattleOfEntry(entry, size, id.difficulty) : generateStarBattle(id.seed, size, id.difficulty);
 }

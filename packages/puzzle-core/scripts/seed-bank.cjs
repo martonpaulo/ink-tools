@@ -31,6 +31,22 @@ const GAMES = {
     pairs: ['7x7:hard', '10x10:medium', '10x10:hard', '13x13:easy', '13x13:medium', '13x13:hard'],
     make: (core, seed, size, band) => core.encodeBridges(core.generateBridges(seed, sizeOf(size), band)),
   },
+  binairo: {
+    constant: 'BINAIRO_BANK',
+    pairs: ['6:hard', '8:hard', '10:hard', '12:medium', '12:hard'],
+    make: (core, seed, size, band) => core.encodeBinairo(core.generateBinairo(seed, Number(size), band)),
+  },
+  'star-battle': {
+    constant: 'STAR_BATTLE_BANK',
+    pairs: [
+      '5S1:hard', '6S1:medium', '6S1:hard', '7S1:medium', '7S1:hard', '8S1:easy', '8S1:medium', '8S1:hard', '8S2:medium',
+      '8S2:hard', '9S1:easy', '9S1:medium', '9S1:hard', '9S2:hard', '10S1:easy', '10S1:medium', '10S1:hard', '10S2:hard',
+    ],
+    make: (core, seed, size, band) => {
+      const [side, stars] = size.split('S').map(Number);
+      return core.encodeStarBattle(core.generateStarBattle(seed, { side, stars }, band));
+    },
+  },
 };
 
 function sizeOf(text) {

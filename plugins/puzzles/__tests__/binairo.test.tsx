@@ -1,6 +1,6 @@
 /** Binairo in the Puzzles view (#393): a size and a band, «Check» of the marked cells and «Show Solution». */
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
-import {BINAIRO_OPEN, binairoFromCode, generateBinairo, layoutBinairoPage, puzzleCode, type Grid, type InkPoint, type InkStroke} from '@ink-tools/puzzle-core';
+import {BINAIRO_OPEN, binairoFromCode, generateBinairo, layoutBinairoPage, newBinairo, puzzleCode, type Grid, type InkPoint, type InkStroke} from '@ink-tools/puzzle-core';
 import {GAMES} from '../src/games';
 import {BINAIRO, binairoCopy} from '../src/games/binairo';
 import {playCopy} from '../src/play/copy';
@@ -49,7 +49,7 @@ describe('the binairo game (#393)', () => {
     const tree = await mount(BINAIRO, fake.pages);
     await press(tree, `${playCopy.size}: ${playCopy.sizeLabel(10)}`);
     await press(tree, `${playCopy.difficulty}: ${playCopy.bands.hard}`);
-    const code = puzzleCode(generateBinairo(SEED, 10, 'hard').id);
+    const code = puzzleCode(newBinairo(SEED, 10, 'hard').id);
     await expectAdded(tree, fake, BINAIRO, code, {size: '10', band: 'hard'});
   });
 

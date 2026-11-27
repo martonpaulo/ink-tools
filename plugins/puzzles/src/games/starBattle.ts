@@ -9,8 +9,8 @@ import {
   drawCellCheck,
   drawCellMarks,
   drawStarBattlePage,
-  generateStarBattle,
   layoutStarBattle,
+  newStarBattle,
   puzzleCode,
   STAR_BATTLE_MAX_SIDE,
   STAR_BATTLE_MIN_SIDE,
@@ -84,6 +84,6 @@ export const STAR_BATTLE: PuzzleGame = {
     },
   ],
   create: (choices, seed, shape) =>
-    board(generateStarBattle(seed, {side: Number(choices.size), stars: Number(choices.stars) as 1 | 2}, choices.band as Difficulty), shape),
+    board(newStarBattle(seed, {side: Number(choices.size), stars: Number(choices.stars) as 1 | 2}, choices.band as Difficulty), shape),
   open: (code, shape) => board(starBattleFromCode(code), shape),
 };

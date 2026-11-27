@@ -12,10 +12,15 @@
  *
  * On the page a given 1 is a black disc and a given 0 a white one; the player shades a 1 and dots
  * or crosses a 0, so «Check» reads the ink without recognition.
+ *
+ * A new page of a slow size and band comes from `binairo-bank.ts` (#552): a 12 x 12 hard took
+ * 9.5 s on the tablet.
  */
 
+import { BINAIRO_BANK } from './binairo-bank';
 import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
+import { bankPair, findInBank, pickFromBank, type SeedBankEntry } from './seed-bank';
 import { classifyMark, marksByCell, type InkStroke } from './check/cells';
 import { type CheckResult } from './check/read';
 import { drawFooter, drawIcon, drawSquareLattice, createPage, fitCellMm, layoutPage, type Hand, type Orientation, type FooterText, type PageLayout, type Raster, type CellPreset } from './page';
@@ -402,11 +407,37 @@ export function generateBinairo(seed: string, size: number, difficulty: Difficul
   throw new Error(`no ${difficulty} ${size} x ${size} binairo from seed «${seed}» in ${BINAIRO_ATTEMPTS} attempts`);
 }
 
-/** The binairo a puzzle code names (`BI-8-M-7K2Q9X`), the same one every time (#393). */
+/** A seed bank entry's mark for an open cell. */
+const OPEN_MARK = '.';
+
+/** A seed bank entry's text (#552): the givens row by row, `.` for an open cell, then the solution, joined by «/». */
+export function encodeBinairo(puzzle: Pick<Binairo, 'givens' | 'solution'>): string {
+  return [puzzle.givens.map(v => (v === BINAIRO_OPEN ? OPEN_MARK : String(v))).join(''), puzzle.solution.join('')].join('/');
+}
+
+function binairoOfEntry(entry: SeedBankEntry, size: number, difficulty: Difficulty): Binairo {
+  const [givenText, solutionText] = entry.text.split('/');
+  if (givenText?.length !== size * size || solutionText?.length !== size * size) throw new RangeError(`a ${size} x ${size} binairo entry has ${size * size} givens and cells`);
+  const givens = [...givenText].map(ch => (ch === OPEN_MARK ? BINAIRO_OPEN : Number(ch)));
+  return { id: { game: 'binairo', size: String(size), difficulty, seed: entry.seed }, size, givens, solution: [...solutionText].map(Number) };
+}
+
+/**
+ * The binairo a new page shows: at a size and band in the bank, the entry the seed picks, ready at
+ * once and named by its own seed (#552); elsewhere `generateBinairo`'s, made live.
+ */
+export function newBinairo(seed: string, size: number, difficulty: Difficulty): Binairo {
+  const entry = pickFromBank(BINAIRO_BANK, bankPair(size, difficulty), seed);
+  return entry ? binairoOfEntry(entry, size, difficulty) : generateBinairo(seed, size, difficulty);
+}
+
+/** The binairo a puzzle code names (`BI-8-M-7K2Q9X`), the same one every time (#393), banked or not. */
 export function binairoFromCode(code: string): Binairo {
   const id = parsePuzzleCode(code);
   if (id.game !== 'binairo' || !/^\d+$/.test(id.size)) throw new RangeError(`«${code}» is not a binairo code`);
-  return generateBinairo(id.seed, Number(id.size), id.difficulty);
+  const size = Number(id.size);
+  const entry = findInBank(BINAIRO_BANK, bankPair(size, id.difficulty), id.seed);
+  return entry ? binairoOfEntry(entry, size, id.difficulty) : generateBinairo(id.seed, size, id.difficulty);
 }
 
 /** How the page is set: its orientation, the writing hand, and the cell preset (the largest that fits when absent). */
