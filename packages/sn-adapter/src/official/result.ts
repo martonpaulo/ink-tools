@@ -1,4 +1,6 @@
-import type {Outcome} from '@ink-tools/ink-core';
+import type {Outcome} from './model';
+
+export type {Outcome};
 
 /**
  * One result type for every SDK call, so no failure is swallowed and none throws past a wrapper.

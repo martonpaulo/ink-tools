@@ -19,7 +19,9 @@
    "apps/ink-tools-helper/src/com/martonpaulo/inktools/bridge/InternalFailure.java",
    "apps/handwriting-language/src/com/supernotetools/lingo/InternalFailure.java",
    "plugins/ink-tools-probe/native/src/com/probe/providers/Registry.java",
-   "apps/note-editor/NoteFormat/Sources/NoteFormat/Registry.swift", "apps/note-editor/scripts/cask.sh", "apps/note-editor/scripts/test-cask.sh"
+   "apps/note-editor/NoteFormat/Sources/NoteFormat/Registry.swift",
+   "apps/note-editor/scripts/cask.sh",
+   "apps/note-editor/scripts/test-cask.sh"
   ],
   "counts": {
    "apps/handwriting-language/scripts/toolchain.sh": {
@@ -46,14 +48,14 @@
    "packages/ink-core/testing/ink.ts": {
     "number": 13
    },
+   "packages/native-build/native-toolchain.sh": {
+    "url": 4
+   },
    "packages/sync-core/src/caldav.ts": {
     "number": 6
    },
    "packages/sync-core/src/ics.ts": {
     "number": 9
-   },
-   "packages/native-build/native-toolchain.sh": {
-    "url": 4
    },
    "packages/sync-core/src/push.ts": {
     "number": 2
@@ -347,9 +349,6 @@
     "Ink2Pic": 4
    },
    "packages/ink-core/src/lasso.ts": {
-    "Ink2Pic": 1
-   },
-   "packages/ink-core/src/outcome.ts": {
     "Ink2Pic": 1
    },
    "packages/ink-core/src/place.ts": {

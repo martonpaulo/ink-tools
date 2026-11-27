@@ -4,9 +4,9 @@
  * port keeps sn-plugin-lib out of this package, so its tests need no device.
  */
 import type {Outcome} from './outcome';
+import type {Rect, Size} from '@ink-tools/sn-adapter/official';
 
-export type Rect = {left: number; top: number; right: number; bottom: number};
-export type Size = {width: number; height: number};
+export type {Rect, Size};
 
 /** Where the lasso was when the view opened; lasso context does not survive navigation. */
 export type LassoPlace = {

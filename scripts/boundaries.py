@@ -16,6 +16,8 @@ The rules are `docs/architecture.md` › Layer rules:
   `www.googleapis.com`, `oauth2.googleapis.com`), and no code outside `packages/sync-core/` imports a
   service client module (`todoist`, `google`, `ics`, `http`) by its path: a plugin takes the
   provider-neutral `@ink-tools/sync-core`.
+- `layer`: `packages/sn-adapter` imports no other `@ink-tools/` package, so no cycle joins it to
+  `ink-core`; `packages/ui-kit` imports no plugin outside `renders/`, its dev harness (#491).
 - `dictionary`: no code outside `packages/ink-core/src/` names a dictionary host (`wiktionary.org`):
   a plugin takes the provider-neutral `DictionaryProvider` of `@ink-tools/ink-core` (#115).
 - `url`: no code that runs on the tablet (a plugin's or package's `src/`, a plugin's `index.js`)
@@ -370,6 +372,10 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None, pending_toasts=N
                 for target in IMPORT.findall(line):
                     if target == "sn-plugin-lib" and not test and not rel.startswith("packages/sn-adapter/src/official/"):
                         found.append((rel, number, "sdk", "imports sn-plugin-lib outside sn-adapter's official tier"))
+                    if rel.startswith("packages/sn-adapter/") and re.match(r"@ink-tools/(?!sn-adapter\b)", target):
+                        found.append((rel, number, "layer", "sn-adapter sits below every package and imports none of them; move the shared shape into sn-adapter (#491)"))
+                    if rel.startswith("packages/ui-kit/") and not rel.startswith("packages/ui-kit/renders/") and re.search(r"(^|/)plugins/", target):
+                        found.append((rel, number, "layer", "ui-kit imports no plugin; only its renders harness does (#491)"))
                     if CLIENT.search(target) and not rel.startswith("packages/sync-core/"):
                         found.append((rel, number, "service", "imports the service client %s; take @ink-tools/sync-core" % target))
                 if HOST.search(line) and not test and not rel.startswith("packages/sync-core/src/"):

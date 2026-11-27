@@ -148,6 +148,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   the SDK and service rules, since it exists to call internals directly, but names each internal it
   probes only through its registry readers, as every tool does
   ([#294](https://github.com/martonpaulo/ink-tools/issues/294)).
+- **Packages sit in layers, lowest first** ([#491](https://github.com/martonpaulo/ink-tools/issues/491)): `sn-adapter`, then `ink-core` and the other packages, then the tools. A package imports only a lower one, so no cycle joins two packages: the shapes both sides use (`Rect`, `Size`, `Outcome`) live in `sn-adapter`, and `ink-core` re-exports them. `packages/ui-kit/src` imports no plugin; its `renders/` harness may, since it draws the plugins' screens and ships on no tablet. The `layer` rule of `scripts/boundaries.py` checks both.
 - **The highest dependency level that serves.** As with high-level and low-level languages,
   level 1 is the highest and level 5 the lowest. Use the highest level that delivers the outcome at
   acceptable cost and quality (owner, [#287](https://github.com/martonpaulo/ink-tools/issues/287)). The levels, from the highest to the lowest and so the most fragile: 1, the

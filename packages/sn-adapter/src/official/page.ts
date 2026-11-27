@@ -1,8 +1,8 @@
 import {PluginCommAPI, PluginFileAPI} from 'sn-plugin-lib';
 import {attempt, Result} from './result';
 
-/** The page size, owned by ink-core (#109). */
-import type {Size} from '@ink-tools/ink-core';
+/** The page size, owned by the adapter's model (#491). */
+import type {Size} from './model';
 
 export type {Size};
 

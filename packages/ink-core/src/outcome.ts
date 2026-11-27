@@ -1,7 +1,5 @@
 /**
- * A call's result: its value, or the caller's own failure shape (#109). The same shape as
- * Ink2Pic's `search-core` Outcome, so a plugin's Result fits it unchanged.
+ * A call's result (#109); the type lives in `sn-adapter`'s model, the lower layer, so no package
+ * cycle joins the two (#491).
  */
-export type Outcome<T, F extends {ok: false; message: string}> =
-  | {ok: true; value: T}
-  | F;
+export type {Outcome} from '@ink-tools/sn-adapter/official';

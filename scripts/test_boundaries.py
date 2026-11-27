@@ -33,6 +33,17 @@ class Boundaries(unittest.TestCase):
             "plugins/a/src/b.ts": "const lib = require('sn-plugin-lib');\n",
         }), [("plugins/a/index.js", "sdk"), ("plugins/a/src/b.ts", "sdk")])
 
+    def test_layers_hold_no_cycle_and_ui_kit_imports_no_plugin(self):
+        self.assertEqual(self.tree({
+            "packages/sn-adapter/src/official/page.ts": "import type {Size} from './model';\n",
+            "packages/ink-core/src/lasso.ts": "import type {Rect} from '@ink-tools/sn-adapter/official';\n",
+            "packages/ui-kit/renders/screens.tsx": "import App from '../../../plugins/smart-pen/App';\n",
+        }), [])
+        self.assertEqual(self.tree({
+            "packages/sn-adapter/src/official/page.ts": "import type {Size} from '@ink-tools/ink-core';\n",
+            "packages/ui-kit/src/Row.tsx": "import App from '../../../plugins/smart-pen/App';\n",
+        }), [("packages/sn-adapter/src/official/page.ts", "layer"), ("packages/ui-kit/src/Row.tsx", "layer")])
+
     def test_a_vendor_name_only_in_the_registry(self):
         # Allowed: a generated reader, Ink Tools Probe's own included, tests and comments (#294).
         self.assertEqual(self.tree({

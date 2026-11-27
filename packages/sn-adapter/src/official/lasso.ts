@@ -1,8 +1,8 @@
 import {PluginCommAPI} from 'sn-plugin-lib';
 import {attempt, fail, fromResponse, Result, THROWN_CODE} from './result';
 
-/** The page rect, owned by ink-core (#109). */
-import type {Rect} from '@ink-tools/ink-core';
+/** The page rect, owned by the adapter's model (#491). */
+import type {Rect} from './model';
 
 export type {Rect};
 
