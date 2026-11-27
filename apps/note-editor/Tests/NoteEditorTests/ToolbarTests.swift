@@ -11,8 +11,9 @@ import Testing
 /// windows are the test's own and never ordered in.
 @MainActor
 @Suite(.serialized) struct ToolbarTests {
-    /// The toolbar's items, in Preview's order.
-    static let order = ["toggleSidebar", "layout", "zoom", "selection", "shape", "textBox", "search"]
+    /// The toolbar's items by default, in Preview's order; Insert Shape and Insert Text Box are
+    /// added with View › Customize Toolbar.
+    static let order = ["toggleSidebar", "layout", "zoom", "selection", "search"]
 
     @Test func twoNotebookWindowsShowTheSameCustomizableToolbar() async throws {
         let document = NoteDocument(data: try Fixtures.data("content.note"))
@@ -43,5 +44,29 @@ import Testing
         #expect(try await third.until { third.toolbar?.items.isEmpty == false })
         third.contentView?.superview?.layoutSubtreeIfNeeded()
         #expect(third.toolbar?.items.count == second.toolbar?.items.count)
+    }
+
+    /// The find field shows in the toolbar at the window's default size and a large one (#460): a
+    /// search field with room for a word, inside the window, never left under the overflow button.
+    @Test(arguments: [CGSize(width: 1000, height: 720), CGSize(width: 1600, height: 1100)])
+    func theFindFieldShowsInTheToolbar(size: CGSize) async throws {
+        let window = KeyedOffscreenWindow(size: size, dark: false)
+        defer { window.close() }
+        window.show(NotebookWindow(document: NoteDocument(data: try Fixtures.data("content.note"))))
+        #expect(try await window.until { Self.field(in: window) != nil })
+        window.contentView?.superview?.layoutSubtreeIfNeeded()
+        let field = try #require(Self.field(in: window))
+        let frame = field.convert(field.bounds, to: nil)
+        #expect(frame.width >= 120 && window.contentLayoutRect.union(frame).width <= window.frame.width, "\(frame)")
+    }
+
+    /// The search field anywhere in `window`'s frame view, the toolbar included.
+    static func field(in window: NSWindow) -> NSSearchField? {
+        var views = [window.contentView?.superview].compactMap(\.self)
+        while let view = views.popLast() {
+            if let field = view as? NSSearchField { return field }
+            views += view.subviews
+        }
+        return nil
     }
 }

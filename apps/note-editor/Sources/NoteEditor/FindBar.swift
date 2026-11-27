@@ -139,8 +139,10 @@ extension FocusedValues {
 /// #460): typing finds, Return or Enter go to the next match and with Shift to the previous one
 /// each time, as in Safari, Escape ends the find, and Edit › Find puts the focus in it.
 struct FindField: View {
-    /// The field's width in the toolbar, in points, as Preview's search field.
+    /// The field's width in the toolbar, in points, as Preview's search field, and the least it
+    /// narrows to before the toolbar moves it under its overflow button.
     static let width: CGFloat = 200
+    static let minWidth: CGFloat = 110
 
     let text: NoteText
     /// Gives the keyboard focus back to the pages when Escape ends the find.

@@ -66,6 +66,9 @@ struct ViewerToolbar: CustomizableToolbarContent {
             .disabled(!canEdit)
             .help(canEdit ? Copy.insertShapeTool : Copy.editOnlyFromTablet)
         }
+        // Off by default, so the find field keeps its place in a window of the default width;
+        // View › Customize Toolbar adds them, as the Insert menu holds them.
+        .defaultCustomization(.hidden)
         ToolbarItem(id: "textBox") {
             Button(Copy.insertTextBoxTool, systemImage: "character.textbox") {
                 guard let page else { return }
@@ -74,10 +77,11 @@ struct ViewerToolbar: CustomizableToolbarContent {
             .disabled(!canEdit || page == nil)
             .help(canEdit ? Copy.insertTextBoxTool : Copy.editOnlyFromTablet)
         }
+        .defaultCustomization(.hidden)
         if let text {
             ToolbarItem(id: "search") {
                 FindField(text: text, closed: findClosed)
-                    .frame(width: FindField.width)
+                    .frame(minWidth: FindField.minWidth, idealWidth: FindField.width, maxWidth: FindField.width)
                     .help(Copy.findInNote)
             }
         }
