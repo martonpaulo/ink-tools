@@ -67,6 +67,15 @@ import Testing
                     height: 20 + 2 * FindMarks.outset))
     }
 
+    @Test func aMarkAndAWordsBoxIgnoreAFractionOfAPixel() {
+        let box = CGRect(x: 100.3, y: 200.2, width: 300.4, height: 40.1)
+        let moved = box.offsetBy(dx: 0.2, dy: -0.15)
+        #expect(FindMarks.mark(box, scale: 0.5) == FindMarks.mark(moved, scale: 0.5))
+        let mark = FindMarks.mark(box, scale: 0.37)
+        #expect(mark == mark.integral)
+        #expect(VisionRecognizer.onPixelGrid(box) == CGRect(x: 100, y: 200, width: 301, height: 41))
+    }
+
     /// Sends a key down and up to `window`, as AppKit delivers a key press.
     static func press(
         _ characters: String, keyCode: UInt16, modifiers: NSEvent.ModifierFlags = [], in window: NSWindow

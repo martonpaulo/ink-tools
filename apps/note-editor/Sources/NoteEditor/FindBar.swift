@@ -384,8 +384,14 @@ struct FindMarks: View {
     /// The mark of a match whose words' box is `box` in page pixels, on a page drawn at `scale`
     /// points a pixel.
     static func mark(_ box: CGRect, scale: CGFloat) -> CGRect {
-        CGRect(x: box.minX * scale, y: box.minY * scale, width: box.width * scale, height: box.height * scale)
-            .insetBy(dx: -outset, dy: -outset)
+        let reach = CGRect(
+            x: box.minX * scale, y: box.minY * scale, width: box.width * scale, height: box.height * scale
+        ).insetBy(dx: -outset, dy: -outset)
+        // Whole points, outward: a box a reading moved by a fraction of a pixel draws the same
+        // antialiased edge (the renders moved a mark by a pixel between runs, #472).
+        let low = CGPoint(x: reach.minX.rounded(.down), y: reach.minY.rounded(.down))
+        let high = CGPoint(x: reach.maxX.rounded(.up), y: reach.maxY.rounded(.up))
+        return CGRect(x: low.x, y: low.y, width: high.x - low.x, height: high.y - low.y)
     }
 
     var body: some View {

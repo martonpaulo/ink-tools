@@ -108,4 +108,6 @@ struct DelayedProgress: View {
 extension EnvironmentValues {
     /// How long a wait stays blank before its spinner shows; the renders set zero to draw it.
     @Entry var progressDelay = Duration.milliseconds(300)
+    /// The time the sync line counts from, instead of the clock; the renders fix it so «3 s ago» never reads «4 s» (#472).
+    @Entry var syncNow: Date?
 }

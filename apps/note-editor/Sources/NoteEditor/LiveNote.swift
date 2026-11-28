@@ -83,10 +83,11 @@ struct SyncStatusLine: View {
     let live: LiveNote
     /// The edits still on their way to the tablet (#314).
     var sending = 0
+    @Environment(\.syncNow) private var fixedNow
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
-            let (synced, symbol, problem) = Self.words(live.watch, now: context.date)
+            let (synced, symbol, problem) = Self.words(live.watch, now: fixedNow ?? context.date)
             let text = sending > 0 && !problem ? Copy.sendingEdits(sending) : synced
             Label(text, systemImage: sending > 0 && !problem ? "arrow.up.circle" : symbol)
                 .symbolRenderingMode(problem ? .multicolor : .hierarchical)

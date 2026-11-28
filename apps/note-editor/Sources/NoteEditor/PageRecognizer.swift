@@ -51,6 +51,13 @@ nonisolated struct VisionRecognizer: PageRecognizer {
         languages = chosen
     }
 
+    /// The box on whole pixels, outward, so a reading that differs by a fraction of a pixel from
+    /// another of the same page gives the same box (#472).
+    static func onPixelGrid(_ box: CGRect) -> CGRect {
+        let low = CGPoint(x: box.minX.rounded(.down), y: box.minY.rounded(.down))
+        return CGRect(x: low.x, y: low.y, width: box.maxX.rounded(.up) - low.x, height: box.maxY.rounded(.up) - low.y)
+    }
+
     func words(in image: CGImage) async throws -> [(text: String, box: CGRect)] {
         try await read(image).words
     }
@@ -128,7 +135,7 @@ nonisolated struct VisionRecognizer: PageRecognizer {
             guard let text = line.topCandidates(1).first else { continue }
             text.string.enumerateSubstrings(in: text.string.startIndex..., options: .byWords) { word, range, _, _ in
                 guard let word, let box = text.boundingBox(for: range) else { return }
-                words.append((word, box.boundingBox.toImageCoordinates(size, origin: .upperLeft)))
+                words.append((word, Self.onPixelGrid(box.boundingBox.toImageCoordinates(size, origin: .upperLeft))))
             }
         }
         return words
