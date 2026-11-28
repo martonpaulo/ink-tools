@@ -102,6 +102,12 @@ export function placedPageCode(code: string, version: PageLayoutVersion = PAGE_L
   return `${code}-L${version}`;
 }
 
+/** Whether this version can draw the page layout a background name holds. */
+export function knownPageLayout(name: string): boolean {
+  const mark = LAYOUT_MARK.exec(name.slice(name.lastIndexOf('-') + 1).toUpperCase());
+  return !mark || Number(mark[1]) in LAYOUTS;
+}
+
 /** The code and page layout a background name holds; a name with no mark is a page of layout 1. */
 export function pageCodeParts(name: string): { code: string; version: PageLayoutVersion } {
   const at = name.lastIndexOf('-');

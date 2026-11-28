@@ -17,6 +17,7 @@ export const playCopy = {
   /** The titles of the two pictures the view shows. */
   'verdict.title': 'Checked Page',
   'answer.title': 'Solution',
+  'here.newer': 'A newer Puzzles made this page. Update Puzzles to check it or see its solution.',
   'here.none': (game: string) => `This page has no ${game}. Open a ${game} page to check it or see its solution.`,
   /** The row of the page's puzzle: its game, its size when the game offers sizes (#545), its difficulty; then its code. */
   'here.title': (game: string, band: string, size?: string) => (size === undefined ? `${game}, ${band}` : `${game}, ${size}, ${band}`),

@@ -46,7 +46,7 @@ import { kakuroFromCode } from '../src/kakuro';
 import { kakuroPageSpec } from '../src/kakuro-page';
 import { layoutNonogramPage } from '../src/nonogram-page';
 import { nonogramFromCode } from '../src/nonogram';
-import { pageCodeParts, PAGE_LAYOUT, placedPageCode, withPageLayout } from '../src/page/layout';
+import { knownPageLayout, pageCodeParts, PAGE_LAYOUT, placedPageCode, withPageLayout } from '../src/page/layout';
 import { SAMPLE_PAGES } from '../testing/pages';
 
 /**
@@ -359,6 +359,7 @@ describe('a page keeps the layout it was printed with (#553)', () => {
     expect(pageCodeParts('SU-9-H-P2')).toEqual({ code: 'SU-9-H-P2', version: 1 });
     expect(pageCodeParts('gomoku-7K2Q9X-L2')).toEqual({ code: 'gomoku-7K2Q9X', version: 2 });
     expect(() => pageCodeParts('SU-9-H-7K2Q9X-L9')).toThrow('page layout 9');
+    expect(['SU-9-H-7K2Q9X', 'SU-9-H-7K2Q9X-L2', 'SU-9-H-7K2Q9X-L9'].map(knownPageLayout)).toEqual([true, true, false]);
   });
 });
 

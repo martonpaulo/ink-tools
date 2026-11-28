@@ -23,7 +23,7 @@ import {
   useBackKey,
   type Problem,
 } from '@ink-tools/ui-kit';
-import {encodePng, pageCodeParts, parsePuzzleCode, placedPageCode, seedFromNumber, toBase64, withPageLayout, type Raster} from '@ink-tools/puzzle-core';
+import {encodePng, knownPageLayout, pageCodeParts, parsePuzzleCode, placedPageCode, seedFromNumber, toBase64, withPageLayout, type Raster} from '@ink-tools/puzzle-core';
 import type {Game, GameViewProps} from '../games';
 import {playCopy} from './copy';
 import {devicePages, type Here, type PagePorts} from './pages';
@@ -45,7 +45,7 @@ export type GameViewDeps = {
 
 type Screen =
   | {kind: 'reading'}
-  | {kind: 'ready'; board: Puzzle | null}
+  | {kind: 'ready'; board: Puzzle | null; newer?: boolean}
   | {kind: 'working'}
   | {kind: 'verdict'; board: Puzzle; verdict: Verdict}
   | {kind: 'answer'; board: Puzzle; picture: Raster}
@@ -101,7 +101,9 @@ export function GameView({
     const code = await pages.codeOf(here.value);
     if (!code.ok) {return failed(playCopy['error.here'], retry, code.message);}
     let board: Puzzle | null = null;
-    if (code.value !== null && game.open) {
+    // A page drawn by a layout this Puzzles does not know says so, not that it holds no puzzle.
+    const newer = code.value !== null && !knownPageLayout(code.value);
+    if (code.value !== null && game.open && !newer) {
       try {
         board = openPage(game.open, code.value, here.value);
       } catch (error) {
@@ -109,7 +111,7 @@ export function GameView({
         pages.log(`${game.id}: ${code.value} is not a ${game.id} page: ${String(error)}`);
       }
     }
-    setScreen({kind: 'ready', board});
+    setScreen({kind: 'ready', board, newer});
   }, [failed, game, pages]);
 
   useEffect(() => {
@@ -297,7 +299,7 @@ function Ready({
   onClose,
 }: GameViewProps & {
   game: PuzzleGame;
-  screen: {board: Puzzle | null};
+  screen: {board: Puzzle | null; newer?: boolean};
   choices: Choices;
   onChoose: (id: string, value: string) => void;
   onAdd: () => void;
@@ -317,7 +319,7 @@ function Ready({
       />
     </RowGroup>
   ) : (
-    <RowGroup caption={playCopy['here.caption']} note={playCopy['here.none'](game.title)} />
+    <RowGroup caption={playCopy['here.caption']} note={screen.newer ? playCopy['here.newer'] : playCopy['here.none'](game.title)} />
   );
   // The «New page» caption heads the choices, so they never read as the open puzzle's (#549).
   const newPage = <RowGroup caption={playCopy['new.caption']} note={game.open ? playCopy['new.note'] : playCopy['new.noteBoard']} />;
