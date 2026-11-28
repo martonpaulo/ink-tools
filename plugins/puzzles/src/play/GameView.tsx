@@ -88,13 +88,16 @@ function pageBoard(open: NonNullable<PuzzleGame['open']>, name: string, here: He
 
 /**
  * The size «This page» names (#545), read from the page's code so the row needs no puzzle made:
- * `7 x 7` for a square, `10 x 15` for columns by rows; none for a game with no size choice.
+ * `7 x 7` for a square, `10 x 15` for columns by rows, then the game's own extra (`2 stars`); none for a game with no size choice.
  */
 function sizeOf(game: PuzzleGame, name: string): string | undefined {
   if (!game.options.some(option => option.id === 'size')) {return undefined;}
-  const [, width, height] = /^(\d+)(?:X(\d+))?/.exec(parsePuzzleCode(pageCodeParts(name).code).size) ?? [];
+  const token = parsePuzzleCode(pageCodeParts(name).code).size;
+  const [, width, height] = /^(\d+)(?:X(\d+))?/.exec(token) ?? [];
   if (width === undefined) {return undefined;}
-  return height === undefined || height === width ? playCopy.sizeLabel(Number(width)) : playCopy.gridLabel(Number(width), Number(height));
+  const label = height === undefined || height === width ? playCopy.sizeLabel(Number(width)) : playCopy.gridLabel(Number(width), Number(height));
+  const extra = game.sizeExtra?.(token);
+  return extra === undefined ? label : `${label}, ${extra}`;
 }
 
 /** Lets the Loading view draw before a long synchronous step, such as drawing a page. */
@@ -202,7 +205,7 @@ export function GameView({
   /**
    * The board's puzzle: kept, or made now from its code under «Preparing the puzzle…», which a code
    * no bank holds keeps on screen for seconds on the tablet; the time goes to the log (#595). A code
-   * that makes no puzzle of this game shows the page as holding none, as before.
+   * that makes no puzzle of this game says so on the Error view, never as a page holding none.
    */
   const prepared = useCallback(
     async (board: PageBoard): Promise<Puzzle | null> => {
@@ -216,12 +219,13 @@ export function GameView({
         pages.log(`${game.id}: opened ${board.code} in ${Date.now() - started} ms`);
         return puzzle;
       } catch (error) {
-        pages.log(`${game.id}: ${board.code} is not a ${game.id} page: ${String(error)}`);
-        setScreen({kind: 'ready', board: null});
+        failed(playCopy['error.make'], () => {
+          read();
+        }, `${board.code} is not a ${game.id} page: ${String(error)}`);
         return null;
       }
     },
-    [game.id, pages],
+    [failed, game.id, pages, read],
   );
 
   const add = useCallback(

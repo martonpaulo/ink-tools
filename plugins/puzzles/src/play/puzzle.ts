@@ -109,6 +109,8 @@ export type PuzzleGame = {
   unread?: (count: number) => string;
   /** The note for wrong entries, when the shared one, «circled», does not fit the game's mark (#393). */
   wrong?: (count: number) => string;
+  /** What «This page» adds after the size, read from the code's size token, when the size alone does not name the puzzle: Star Battle's stars per line. */
+  sizeExtra?: (token: string) => string | undefined;
   /** A new page from the choices and a fresh seed: a puzzle, or an empty board. */
   create: (choices: Choices, seed: string, shape: PageShape) => GamePage;
   /**

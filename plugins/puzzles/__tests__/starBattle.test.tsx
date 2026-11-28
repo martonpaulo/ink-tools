@@ -79,6 +79,14 @@ describe('the Star Battle game (#392)', () => {
     await expectAdded(tree, fake, STAR_BATTLE, code, {size: '8', stars: '2', band: 'medium'});
   });
 
+  test('«This page» names the stars per line beside the size, from the code alone', async () => {
+    const two = puzzleCode(newStarBattle(SEED, {side: 8, stars: 2}, 'hard').id);
+    for (const [code, stars, size] of [[CODE, '1 star', playCopy.sizeLabel(5)], [two, '2 stars', playCopy.sizeLabel(8)]] as const) {
+      const tree = await mount(STAR_BATTLE, fakePages({code}).pages);
+      expect(shownTexts(tree.root).some(text => text.includes(`${size}, ${stars}`))).toBe(true);
+    }
+  });
+
   test('a page with another game offers only a new one', async () => {
     const tree = await mount(STAR_BATTLE, fakePages({code: 'BR-7X7-E-7K2Q9X'}).pages);
     expect(shownTexts(tree.root)).toContain(playCopy['here.none'](starBattleCopy.title));

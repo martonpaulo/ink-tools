@@ -60,6 +60,10 @@ export const STAR_BATTLE: PuzzleGame = {
   id: 'star-battle',
   title: starBattleCopy.title,
   subtitle: starBattleCopy.subtitle,
+  sizeExtra: token => {
+    const stars = /S([12])$/.exec(token);
+    return stars ? starBattleCopy.starsLabel(Number(stars[1])) : undefined;
+  },
   options: [
     {
       id: 'size',

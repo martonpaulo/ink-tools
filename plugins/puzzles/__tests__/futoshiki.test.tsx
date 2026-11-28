@@ -68,14 +68,29 @@ describe('the futoshiki game (#390)', () => {
     await expectSolved(FUTOSHIKI, CODE, written());
   });
 
-  test('the log names each unread cell and what the recognizer read there, never the screen (#584)', async () => {
+  test('a code that makes no puzzle shows Check, then says so on the Error view, not as no puzzle (#601 sibling)', async () => {
+    const broken: PuzzleGame = {
+      ...FUTOSHIKI,
+      open: () => {
+        throw new Error('no such puzzle');
+      },
+    };
+    const {pages, lines} = fakePages({code: CODE, ink: written(), read: readDigits});
+    const tree = await mount(broken, pages);
+    await press(tree, playCopy['here.check']);
+    expect(shownTexts(tree.root)).toContain(playCopy['error.make']);
+    expect(shownTexts(tree.root)).not.toContain(playCopy['here.none'](futoshikiCopy.title));
+    expect(lines.some(line => line.includes('is not a futoshiki page: Error: no such puzzle'))).toBe(true);
+  });
+
+  test('the log names each unread cell and what the recognizer read there, never on the screen (#584)', async () => {
     const unread = openCells[1];
     const {pages, lines} = fakePages({code: CODE, ink: written((cell, digit) => (cell === unread ? 'x' : digit)), read: readDigits});
     const tree = await mount(FUTOSHIKI, pages);
     await press(tree, playCopy['here.check']);
     const at = `r${Math.floor(unread / GRID.columns) + 1}c${(unread % GRID.columns) + 1}`;
-    expect(lines).toContain(`futoshiki: unread ${at}: read «X», not a digit`);
-    expect(shownTexts(tree.root).join(' ')).not.toContain('not a digit');
+    expect(lines).toContain(`futoshiki: unread ${at}: no text`);
+    expect(shownTexts(tree.root).join(' ')).not.toContain(`${at}: no text`);
   });
 
   test('the log tells that Check was pressed and how long the puzzle then took to make (tablet row 146, #595)', async () => {
