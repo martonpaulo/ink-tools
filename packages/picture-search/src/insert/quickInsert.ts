@@ -13,7 +13,7 @@
  * before each step. The log shows the time around each wait.
  */
 import {log, logTime, timed} from '../log/memory';
-import {MEASURED_RESULTS} from '../measures';
+import {measuredCount} from '../measures';
 import {searchState} from '../state';
 import type {SearchResult} from '../types';
 import type {LassoPlace} from '@ink-tools/ink-core';
@@ -142,7 +142,7 @@ export async function insertBest(
     measuring,
     `${pages.measures.size} of ${Math.min(
       outcome.results.length,
-      MEASURED_RESULTS,
+      measuredCount(outcome.results),
     )} measured`,
   );
   const best = pages.results[0];

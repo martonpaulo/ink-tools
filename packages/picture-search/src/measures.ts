@@ -336,6 +336,24 @@ export function lineArt(m: Measures): number {
 
 /** Pages 1 and 2: their thumbnails are on the device before page 1 shows (research section 7). */
 export const MEASURED_RESULTS = 2 * PAGE_SIZE;
+
+/**
+ * How many results are measured: MEASURED_RESULTS, and one more for each canonical picture among
+ * them, which keeps its slot and is never re-sorted. A canonical picture would otherwise take a
+ * measured place from a light drawing the pixels move up: «ox» lost its engraving from pages 1
+ * and 2 when Wikidata added two pictures (#13, lab run 46092097427).
+ */
+export function measuredCount(results: readonly SearchResult[]): number {
+  return (
+    MEASURED_RESULTS +
+    results.slice(0, MEASURED_RESULTS).filter(result => result.canonical).length
+  );
+}
+
+/** The results whose thumbnails are measured and re-sorted: `measuredCount` of them. */
+export function measuredHead<T extends SearchResult>(results: readonly T[]): T[] {
+  return results.slice(0, measuredCount(results));
+}
 /** `einkScore + 3 x lineArt`, lineArt scaled 0 to 1 within the measured thumbnails (research D). */
 const LINE_ART_WEIGHT = 3;
 /**
@@ -433,7 +451,7 @@ function measuresDark(
 }
 
 /**
- * Re-sorts the first MEASURED_RESULTS results by `einkScore + pixelScorer`; ties keep their
+ * Re-sorts the first `measuredHead` results by `einkScore + pixelScorer`; ties keep their
  * order. A canonical Wikidata picture keeps its index (brief section 5.5, rule 4), unless it
  * measures dark and does not lead: then it ranks after every light picture of those results,
  * still among them (owner D105 A, #13: «ox»'s dark photo pushed its engraving off page 1). A blank
@@ -452,7 +470,7 @@ export function reorderByMeasures(
   if (measures.size === 0) {
     return [...results];
   }
-  const head = results.slice(0, MEASURED_RESULTS);
+  const head = measuredHead(results);
   const pixels = pixelScorer(measures, converted);
   const intent = intentFor(query, results);
   const blank = head.filter(result => isLeft(result, measures));
@@ -478,7 +496,7 @@ export function reorderByMeasures(
     }
   });
   sorted.splice(lastLight + 1, 0, ...yields);
-  const queue = [...sorted, ...results.slice(MEASURED_RESULTS)];
+  const queue = [...sorted, ...results.slice(head.length)];
   const ordered: SearchResult[] = [];
   for (const result of head) {
     // Each other slot takes the next sorted result, or a later one when blanks left.
@@ -639,7 +657,7 @@ export function leaderDecided(
   /** Pending thumbnails measured as found and now converted, by result id: their found measures. */
   converting: ReadonlyMap<string, Measures> = new Map(),
 ): boolean {
-  const head = results.slice(0, MEASURED_RESULTS);
+  const head = measuredHead(results);
   if (head.length === 0) {
     return true;
   }

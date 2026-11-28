@@ -152,7 +152,7 @@ export async function pixelOrder(
   userAgent,
   style = DEFAULT_STYLE,
 ) {
-  const head = results.slice(0, core.MEASURED_RESULTS);
+  const head = core.measuredHead(results);
   const files = new Map();
   for (const result of head) {
     const file = await thumbFile(result.thumbUrl, userAgent);

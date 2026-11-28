@@ -11,7 +11,7 @@
  */
 import {checkLookup, type LassoPlace} from '@ink-tools/ink-core';
 import {
-  MEASURED_RESULTS,
+  measuredCount,
   searchState,
   type SearchResult,
 } from '@ink-tools/picture-search';
@@ -217,7 +217,7 @@ export async function chooseResults(
   // A tile whose download or measure failed would keep the grid short until a restart (#219),
   // and an empty list says why, which the next open may say otherwise: both are searched again.
   const whole = outcome.results
-    .slice(0, MEASURED_RESULTS)
+    .slice(0, measuredCount(outcome.results))
     .every(result => pages.measures.has(result.id));
   if (tiles.length > 0 && whole) {
     kept.set(mode.kind, {word, answer, list});

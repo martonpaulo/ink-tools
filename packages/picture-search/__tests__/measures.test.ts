@@ -22,6 +22,7 @@ import {
   pixelKind,
   pixelScorer,
   Prepared,
+  measuredHead,
   reorderByMeasures,
   splitPrepared,
 } from '../src/measures';
@@ -552,6 +553,29 @@ describe('reorderByMeasures (#66)', () => {
       'line',
       'other',
     ]);
+  });
+
+  it('measures one more result for each canonical picture, so a light drawing keeps its page (#13)', () => {
+    // «ox»: two Wikidata pictures took two measured places and its engraving, 12th by score,
+    // never left page 3 (lab run 46092097427).
+    const list = [
+      result('best'),
+      result('wikidata1', 'wikidata', true),
+      result('wikidata2', 'wikidata', true),
+      ...Array.from({length: 10}, (_, i) => result(`r${i}`)),
+      result('engraving'),
+    ];
+    expect(list).toHaveLength(14);
+    expect(measuredHead(list)).toHaveLength(14);
+    expect(measuredHead(list.filter(r => !r.canonical))).toHaveLength(12);
+    const measures = new Map<string, Measures>([
+      ...list.map(r => [r.id, photo] as [string, Measures]),
+      ['engraving', outline],
+    ]);
+    const ordered = ids(reorderByMeasures(list, measures));
+    expect(ordered.indexOf('engraving')).toBeLessThan(12);
+    expect(ordered.slice(1, 3)).toEqual(['wikidata1', 'wikidata2']);
+    expect(new Set(ordered).size).toBe(14);
   });
 
   it('leaves page 3 and later in their order and sends a blank thumbnail to the end', () => {

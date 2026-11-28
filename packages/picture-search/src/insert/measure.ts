@@ -20,7 +20,8 @@ import {
   ImageAnalyzer,
   leaderDecided,
   lineArt,
-  MEASURED_RESULTS,
+  measuredCount,
+  measuredHead,
   Measures,
   orderMeasured,
   pixelKind,
@@ -249,7 +250,7 @@ export async function measureFirstPages(
   const found = new Map<string, PreparedThumb>();
   const contourAll = (await deps.allContour?.()) ?? false;
   const photos = (await deps.photos?.()) ?? false;
-  const firstPages = results.slice(0, MEASURED_RESULTS);
+  const firstPages = measuredHead(results);
   const picked = (await deps.picked?.(query)) ?? [];
   // shortcut: a pick among the results leads anyway, so it waits for every thumbnail; decide on
   // the pick once its own thumbnail is measured if the log shows that wait (#19).
@@ -354,7 +355,7 @@ export async function measureFirstPages(
   log(
     `pixels: ${used.size} of ${Math.min(
       results.length,
-      MEASURED_RESULTS,
+      measuredCount(results),
     )} measured in ${Date.now() - started} ms${
       limitReached ? ', limit reached' : leaderFirst ? ', leader decided' : ''
     }`,

@@ -32,6 +32,8 @@ export {
   leaderDecided,
   lineArt,
   MEASURED_RESULTS,
+  measuredCount,
+  measuredHead,
   needsContour,
   orderMeasured,
   pixelKind,
