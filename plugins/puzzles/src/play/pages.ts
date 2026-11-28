@@ -3,8 +3,9 @@
  * plugin's page file module. A new puzzle is a PNG named by its code in the plugin's hidden folder,
  * which Supernote Cloud does not sync, inserted as the background of a new page after the current
  * one; the note keeps the background (#377). A successful insert reloads the note and ends this
- * JavaScript (device round, #386), so nothing after it runs: the next game view deletes the page
- * files an earlier one left. The page's background then reads `user_<code>`, so «Check» and «Show
+ * JavaScript (device round, #386), so the picture is deleted right after the insert when this
+ * JavaScript still runs, and else by the next game view, which deletes the page files an earlier one
+ * left (#541, FILE:DELETE). The page's background then reads `user_<code>`, so «Check» and «Show
  * solution» find the puzzle of the current page again from it, and the plugin stores nothing.
  */
 import {NativeModules} from 'react-native';
@@ -129,7 +130,13 @@ export function devicePages(modules: Record<string, unknown> = NativeModules): P
       // An insert reloads the note, so an edit the Note app holds unsaved would be lost (#524).
       const inserted = await onSavedPage(() => insertPageAfter(here.notePath, here.page, path));
       if (!inserted.ok) {return inserted;}
-      return inserted.value ? ok(true) : fail(THROWN_CODE, 'insertNotePage answered false');
+      if (!inserted.value) {return fail(THROWN_CODE, 'insertNotePage answered false');}
+      // The note keeps its own copy of the background (device round, #541), so the picture goes now;
+      // when the note reload ended this JavaScript first, the next game view's `clear` deletes it.
+      // The page is in the note either way, so a refused delete is logged, never the insert's failure.
+      const removed = await pageFiles(modules, `${path} was not deleted`, files => files.removePages(PAGE_FOLDER));
+      log(`after the insert, ${removed.ok ? `deleted ${removed.value} page files` : removed.message}`);
+      return ok(true);
     },
     ink: async here => {
       // The newest strokes are in the file only once the note saved (#296).

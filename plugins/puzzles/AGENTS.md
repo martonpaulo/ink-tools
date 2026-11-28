@@ -37,8 +37,9 @@ pages: a new puzzle is `<code>.png` in the plugin's hidden folder (`.data/plugin
 never `MyStyle/`, which Supernote Cloud syncs), written by the native module `PuzzlesPages`
 (`native/com/puzzles/view/PageFileModule.java`, as sn-plugin-lib writes no bytes), and inserted as
 the background of a new page after the current one once the note saved. A successful insert reloads
-the note and ends the plugin's JavaScript, so the view closes before it and the next game view
-deletes the page files an earlier one left; each press of the button starts at the game list
+the note and ends the plugin's JavaScript, so the view closes before it; the picture is deleted
+right after the insert when the JavaScript still runs, else by the next game view, which deletes
+the page files an earlier one left ([#541](https://github.com/martonpaulo/ink-tools/issues/541)); each press of the button starts at the game list
 ([#386](https://github.com/martonpaulo/ink-tools/issues/386)). The page's background then reads
 `user_<code>`, so the view finds the puzzle of the current page from it and stores nothing.
 The view outlives a close and the page can turn before the next press, so «Add Page», «Check» and
@@ -74,9 +75,10 @@ instead ([#542](https://github.com/martonpaulo/ink-tools/issues/542)).
 
 ## Permissions
 
-`PluginConfig.json` declares `FILE:READ` and `FILE:WRITE`, the one list: every game writes its
-page background and inserts the page after the current one (`docs/supernote.md`). The view reads
-the list from there; `__tests__/pluginConfig.test.ts` pins both.
+`PluginConfig.json` declares `FILE:READ`, `FILE:WRITE` and `FILE:DELETE`, the one list: every game
+writes its page background and inserts the page after the current one (`docs/supernote.md`), and
+the page picture is deleted once the page is in the note ([#541](https://github.com/martonpaulo/ink-tools/issues/541)). The view reads
+the list from there; `__tests__/pluginConfig.test.ts` pins all three.
 
 ## Build
 

@@ -36,6 +36,10 @@ describe('the current page', () => {
 describe('a new page', () => {
   const written: [string, string][] = [];
   const cleared: string[] = [];
+  beforeEach(() => {
+    written.length = 0;
+    cleared.length = 0;
+  });
   const writeBase64 = async (path: string, base64: string) => {
     written.push([path, base64]);
     return true;
@@ -58,6 +62,29 @@ describe('a new page', () => {
     const path = `${PAGE_FOLDER}/${CODE}.png`;
     expect(written).toEqual([[path, toBase64(PNG)]]);
     expect(PluginFileAPI.insertNotePage).toHaveBeenCalledWith({notePath: NOTE, page: 3, template: path});
+  });
+
+  test('deletes its picture right after the insert, as the note keeps its own copy (#541)', async () => {
+    mocked(PluginNoteAPI.saveCurrentNote).mockResolvedValue({success: true, result: true});
+    mocked(PluginFileAPI.insertNotePage).mockResolvedValue({success: true, result: true});
+    await expect(devicePages(modules).insert(HERE, CODE, PNG)).resolves.toEqual({ok: true, value: true});
+    expect(cleared).toEqual([PAGE_FOLDER]);
+  });
+
+  test('a refused delete after the insert keeps the insert a success (#541)', async () => {
+    mocked(PluginNoteAPI.saveCurrentNote).mockResolvedValue({success: true, result: true});
+    mocked(PluginFileAPI.insertNotePage).mockResolvedValue({success: true, result: true});
+    const refusing = {[PAGE_FILE_MODULE]: {writeBase64, removePages: async () => {
+      throw new Error('no DELETE permission');
+    }}};
+    await expect(devicePages(refusing).insert(HERE, CODE, PNG)).resolves.toEqual({ok: true, value: true});
+  });
+
+  test('keeps its picture when the insert fails, for the next view to delete', async () => {
+    mocked(PluginNoteAPI.saveCurrentNote).mockResolvedValue({success: true, result: true});
+    mocked(PluginFileAPI.insertNotePage).mockResolvedValue({success: true, result: false});
+    await expect(devicePages(modules).insert(HERE, CODE, PNG)).resolves.toEqual(expect.objectContaining({ok: false}));
+    expect(cleared).toEqual([]);
   });
 
   test('the page files an earlier insert left are deleted', async () => {

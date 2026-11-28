@@ -1,19 +1,23 @@
-import {PERMISSION_FILE_READ, PERMISSION_FILE_WRITE} from '@ink-tools/sn-adapter/official';
+import {PERMISSION_FILE_DELETE, PERMISSION_FILE_READ, PERMISSION_FILE_WRITE} from '@ink-tools/sn-adapter/official';
 
 /** Puzzles' own strings; each game keeps its own beside its view. English only (#93). */
 export const copy = {
   title: 'Puzzles',
   'games.caption': 'Games',
   'games.none': 'No games yet. A newer version of Puzzles adds them.',
-  /** Each permission by the name the tablet's Settings shows (#453). */
+  /**
+   * Each permission by the name the tablet's Settings shows (#453); «File delete» follows the other
+   * two, and the device round of #541 confirms it.
+   */
   permissionNames: {
     [PERMISSION_FILE_READ]: 'File read',
     [PERMISSION_FILE_WRITE]: 'File write',
+    [PERMISSION_FILE_DELETE]: 'File delete',
   } as Record<string, string>,
   /** The Needs state while a declared permission is not granted (#245, #453). */
   needsPermission: (names: string) => `Puzzles needs ${names}`,
   'needs.files':
-    'Puzzles reads and writes files to put each game on a new page of your note.',
+    'Puzzles reads and writes files to put each game on a new page of your note, and deletes each page picture once the page is in the note.',
   'needs.allow': 'Allow',
   /** The Needs state after the host refused: only the person can allow it now. */
   refusedSteps: (names: string) => [

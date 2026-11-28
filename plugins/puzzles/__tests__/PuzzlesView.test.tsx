@@ -16,6 +16,7 @@ import {onToolbarPress, PUZZLES_ID} from '../src/toolbar';
 
 const READ = 'plugin.permission.FILE:READ';
 const WRITE = 'plugin.permission.FILE:WRITE';
+const DELETE = 'plugin.permission.FILE:DELETE';
 const GAME_LABEL = 'Test game, A synthetic game';
 
 /** Ports whose host grants what `granted` holds; `request` grants unless `refuse` is set. */
@@ -73,7 +74,7 @@ test('with no game, the view says so, asks for nothing and closes', async () => 
 });
 
 test('opening a game with a permission not granted shows Needs naming it, and Allow opens the game', async () => {
-  const ports = fakePorts(new Set([READ]));
+  const ports = fakePorts(new Set([READ, DELETE]));
   const tree = await mount({ports, games: [game()]});
   await press(tree, GAME_LABEL);
   expect(state(tree, 'needs')).toHaveLength(1);
@@ -87,15 +88,15 @@ test('a refused Allow shows the steps in Settings, never the same Needs again', 
   const ports = fakePorts(new Set(), {refuse: true});
   const tree = await mount({ports, games: [game()]});
   await press(tree, GAME_LABEL);
-  expect(shownTexts(tree.root)).toContain('Puzzles needs File read and File write');
+  expect(shownTexts(tree.root)).toContain('Puzzles needs File read, File write and File delete');
   await press(tree, copy['needs.allow']);
   expect(state(tree, 'problem-steps')).toHaveLength(1);
-  expect(shownTexts(tree.root)).toContain('2. Allow File read and File write.');
+  expect(shownTexts(tree.root)).toContain('2. Allow File read, File write and File delete.');
   expect(pressables(tree.root, copy['needs.allow'])).toHaveLength(0);
 });
 
 test('a check the host cannot answer shows Error with Retry, and Retry checks again', async () => {
-  const granted = new Set([READ, WRITE]);
+  const granted = new Set([READ, WRITE, DELETE]);
   const ports = fakePorts(granted, {failing: true});
   const tree = await mount({ports, games: [game()]});
   await press(tree, GAME_LABEL);
@@ -117,7 +118,7 @@ test('while the check runs, the view shows Loading with Close', async () => {
 });
 
 test("a game's own requirement is checked with the plugin's before its view opens", async () => {
-  const ports = fakePorts(new Set([READ, WRITE]));
+  const ports = fakePorts(new Set([READ, WRITE, DELETE]));
   const extra = 'plugin.permission.INTERNET';
   const tree = await mount({ports, games: [game([{kind: 'permission', permission: extra}])]});
   await press(tree, GAME_LABEL);
@@ -128,7 +129,7 @@ test("a game's own requirement is checked with the plugin's before its view open
 });
 
 test("a game's Back returns to the list without checking again", async () => {
-  const ports = fakePorts(new Set([READ, WRITE]));
+  const ports = fakePorts(new Set([READ, WRITE, DELETE]));
   const has = jest.spyOn(ports, 'has');
   const tree = await mount({ports, games: [game()]});
   await press(tree, GAME_LABEL);
@@ -156,7 +157,7 @@ test('a new press of the toolbar button starts at the game list, never where the
   const show = jest.fn();
   startButtonQueue(id => onToolbarPress(id, show));
   const listener = (PluginManager.registerButtonListener as jest.Mock).mock.calls.at(-1)[0];
-  const tree = await mount({ports: fakePorts(new Set([READ, WRITE])), games: [game()]});
+  const tree = await mount({ports: fakePorts(new Set([READ, WRITE, DELETE])), games: [game()]});
   await press(tree, GAME_LABEL);
   expect(shownTexts(tree.root)).toContain('Playing');
   await act(async () => listener.onButtonPress({id: PUZZLES_ID}));
