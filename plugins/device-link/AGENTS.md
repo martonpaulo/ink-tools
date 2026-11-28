@@ -116,7 +116,7 @@ PDF into a new note with its pages as backgrounds. Layers: `../../docs/architect
   `MAX_FILE_BYTES`, and names a received file from its type, never the sender's file name.
 - Log no image content, text, token or session id; only steps, status codes, timings and the
   toast line (`sendLog`).
-- Permissions: `INTERNET`, `FILE:READ` and `FILE:WRITE`; `__tests__/pluginConfig.test.ts` checks them.
+- Permissions: `INTERNET`, `FILE:READ`, `FILE:WRITE` and `FILE:DELETE` (the text copy beside a note, shared storage, is removed only with it, [#593](https://github.com/martonpaulo/ink-tools/issues/593)); `__tests__/pluginConfig.test.ts` checks them.
   `src/permissions.ts` asks for each one before the first file, note or network call of a tap and
   when Settings opens, and a refusal, on a send or a receive, holds the Needs state that names it ([#163](https://github.com/martonpaulo/supernote-tools/issues/163), [#428](https://github.com/martonpaulo/ink-tools/issues/428), [#438](https://github.com/martonpaulo/ink-tools/issues/438)); `__tests__/permissions.test.tsx`
   checks that every declared permission is asked.

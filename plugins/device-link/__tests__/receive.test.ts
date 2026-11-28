@@ -405,6 +405,14 @@ describe('a received text longer than the page\'s room goes whole over new pages
     expect(calls.removed).toEqual([expect.stringMatching(/^\/note received text \d+\.txt$/)]);
   });
 
+  test('a copy the host refuses to delete is named in the log, never left silent (tablet row 141)', async () => {
+    const h = host();
+    const {api} = fakeRelay({remove: jest.fn(async () => false)}, [offer({t: {fileType: 'text/plain', preview: long}})]);
+    await expect(receiveOne(api, h, 'Supernote')).resolves.toBe(copy.receivedTextPages(3));
+    const lines = (h.log as jest.Mock).mock.calls.map(call => call[0]);
+    expect(lines).toContainEqual(expect.stringMatching(/^receive: the saved copy of the text could not be removed: \/note received text \d+\.txt$/));
+  });
+
   test('no text box goes in while the note reloads after a page insert (tablet row 141)', async () => {
     const order: string[] = [];
     const step = (name: string) => jest.fn(async () => {

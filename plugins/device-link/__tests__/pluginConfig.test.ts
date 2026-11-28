@@ -11,9 +11,11 @@ test('plugin config declares its own generated id', () => {
   expect(others).not.toContain(config.pluginID);
 });
 
-test('plugin config declares the network and the two file permissions', () => {
-  // INTERNET for LocalSend; FILE:WRITE for the PNG it renders, FILE:READ to send it (#98).
+test('plugin config declares the network and the three file permissions', () => {
+  // INTERNET for LocalSend; FILE:WRITE for the PNG it renders, FILE:READ to send it (#98); FILE:DELETE to
+  // remove the text copy it saved beside the note, which the host refuses without it (#593).
   expect([...config['uses-permissions']].sort()).toEqual([
+    'plugin.permission.FILE:DELETE',
     'plugin.permission.FILE:READ',
     'plugin.permission.FILE:WRITE',
     'plugin.permission.INTERNET',

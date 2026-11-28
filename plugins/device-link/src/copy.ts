@@ -67,6 +67,7 @@ export const copy = {
     'plugin.permission.INTERNET': 'Network',
     'plugin.permission.FILE:READ': 'File read',
     'plugin.permission.FILE:WRITE': 'File write',
+    'plugin.permission.FILE:DELETE': 'File delete',
   } as Record<string, string>,
   /** The Needs state of a refused permission (#256): what is missing, then the steps that allow it. */
   permissionNeeded: (name: string) =>

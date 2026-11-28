@@ -306,7 +306,10 @@ async function placeOverPages(
   }
   host.log(`receive: lassoElements skipped, the text is on ${pieces.length} pages`);
   if (copied !== null) {
-    await native.remove(copied);
+    // The host refuses a delete in shared storage without FILE:DELETE, and the copy then stayed
+    // beside the note with no line saying so (tablet row 141, #593).
+    const removed = await native.remove(copied);
+    host.log(removed ? 'receive: the saved copy of the text is removed' : `receive: the saved copy of the text could not be removed: ${copied}`);
   }
   return copy.receivedTextPages(pieces.length);
 }

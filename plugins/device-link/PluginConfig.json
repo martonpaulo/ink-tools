@@ -11,6 +11,7 @@
   "uses-permissions": [
     "plugin.permission.INTERNET",
     "plugin.permission.FILE:READ",
-    "plugin.permission.FILE:WRITE"
+    "plugin.permission.FILE:WRITE",
+    "plugin.permission.FILE:DELETE"
   ]
 }

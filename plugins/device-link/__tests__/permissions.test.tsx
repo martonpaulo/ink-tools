@@ -37,6 +37,7 @@ test('each permission not granted is requested, in order', async () => {
   expect((d.request as jest.Mock).mock.calls).toEqual([
     ['plugin.permission.FILE:READ', copy.permissionReason],
     ['plugin.permission.FILE:WRITE', copy.permissionReason],
+    ['plugin.permission.FILE:DELETE', copy.permissionReason],
   ]);
 });
 

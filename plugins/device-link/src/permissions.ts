@@ -7,6 +7,7 @@
 import {
   hasPermission,
   isGranted,
+  PERMISSION_FILE_DELETE,
   PERMISSION_FILE_READ,
   PERMISSION_FILE_WRITE,
   PERMISSION_INTERNET,
@@ -20,6 +21,7 @@ export const NEEDED = [
   PERMISSION_INTERNET,
   PERMISSION_FILE_READ,
   PERMISSION_FILE_WRITE,
+  PERMISSION_FILE_DELETE,
 ] as const;
 
 export type PermissionDeps = {
