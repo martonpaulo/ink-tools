@@ -23,6 +23,8 @@ export type Mark = 'empty' | 'dot' | 'cross' | 'shade' | 'other';
 export const DOT_MAX_SHARE = 0.3;
 export const SHADE_MIN_COVER = 0.3;
 export const CROSS_MIN_SPAN = 0.4;
+/** [inference] the share of each line of a cross, from either end, where the other line may not meet it: lines that only touch there are a zigzag's teeth. */
+const CROSS_END_SHARE = 0.1;
 /**
  * [inference] a share of the cell: a piece of a stroke that never gets this deep into a cell, from
  * its nearest side, is a neighbour's mark spilling over the border, not a mark of this cell (#384).
@@ -177,17 +179,23 @@ function coverOf(strokes: readonly InkStroke[], box: Bounds, size: number): numb
   return touched.size / (COVER_STEPS * COVER_STEPS);
 }
 
+/** A straight run of ink along one diagonal: where it starts and ends, and its length along the ink. */
+interface DiagonalRun {
+  readonly band: 'falling' | 'rising';
+  readonly from: InkPoint;
+  readonly to: InkPoint;
+  readonly length: number;
+}
+
 /**
- * The longest straight run of ink along each diagonal: falling (top left to bottom right on the
- * page) and rising. A run is consecutive segments in one diagonal band, so the arcs of a written 0
- * or 8, which turn through every direction, never add up to a cross.
+ * The straight runs of ink along each diagonal, falling (top left to bottom right on the page) and
+ * rising. A run is consecutive segments in one diagonal band, so the arcs of a written 0 or 8,
+ * which turn through every direction, never add up to a cross.
  */
-function diagonalRuns(strokes: readonly InkStroke[]): { falling: number; rising: number } {
-  let falling = 0;
-  let rising = 0;
+function diagonalRuns(strokes: readonly InkStroke[]): DiagonalRun[] {
+  const runs: DiagonalRun[] = [];
   for (const { points } of strokes) {
-    let band: 'falling' | 'rising' | null = null;
-    let run = 0;
+    let current: { band: 'falling' | 'rising'; from: InkPoint; to: InkPoint; length: number } | null = null;
     for (let i = 1; i < points.length; i++) {
       const dx = points[i].x - points[i - 1].x;
       const dy = points[i].y - points[i - 1].y;
@@ -195,19 +203,56 @@ function diagonalRuns(strokes: readonly InkStroke[]): { falling: number; rising:
       if (length === 0) continue;
       // The segment's angle folded into a half turn, 0 to pi; page y grows downward.
       const angle = (Math.atan2(dy, dx) + Math.PI) % Math.PI;
-      const next =
+      const band =
         Math.abs(angle - DIAGONAL) <= DIAGONAL_TOLERANCE
           ? 'falling'
           : Math.abs(angle - (Math.PI - DIAGONAL)) <= DIAGONAL_TOLERANCE
             ? 'rising'
             : null;
-      run = next !== null && next === band ? run + length : length;
-      band = next;
-      if (band === 'falling') falling = Math.max(falling, run);
-      if (band === 'rising') rising = Math.max(rising, run);
+      if (current && band === current.band) {
+        current.to = points[i];
+        current.length += length;
+        continue;
+      }
+      if (current) runs.push(current);
+      current = band ? { band, from: points[i - 1], to: points[i], length } : null;
     }
+    if (current) runs.push(current);
   }
-  return { falling, rising };
+  return runs;
+}
+
+/** How far along each of two runs they meet, 0 at its start and 1 at its end, or null when parallel. */
+function meeting(a: DiagonalRun, b: DiagonalRun): [number, number] | null {
+  const ax = a.to.x - a.from.x;
+  const ay = a.to.y - a.from.y;
+  const bx = b.to.x - b.from.x;
+  const by = b.to.y - b.from.y;
+  const det = ax * by - ay * bx;
+  if (det === 0) return null;
+  const cx = b.from.x - a.from.x;
+  const cy = b.from.y - a.from.y;
+  return [(cx * by - cy * bx) / det, (cx * ay - cy * ax) / det];
+}
+
+/**
+ * Whether a falling and a rising run, each at least `span` long, cross each other: a cross is two
+ * lines through one another. A zigzag's teeth meet only at their ends, so a shading zigzag whose
+ * teeth lean as far as a diagonal is never read as a cross (tablet shift 7: 22 px teeth in 83 px
+ * cells read as 47 crosses, #384).
+ */
+function crossed(strokes: readonly InkStroke[], span: number): boolean {
+  const runs = diagonalRuns(strokes).filter(run => run.length >= span);
+  const inside = (t: number) => t > CROSS_END_SHARE && t < 1 - CROSS_END_SHARE;
+  return runs.some(
+    a =>
+      a.band === 'falling' &&
+      runs.some(b => {
+        if (b.band !== 'rising') return false;
+        const at = meeting(a, b);
+        return at !== null && inside(at[0]) && inside(at[1]);
+      }),
+  );
 }
 
 /**
@@ -223,7 +268,6 @@ export function classifyMark(grid: Grid, index: number, strokes: readonly InkStr
   const ink = boundsOf(points);
   if (Math.max(ink.right - ink.left, ink.bottom - ink.top) <= DOT_MAX_SHARE * size) return 'dot';
   if (coverOf(strokes, box, size) >= SHADE_MIN_COVER) return 'shade';
-  const { falling, rising } = diagonalRuns(strokes);
-  if (Math.min(falling, rising) >= CROSS_MIN_SPAN * size) return 'cross';
+  if (crossed(strokes, CROSS_MIN_SPAN * size)) return 'cross';
   return 'other';
 }

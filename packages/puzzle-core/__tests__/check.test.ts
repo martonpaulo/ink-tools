@@ -235,6 +235,20 @@ describe('marksByCell (#384)', () => {
     expect(kinds([stroke(zigzag)], [0, 1, 2, 3])).toEqual(['shade', 'shade', 'shade', 'empty']);
   });
 
+  test('a zigzag whose teeth lean as far as a diagonal is no cross, and a cross in one stroke still is (#384)', () => {
+    // Tablet shift 7: a run of three 83 px cells shaded by one zigzag of 22 px teeth, 25 px inside
+    // the cells, read as three crosses: each tooth is diagonal and longer than 0.4 of the cell.
+    const small: Grid = { lattice: 'square', x: 100, y: 100, cell: 83, columns: 15, rows: 15 };
+    const [left, top, bottom] = [small.x + 25, small.y + 25, small.y + small.cell - 25];
+    const teeth = Math.floor((3 * small.cell - 50) / 22);
+    const zigzag = Array.from({ length: teeth + 1 }, (_, i) => ({ x: left + i * 22, y: i % 2 ? bottom : top }));
+    const byCell = marksByCell(small, [stroke(zigzag)]);
+    expect([0, 1, 2].map(cell => classifyMark(small, cell, byCell.get(cell) ?? []))).not.toContain('cross');
+    // Down and right, up, then down and left, without a lift: the two lines cross.
+    const oneStroke = [...line(at(0.2, 0.2), at(0.8, 0.8)), ...line(at(0.8, 0.8), at(0.8, 0.2)), ...line(at(0.8, 0.2), at(0.2, 0.8))];
+    expect(classifyMark(grid, 0, [stroke(oneStroke)])).toBe('cross');
+  });
+
   test('a cross spilling a little over its cell marks only its own cell', () => {
     const cross = [stroke(line(at(3.9, 0.9), at(5.1, 2.1))), stroke(line(at(3.9, 2.1), at(5.1, 0.9)))];
     const center = 1 * 9 + 4;
