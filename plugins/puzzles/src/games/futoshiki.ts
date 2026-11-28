@@ -15,7 +15,7 @@ import {
   type Futoshiki,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
+import {drawn, unreadWhy, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const futoshikiCopy = {
   title: 'Futoshiki',
@@ -34,7 +34,7 @@ function board(puzzle: Futoshiki, shape: PageShape): Puzzle {
       const found = await checkFutoshiki(puzzle, layout.grid, ink, read);
       const unread = found.unread.map(cell => cell.index);
       const solved = found.wrong.length === 0 && found.empty.length === 0 && unread.length === 0;
-      return {picture: drawCellCheck(page, layout.grid, ink, found.wrong, unread), wrong: found.wrong.length, unread: unread.length, solved};
+      return {picture: drawCellCheck(page, layout.grid, ink, found.wrong, unread), wrong: found.wrong.length, unread: unread.length, why: unreadWhy(found.unread, layout.grid.columns), solved};
     },
     answer: () => drawCellAnswers(page, layout.grid, new Map(open)),
   };

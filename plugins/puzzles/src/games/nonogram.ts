@@ -19,7 +19,7 @@ import {
   type Nonogram,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
+import {drawn, unreadWhy, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const nonogramCopy = {
   title: 'Nonogram',
@@ -39,7 +39,7 @@ function board(puzzle: Nonogram, shape: PageShape): Puzzle {
       const unread = found.unread.map(cell => cell.index);
       // An empty cell is done when the picture leaves it empty: only an unshaded filled cell is left to do.
       const solved = found.wrong.length === 0 && unread.length === 0 && found.empty.every(cell => !puzzle.solution[cell]);
-      return {picture: drawCellCheck(page, layout.grid, ink, found.wrong, unread), wrong: found.wrong.length, unread: unread.length, solved};
+      return {picture: drawCellCheck(page, layout.grid, ink, found.wrong, unread), wrong: found.wrong.length, unread: unread.length, why: unreadWhy(found.unread, layout.grid.columns), solved};
     },
     answer: () => drawCellMarks(page, layout.grid, shaded),
   };

@@ -68,6 +68,16 @@ describe('the futoshiki game (#390)', () => {
     await expectSolved(FUTOSHIKI, CODE, written());
   });
 
+  test('the log names each unread cell and what the recognizer read there, never the screen (#584)', async () => {
+    const unread = openCells[1];
+    const {pages, lines} = fakePages({code: CODE, ink: written((cell, digit) => (cell === unread ? 'x' : digit)), read: readDigits});
+    const tree = await mount(FUTOSHIKI, pages);
+    await press(tree, playCopy['here.check']);
+    const at = `r${Math.floor(unread / GRID.columns) + 1}c${(unread % GRID.columns) + 1}`;
+    expect(lines).toContain(`futoshiki: unread ${at}: read «X», not a digit`);
+    expect(shownTexts(tree.root).join(' ')).not.toContain('not a digit');
+  });
+
   test('the log tells that Check was pressed and how long the puzzle then took to make (tablet row 146, #595)', async () => {
     const {pages, lines} = fakePages({code: CODE});
     const tree = await mount(FUTOSHIKI, pages);

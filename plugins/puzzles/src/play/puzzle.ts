@@ -60,7 +60,15 @@ export function recalled(options: readonly PuzzleOption[], kept: Choices | null)
 export type PageShape = {orientation: Orientation; hand: Hand};
 
 /** What «Check» found: the page with the marks, for the view only, the wrong and the unread entries it marked. */
-export type Verdict = {picture: Raster; wrong: number; unread: number; solved: boolean};
+export type Verdict = {picture: Raster; wrong: number; unread: number; solved: boolean; why?: readonly string[]};
+
+/**
+ * What the recognizer answered for each unread cell, as `r6c2: read «\», not a digit`, rows and
+ * columns counted from 1. For the Puzzles debug log only, never shown to the player (#584).
+ */
+export function unreadWhy(unread: readonly {index: number; reason: string}[], columns: number): string[] {
+  return unread.map(cell => `r${Math.floor(cell.index / columns) + 1}c${(cell.index % columns) + 1}: ${cell.reason}`);
+}
 
 /** A new page: the name of its background and the picture drawn as it. */
 export type GamePage = {

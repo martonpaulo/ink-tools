@@ -290,6 +290,7 @@ export function GameView({
         return failed(playCopy['error.check'], retry, String(error));
       }
       pages.log(`${game.id}: checked ${board.code}: ${verdict.wrong} wrong, solved ${verdict.solved}`);
+      for (const line of verdict.why ?? []) {pages.log(`${game.id}: unread ${line}`);}
       setScreen({kind: 'verdict', board, verdict});
     },
     [failed, game.id, onScreen, pages, prepared],
