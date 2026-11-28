@@ -98,6 +98,17 @@ export function textBoxFields(box: TextBoxInput): Record<string, unknown> {
   };
 }
 
+/**
+ * `elements` set to go to `layer` (0 the main layer, 1 to 3 the custom ones) by a file API call,
+ * which takes no layer argument: each element's `layerNum` names it (#334). Without a layer, the
+ * elements as they are.
+ * shortcut: whether insertElements and modifyElements by path follow `layerNum` is not measured;
+ * the device round of #334 settles it.
+ */
+export function onLayer(elements: object[], layer?: number): object[] {
+  return layer === undefined ? elements : elements.map(element => Object.assign(element, {layerNum: layer}));
+}
+
 /** `Element.TYPE_STROKE` and `Element.TYPE_TEXT` in sn-plugin-lib 0.2.3 (#187). */
 export const STROKE_TYPE = 0;
 export const TEXT_TYPE = 500;

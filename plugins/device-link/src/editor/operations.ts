@@ -39,6 +39,8 @@ export const THICKNESS = {min: 100, max: 5000};
 export const PAGE = {width: 1920, height: 2560};
 /** The Manta's four pen tones (docs/supernote.md › Greys and colours): no other colour enters a note. */
 export const PEN_TONES = [0x00, 0x9d, 0xc9, 0xfe];
+/** A note page's layers: 0 the main layer, 1 to 3 the custom ones (sn-plugin-lib's `layerNum`, #334). */
+export const LAYERS = {min: 0, max: 3};
 
 /** Each refusal's name, which the Mac reads; the message says the rest. */
 export const REFUSAL = {
@@ -52,8 +54,8 @@ export const REFUSAL = {
 } as const;
 
 export type Operation =
-  | {op: 'insertElements'; page: number; elements: NewElement[]}
-  | {op: 'modifyElements'; page: number; num: number; rect: EditRect; file?: string; text?: TextChange}
+  | {op: 'insertElements'; page: number; elements: NewElement[]; layer?: number}
+  | {op: 'modifyElements'; page: number; num: number; rect: EditRect; file?: string; text?: TextChange; layer?: number}
   | {op: 'transformElements'; page: number; nums: number[]; matrix: Matrix}
   | {op: 'deleteElements'; page: number; nums: number[]}
   | {op: 'insertPage'; page: number; template: string}
@@ -79,10 +81,11 @@ export interface EditHost {
   retext(element: object, text: string, fontSize: number): Result<object>;
   /** Scales, rotates or flips a stroke through `matrix`, refused when it leaves the page (#326). */
   transform(element: object, page: number, matrix: Matrix): Promise<Result<object>>;
-  insertOpen(page: number, elements: object[]): Promise<Result<unknown>>;
-  insertByPath(path: string, page: number, elements: object[]): Promise<Result<unknown>>;
-  modifyOpen(page: number, elements: object[]): Promise<Result<unknown>>;
-  modifyByPath(path: string, page: number, elements: object[]): Promise<Result<unknown>>;
+  /** `layer`, when given, is the layer the elements go to (#334); without it the tablet chooses. */
+  insertOpen(page: number, elements: object[], layer?: number): Promise<Result<unknown>>;
+  insertByPath(path: string, page: number, elements: object[], layer?: number): Promise<Result<unknown>>;
+  modifyOpen(page: number, elements: object[], layer?: number): Promise<Result<unknown>>;
+  modifyByPath(path: string, page: number, elements: object[], layer?: number): Promise<Result<unknown>>;
   deleteOpen(page: number, nums: number[]): Promise<Result<unknown>>;
   deleteByPath(path: string, page: number, nums: number[]): Promise<Result<unknown>>;
   insertPage(path: string, page: number, template: string): Promise<Result<unknown>>;
@@ -105,6 +108,20 @@ function check(condition: boolean, message: string): void {
 
 function wholeIn(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
+}
+
+/** A target layer, 0 to 3, when the request names one (#334). */
+function parseLayer(value: unknown): {layer?: number} {
+  if (value === undefined) {
+    return {};
+  }
+  check(wholeIn(value, LAYERS.min, LAYERS.max), `layer must be a layer number from ${LAYERS.min} to ${LAYERS.max}`);
+  return {layer: value as number};
+}
+
+/** The trailing `layer` argument of a host call: none when the request names no layer. */
+function layerArg(operation: {layer?: number}): [] | [number] {
+  return operation.layer === undefined ? [] : [operation.layer];
 }
 
 function parseNums(value: unknown): number[] {
@@ -247,7 +264,7 @@ function parseOperation(value: unknown): Operation {
   switch (raw.op) {
     case 'insertElements':
       check(Array.isArray(raw.elements) && raw.elements.length > 0 && raw.elements.length <= LIMITS.elements, `elements must hold 1 to ${LIMITS.elements}`);
-      return {op: 'insertElements', page: parsePage(raw.page), elements: (raw.elements as unknown[]).map(parseElement)};
+      return {op: 'insertElements', page: parsePage(raw.page), elements: (raw.elements as unknown[]).map(parseElement), ...parseLayer(raw.layer)};
     case 'modifyElements':
       check(wholeIn(raw.num, 1, Number.MAX_SAFE_INTEGER), 'num must be an element number from 1');
       // A new text and font size come together, for a text box only, never with a picture's file (#264).
@@ -259,6 +276,7 @@ function parseOperation(value: unknown): Operation {
         rect: parseRect(raw.rect),
         ...(raw.file === undefined ? {} : {file: parsePictureFile(raw.file)}),
         ...(raw.text === undefined && raw.fontSize === undefined ? {} : {text: parseText(raw)}),
+        ...parseLayer(raw.layer),
       };
     case 'transformElements':
       return {op: 'transformElements', page: parsePage(raw.page), nums: parseNums(raw.nums), matrix: parseMatrix(raw.matrix)};
@@ -340,8 +358,9 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
       for (const spec of operation.elements) {
         built.push(await must('createElement', host.build(spec)));
       }
-      await must('insert', open ? host.insertOpen(operation.page, built) : host.insertByPath(path, operation.page, built));
-      return {page: operation.page, inserted: built.length};
+      const at = layerArg(operation);
+      await must('insert', open ? host.insertOpen(operation.page, built, ...at) : host.insertByPath(path, operation.page, built, ...at));
+      return {page: operation.page, inserted: built.length, ...(operation.layer === undefined ? {} : {layer: operation.layer})};
     }
     case 'modifyElements': {
       const element = await must(`element ${operation.num}`, host.getElement(path, operation.page, operation.num), REFUSAL.noElement);
@@ -354,8 +373,15 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
       }
       const placed = await must('place', host.place(element, operation.page, operation.rect));
       const changed = text ? await must('retext', Promise.resolve(host.retext(placed, text.text, text.fontSize))) : placed;
-      await must('modify', open ? host.modifyOpen(operation.page, [changed]) : host.modifyByPath(path, operation.page, [changed]));
-      return {page: operation.page, num: operation.num, rect: operation.rect, ...(text ? {retexted: true} : {})};
+      const at = layerArg(operation);
+      await must('modify', open ? host.modifyOpen(operation.page, [changed], ...at) : host.modifyByPath(path, operation.page, [changed], ...at));
+      return {
+        page: operation.page,
+        num: operation.num,
+        rect: operation.rect,
+        ...(text ? {retexted: true} : {}),
+        ...(operation.layer === undefined ? {} : {layer: operation.layer}),
+      };
     }
     case 'transformElements': {
       // Strokes only: a picture or a text box is sent a rect by modifyElements (#326).
@@ -405,7 +431,8 @@ async function movePicture(
   }
   const {page, num, rect} = operation;
   const picture = await must('createElement', host.build({kind: 'picture', file: operation.file, rect}));
-  await must('insert', open ? host.insertOpen(page, [picture]) : host.insertByPath(path, page, [picture]));
+  const at = layerArg(operation);
+  await must('insert', open ? host.insertOpen(page, [picture], ...at) : host.insertByPath(path, page, [picture], ...at));
   await must(`delete of the old picture ${num}, after the moved one was inserted`, open ? host.deleteOpen(page, [num]) : host.deleteByPath(path, page, [num]));
   return {page, num, rect, replaced: true};
 }

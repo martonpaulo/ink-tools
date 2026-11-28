@@ -95,7 +95,7 @@ the request names, then the old one deleted, as a modify draws it twice (`docs/s
 the pen is on the page, at most 20 s. The action `save-note` (`src/editor/save.ts`) saves the open
 note, which inkctl asks before it opens another note ([#426](https://github.com/martonpaulo/ink-tools/issues/426)). The action `templates` (`src/editor/templates.ts`) lists the tablet's page templates for the
 editor's Insert Page, the system ones by name and the PNGs straight in `MyStyle/` by full path,
-which `insertPage` also takes ([#451](https://github.com/martonpaulo/ink-tools/issues/451)). To test on the device: each operation with the screen
+which `insertPage` also takes ([#451](https://github.com/martonpaulo/ink-tools/issues/451)). `insertElements` and `modifyElements` take an optional target `layer`, 0 to 3: the open-note calls' `layer` argument, and by path each element's `layerNum`, whether the file API follows it waiting for the device round ([#334](https://github.com/martonpaulo/ink-tools/issues/334)). To test on the device: each operation with the screen
 untouched, whether a picture element takes a path in that folder, and a stroke's `setRange` move.
 
 ## What it is

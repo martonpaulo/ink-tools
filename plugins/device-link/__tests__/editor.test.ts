@@ -60,6 +60,28 @@ async function refusal(run: Promise<unknown>): Promise<ActionRefused> {
 const text = {kind: 'text', text: 'Agenda', rect: RECT, fontSize: 40};
 
 describe('operations on a closed note go through the file API by path', () => {
+  it('sends a target layer with an insert and a modify, by path and on the open note (#334)', async () => {
+    const insert = {op: 'insertElements', page: 1, elements: [text], layer: 2};
+    const modify = {op: 'modifyElements', page: 0, num: 4, rect: RECT, layer: 3};
+    const closed = host();
+    const answer = await editAction(closed.fake, () => 0)({path: NOTE, ops: [insert, modify]});
+    expect(closed.calls).toContain(`insertByPath ${JSON.stringify([NOTE, 1, [{built: 'text'}], 2])}`);
+    expect(closed.calls).toContain(`modifyByPath ${JSON.stringify([NOTE, 0, [{type: 500, placed: true}], 3])}`);
+    expect(answer).toMatchObject({results: [{op: 'insertElements', layer: 2}, {op: 'modifyElements', layer: 3}]});
+    const open = host(NOTE);
+    await editAction(open.fake)({path: NOTE, ops: [insert, modify]});
+    expect(open.calls).toContain(`insertOpen ${JSON.stringify([1, [{built: 'text'}], 2])}`);
+    expect(open.calls).toContain(`modifyOpen ${JSON.stringify([0, [{type: 500, placed: true}], 3])}`);
+  });
+
+  it.each([-1, 4, 1.5, '1'])('refuses the layer %p, and writes nothing (#334)', async layer => {
+    const {fake, calls} = host();
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [text], layer}]}));
+    expect(refused.detail).toMatchObject({refusal: 'bad-request'});
+    expect(refused.message).toContain('layer must be a layer number from 0 to 3');
+    expect(calls).toEqual([]);
+  });
+
   it('inserts each element built, then inserts them in one call', async () => {
     const {fake, calls} = host();
     const stroke = {kind: 'stroke', points: [[10, 10], [20, 30]], penColor: 0x9d, thickness: 400};
