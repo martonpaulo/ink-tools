@@ -3,6 +3,8 @@ import sources from '../words/sources.json';
 import { type InkPoint, type InkStroke } from '../src/check';
 import {
   checkWordSearch,
+  drawWordSearchAnswer,
+  drawWordSearchCheck,
   drawWordSearchPage,
   newWordSearch,
   pageTitle,
@@ -193,6 +195,28 @@ describe('checkWordSearch', () => {
     const tick = line(at(0, -0.2, 0), at(0, 0.2, 0));
     const off = line({ x: grid.x - 3 * grid.cell, y: grid.y }, at(3));
     expect(checkWordSearch(game, grid, [bowed, tick, off]).wrong).toEqual([]);
+  });
+
+  test('the view pictures ring the wrong strike whole and strike every word, leaving the page as it was', () => {
+    const { raster } = drawWordSearchPage(game, { orientation: 'portrait', hand: 'right' });
+    const before = Buffer.from(raster.pixels);
+    const diagonal = line(at(0), at(2 * size + 2));
+    const { wrong } = checkWordSearch(game, grid, [diagonal]);
+    const checked = drawWordSearchCheck(raster, grid, [diagonal], wrong);
+    const answered = drawWordSearchAnswer(game, raster, grid);
+    expect(Buffer.from(raster.pixels).equals(before)).toBe(true);
+    for (const picture of [checked, answered]) assertNativeGreys(picture);
+    const pixel = (picture: { width: number; pixels: Uint8Array }, p: InkPoint): number => picture.pixels[Math.round(p.y) * picture.width + Math.round(p.x)];
+    // The ring passes 0.42 of a cell beyond the strike's first cell, along the strike, so it reads as the whole line.
+    const [x0, y0] = cellCenter(grid, 0, 0);
+    const beyond = { x: x0 - (0.42 * grid.cell) / Math.SQRT2, y: y0 - (0.42 * grid.cell) / Math.SQRT2 };
+    expect(pixel(checked, beyond)).toBeLessThan(pixel(raster, beyond));
+    // The answer's line runs between each word's first two letters, where the page has paper.
+    for (const { cells } of game.puzzle.words) {
+      const [a, b] = [at(cells[0]), at(cells[1])];
+      const middle = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      expect(pixel(answered, middle)).toBe(0);
+    }
   });
 
   test('refuses a grid that is not this puzzle’s', () => {

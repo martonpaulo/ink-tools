@@ -11,6 +11,8 @@
       "@ink-tools/sn-adapter/registry": ["../../packages/sn-adapter/registry"],
       // The games' generators, pages and checks (#453).
       "@ink-tools/puzzle-core": ["../../packages/puzzle-core/src"],
+      // The bundled word lists, which the main entry leaves out (#385).
+      "@ink-tools/puzzle-core/word-lists": ["../../packages/puzzle-core/src/words-data"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

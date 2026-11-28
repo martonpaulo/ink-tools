@@ -20,6 +20,7 @@ export * from './word-search';
 export * from './slitherlink';
 export * from './slitherlink-page';
 export * from './games/word-search';
+export * from './words';
 export * from './futoshiki';
 export * from './futoshiki-page';
 export * from './codeword';

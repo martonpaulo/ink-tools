@@ -64,12 +64,14 @@ import {NONOGRAM} from '../../../plugins/puzzles/src/games/nonogram';
 import {STAR_BATTLE} from '../../../plugins/puzzles/src/games/starBattle';
 import {BINAIRO} from '../../../plugins/puzzles/src/games/binairo';
 import {HITORI} from '../../../plugins/puzzles/src/games/hitori';
+import {WORD_SEARCH} from '../../../plugins/puzzles/src/games/wordSearch';
+import {WORD_AVOID, WORD_LISTS} from '@ink-tools/puzzle-core/word-lists';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, wordSearchFromCode, wordSearchLayout, WORD_LANGUAGES, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -469,6 +471,23 @@ const hitoriInk = () => {
   return [...shaded.slice(0, -1), white[1]].map(hatch).concat([ring]);
 };
 const puzzlesHitori = (code: string | null, steps: string[] = []) => puzzlesGame(HITORI, hitoriInk, code, steps);
+/**
+ * The largest word search, a hard Portuguese one (#385): every word struck end to end but the last,
+ * and one strike over five cells of the middle row that finds no word.
+ */
+const WORD_SEARCH_CODE = 'WS-15PT-H-7K2Q9X';
+const wordSearchInk = () => {
+  const game = wordSearchFromCode(WORD_SEARCH_CODE, Object.fromEntries(WORD_LANGUAGES.map(language => [language, {list: WORD_LISTS[language], avoid: WORD_AVOID[language]}])) as Parameters<typeof wordSearchFromCode>[1]);
+  const {grid} = wordSearchLayout(game, {orientation: 'portrait', hand: 'right'});
+  const at = (cell: number) => cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
+  const strike = (from: number, to: number) => {
+    const [[x0, y0], [x1, y1]] = [at(from), at(to)];
+    return {points: Array.from({length: 21}, (_, i) => ({x: x0 + ((x1 - x0) * i) / 20, y: y0 + ((y1 - y0) * i) / 20})), element: {}};
+  };
+  const struck = game.puzzle.words.slice(0, -1).map(({cells}) => strike(cells[0], cells[cells.length - 1]));
+  return [...struck, strike(grid.columns * 7, grid.columns * 7 + 4)];
+};
+const puzzlesWordSearch = (code: string | null, steps: string[] = []) => puzzlesGame(WORD_SEARCH, wordSearchInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -543,6 +562,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-hitori-page', render: () => puzzlesHitori(HITORI_CODE)},
   {name: 'puzzles-hitori-check', render: () => puzzlesHitori(HITORI_CODE, ['Check'])},
   {name: 'puzzles-hitori-solution', render: () => puzzlesHitori(HITORI_CODE, ['Show Solution'])},
+  {name: 'puzzles-word-search', render: () => puzzlesWordSearch(null)},
+  {name: 'puzzles-word-search-page', render: () => puzzlesWordSearch(WORD_SEARCH_CODE)},
+  {name: 'puzzles-word-search-check', render: () => puzzlesWordSearch(WORD_SEARCH_CODE, ['Check'])},
+  {name: 'puzzles-word-search-solution', render: () => puzzlesWordSearch(WORD_SEARCH_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

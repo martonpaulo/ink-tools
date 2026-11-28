@@ -21,7 +21,11 @@ exports.metro = part => ({
   },
 });
 
-/** The Jest moduleNameMapper part: the package, to its source. */
+/**
+ * The Jest moduleNameMapper part: the package, to its source, and `/word-lists`, the bundled word
+ * lists the main entry leaves out (#385), to `src/words-data`; Metro reads `word-lists.ts` here.
+ */
 exports.jestModuleNameMapper = {
   [`^${NAME}$`]: path.join(__dirname, 'src'),
+  [`^${NAME}/word-lists$`]: path.join(__dirname, 'src', 'words-data'),
 };

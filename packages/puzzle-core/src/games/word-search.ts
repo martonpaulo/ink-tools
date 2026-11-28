@@ -16,6 +16,7 @@ import { cellCenter, drawCellText, drawSquareLattice, type Grid } from '../page/
 import { createPage, drawFooter, fitCellMm, layoutPage, type PageLayout, type PageSpec } from '../page/layout';
 import { mmToPx, TEXT_SIZE, type Hand, type Orientation } from '../page/look';
 import { type Raster } from '../page/raster';
+import { copyRaster, drawPolyline, drawStrikeCheck, VIEW_ANSWER_PX, type Segment } from '../page/view';
 import { childSeed, createRandom } from '../random';
 import { DIRECTIONS, generateWordSearch, type WordSearch } from '../word-search';
 import { WORD_LANGUAGES, type ThemeTier, type WordLanguage, type WordList } from '../words';
@@ -249,4 +250,23 @@ export function checkWordSearch(game: WordSearchGame, grid: Grid, strokes: reado
     missing: game.words.filter(word => !found.has(word)),
     wrong,
   };
+}
+
+/** The line from the centre of a strike's first cell to the centre of its last. */
+function strikeLine(grid: Grid, cells: readonly number[]): Segment {
+  const side = grid.columns;
+  const at = (cell: number): [number, number] => cellCenter(grid, cell % side, Math.floor(cell / side));
+  return [at(cells[0]), at(cells[cells.length - 1])];
+}
+
+/** The page «Check» shows, for the plugin's view only: the player's ink and a ring around each wrong strike. */
+export function drawWordSearchCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly WrongStrike[]): Raster {
+  return drawStrikeCheck(page, grid, strokes, wrong.map(strike => strikeLine(grid, strike.cells)));
+}
+
+/** The page with the answer, for the plugin's view only: one line through each listed word, as a player strikes it. */
+export function drawWordSearchAnswer(game: WordSearchGame, page: Raster, grid: Grid): Raster {
+  const answer = copyRaster(page);
+  for (const placed of game.puzzle.words) drawPolyline(answer, strikeLine(grid, placed.cells), VIEW_ANSWER_PX);
+  return answer;
 }

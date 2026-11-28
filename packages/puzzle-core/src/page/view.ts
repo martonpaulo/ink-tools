@@ -196,11 +196,15 @@ export function edgeEnds(grid: Grid, key: string): [[number, number], [number, n
 export type Segment = readonly [readonly [number, number], readonly [number, number]];
 
 /** A capsule around a line's middle, along it, as a closed polyline: a half ring at each end, joined along the line. */
-function lineCapsule(grid: Grid, [[x0, y0], [x1, y1]]: Segment): [number, number][] {
+function lineCapsule(grid: Grid, line: Segment): [number, number][] {
+  const radius = (grid.cell * VIEW_EDGE_MARK.width) / 2;
+  return capsule(line, radius, (grid.cell * VIEW_EDGE_MARK.length) / 2 - radius);
+}
+
+/** A capsule of `radius` whose two half rings are centred `reach` pixels each side of the line's middle. */
+function capsule([[x0, y0], [x1, y1]]: Segment, radius: number, reach: number): [number, number][] {
   const [cx, cy] = [(x0 + x1) / 2, (y0 + y1) / 2];
   const axis = Math.atan2(y1 - y0, x1 - x0);
-  const radius = (grid.cell * VIEW_EDGE_MARK.width) / 2;
-  const reach = (grid.cell * VIEW_EDGE_MARK.length) / 2 - radius;
   const half = RING_CHORDS / 2;
   const points: [number, number][] = [];
   for (const side of [1, -1]) {
@@ -221,6 +225,24 @@ function lineCapsule(grid: Grid, [[x0, y0], [x1, y1]]: Segment): [number, number
 export function drawLineCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly Segment[]): Raster {
   const marked = drawPointCheck(page, strokes, [], 0);
   for (const line of wrong) drawPolyline(marked, lineCapsule(grid, line), VIEW_MARK_PX);
+  return marked;
+}
+
+/** A wrong strike's ring reaches this share of a cell around the centres of its two end cells (#385). */
+export const VIEW_STRIKE_RING = 0.42;
+
+/**
+ * The page a strikes game's «Check» shows (#385): the player's ink and a ring around the whole of
+ * each wrong strike, from the centre of its first cell to the centre of its last, so it reads as
+ * «this line», never as one cell.
+ */
+export function drawStrikeCheck(page: Raster, grid: Grid, strokes: readonly InkStroke[], wrong: readonly Segment[]): Raster {
+  const marked = drawPointCheck(page, strokes, [], 0);
+  const radius = grid.cell * VIEW_STRIKE_RING;
+  for (const line of wrong) {
+    const [[x0, y0], [x1, y1]] = line;
+    drawPolyline(marked, capsule(line, radius, Math.hypot(x1 - x0, y1 - y0) / 2), VIEW_MARK_PX);
+  }
   return marked;
 }
 
