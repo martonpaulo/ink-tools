@@ -68,4 +68,35 @@ import Testing
         let seen = try await zoom(from: 53, through: [.fitPage, .magnification(1)])
         #expect(seen == ["fitPage: page 54, Page 54 of 54", "magnification(1.0): page 54, Page 54 of 54"])
     }
+
+    /// The Pages sidebar's table: the one with a row per page.
+    var sidebarTable: NSTableView? {
+        var queue: [NSView] = window.contentView.map { [$0] } ?? []
+        while let view = queue.popLast() {
+            if let table = view as? NSTableView, table.numberOfRows == pages.pageSizes.count { return table }
+            queue.append(contentsOf: view.subviews)
+        }
+        return nil
+    }
+
+    /// The rows of the Pages sidebar wholly on screen, thumbnail and number, from 0.
+    var sidebarRows: [Int] {
+        guard let table = sidebarTable else { return [] }
+        let rows = table.rows(in: table.visibleRect)
+        return (rows.location..<(rows.location + rows.length)).filter {
+            table.visibleRect.contains(table.rect(ofRow: $0))
+        }
+    }
+
+    /// A note opened at a later page shows that page's thumbnail and number, selected, in the
+    /// Pages sidebar (#550); it showed thumbnails 1 to 4, as one scroll on the list's estimated
+    /// row heights stopped short, and then the row's number below the window's edge.
+    @Test(arguments: [32, 53])
+    func theSidebarShowsTheThumbnailOfThePageTheNoteOpensAt(page: Int) async throws {
+        window.show(NotebookView(pages: pages, page: page, viewer: viewer))
+        let shown = try await window.until { self.sidebarRows.contains(page) }
+        #expect(shown, "rows shown: \(sidebarRows)")
+        #expect(sidebarTable?.selectedRowIndexes == IndexSet(integer: page))
+        try await window.save("sidebar-page\(page + 1)")
+    }
 }

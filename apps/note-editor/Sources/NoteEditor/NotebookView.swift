@@ -105,6 +105,9 @@ struct NotebookView: View {
     @State private var columns: NavigationSplitViewVisibility
     @State private var viewer: PageViewer
     @State private var sidebar: SidebarMode
+    /// The page list's rows laid out now, and the page it still scrolls to (#550).
+    @State private var listRows: Set<Int> = []
+    @State private var listTarget: (page: Int, scrolls: Int)?
     @FocusState private var pageFocused: Bool
     @Environment(\.displayScale) private var displayScale
     @Environment(NoteText.self) private var text: NoteText?
@@ -411,6 +414,8 @@ struct NotebookView: View {
                         .contextMenu { PageMenu(editor: editor, row: index, pages: menuPages(index)) }
                         // One page moves at a time, so a row of a selection of several stays.
                         .moveDisabled(navigator.picked.count > 1 && navigator.picked.contains(index))
+                        .onAppear { listRows.insert(index) }
+                        .onDisappear { listRows.remove(index) }
                 }
                 // A thumbnail dragged within the list moves its page, on a note from the tablet (#330).
                 .onMove(perform: pageDrag)
@@ -420,12 +425,34 @@ struct NotebookView: View {
                 // Every page selected: a note keeps one, so the key only beeps, as a refused key does.
                 if let editor, !editor.askRemoval(of: navigator.selectedPages) { NSSound.beep() }
             }
-            .onChange(of: navigator.index) { _, index in
-                if let index { list.scrollTo(index) }
+            // The list puts a row it has not laid out at an estimated height, shorter than a
+            // thumbnail's, so one scroll to a far page stops short, as a note opened at page 33
+            // showed rows 1 to 4 (#550). Each scroll lays out the rows it reaches, so the list
+            // scrolls again as they appear, until the page's own row is laid out. A far page
+            // comes to the middle, so the rows still estimated below it cannot push it out.
+            .onChange(of: navigator.index, initial: true) { _, index in
+                guard let index else { return }
+                if listRows.contains(index) {
+                    list.scrollTo(index)
+                    listTarget = nil
+                } else {
+                    list.scrollTo(index, anchor: .center)
+                    listTarget = (index, 1)
+                }
+            }
+            .onChange(of: listRows) { _, rows in
+                guard let (page, scrolls) = listTarget else { return }
+                list.scrollTo(page, anchor: .center)
+                listTarget = rows.contains(page) || scrolls >= Self.listScrolls ? nil : (page, scrolls + 1)
             }
         }
         .accessibilityLabel(Copy.pages)
     }
+
+    /// The most scrolls the page list makes toward one page, so a row that never lays out cannot
+    /// keep the list scrolling; the 54-page test note reached pages 33 and 54 with its second
+    /// scroll (#550).
+    private static let listScrolls = 10
 
     /// The pages a row's context menu acts on: the selection when the row is in it, else that row,
     /// as Finder's context menu does.
