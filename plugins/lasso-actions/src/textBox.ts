@@ -125,6 +125,17 @@ export const UNPLACED: Problem = {
   reason: copy['error.unplaced'],
 };
 
+/** The Error state of a word under the note's page bar, where nothing can be placed (#577). */
+export const UNDER_BAR: Problem = {
+  what: copy['error.underBarWhat'],
+  reason: copy['error.underBar'],
+};
+
+/** The Error state a refused read holds, or null for a read with no word, which writes a note. */
+export function refusalProblem(why: 'unplaced' | 'underBar' | 'unreadable'): Problem | null {
+  return why === 'unplaced' ? UNPLACED : why === 'underBar' ? UNDER_BAR : null;
+}
+
 /** What a text button's press needs to stop on a read it may not use (#165, #166). */
 export type CheckDeps = {
   insert: (box: TextBoxInput) => Promise<Result<boolean>>;
@@ -152,9 +163,10 @@ export async function checkedRead(
     return checked;
   }
   deps.log(`${tag}: ${checked.why}, ${checked.message}`);
-  if (checked.why === 'unplaced') {
-    deps.fail(UNPLACED);
-    return {ok: false, text: copy['error.unplaced']};
+  const problem = refusalProblem(checked.why);
+  if (problem) {
+    deps.fail(problem);
+    return {ok: false, text: copy[checked.why === 'underBar' ? 'error.underBar' : 'error.unplaced']};
   }
   if (checked.place) {
     await insertBox(

@@ -143,6 +143,9 @@ export const copy = {
   'error.unreadable': 'The handwriting could not be read.',
   /** The Error state of a pasted selection with no place on the page yet (#165, #428). */
   'error.unplacedWhat': 'The selection has no place on the page yet.',
+  /** The Error state of a word that sits under the note's page bar (#577). */
+  'error.underBarWhat': 'This word sits under the page bar.',
+  'error.underBar': 'Write it higher on the page, then press again.',
   'error.unplaced':
     'Put the selection down on the page first, then press again.',
   /** The Error state's reason when «Choose picture» read no word (#166, #428). */

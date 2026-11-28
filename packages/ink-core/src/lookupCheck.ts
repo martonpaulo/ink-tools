@@ -3,6 +3,7 @@
  * recognized words only, and a lasso rect only when it is on the page.
  */
 import type {LassoPlace, LassoQuery, Rect, Size} from './lasso';
+import {writableSize} from './pageArea';
 
 /**
  * The recognized text reduced to its words: a word holds at least one letter of any script, and
@@ -45,14 +46,25 @@ export function rectProblem(rect: Rect, pageSize: Size, occupied?: Rect[]): stri
   return null;
 }
 
+/**
+ * True when most of the rect lies under the note's page bar (#577): its middle is in the bar's
+ * band, so the word has no room below or above it that a tool may use.
+ */
+export function underPageBar(rect: Rect, pageSize: Size): boolean {
+  return (rect.top + rect.bottom) / 2 >= writableSize(pageSize).height;
+}
+
 /** True when the two rects overlap or share an edge. */
 function touches(a: Rect, b: Rect): boolean {
   return a.left <= b.right && b.left <= a.right && a.top <= b.bottom && b.top <= a.bottom;
 }
 
 export type LookupRefusal = {
-  /** `unplaced`: the rect cannot place anything; `unreadable`: no word was recognized. */
-  why: 'unplaced' | 'unreadable';
+  /**
+   * `unplaced`: the rect cannot place anything; `underBar`: the word sits under the page bar;
+   * `unreadable`: no word was recognized.
+   */
+  why: 'unplaced' | 'underBar' | 'unreadable';
   /** For the log. */
   message: string;
   /** Where a note may be written below the selection; null when the rect is not on the page. */
@@ -63,6 +75,15 @@ export type LookupRefusal = {
 export function checkLookup(
   read: LassoQuery,
 ): {ok: true; value: LassoQuery} | ({ok: false} & LookupRefusal) {
+  const shape = read.place ? rectProblem(read.place.rect, read.place.pageSize) : null;
+  if (read.place && !shape && underPageBar(read.place.rect, read.place.pageSize)) {
+    return {
+      ok: false,
+      why: 'underBar',
+      message: `the lasso rect ${JSON.stringify(read.place.rect)} sits under the page bar`,
+      place: null,
+    };
+  }
   const problem = read.place
     ? rectProblem(read.place.rect, read.place.pageSize, read.place.occupied)
     : null;

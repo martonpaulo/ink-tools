@@ -7,7 +7,7 @@ import {LassoPlace} from '@ink-tools/ink-core';
 import {Measures, pixelKind, SearchResult} from '@ink-tools/picture-search';
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy, pictureCopy} from '../src/copy';
-import {UNPLACED} from '../src/textBox';
+import {UNDER_BAR, UNPLACED} from '../src/textBox';
 import {MODES} from '../src/modes';
 import {
   LOOKUP_PICTURES,
@@ -315,6 +315,15 @@ describe('a press (#111)', () => {
     expect(await pictureLasso(illustration, d)).toBeNull();
     expect(d.insert).not.toHaveBeenCalled();
     expect(d.write).not.toHaveBeenCalled();
+  });
+
+  test('a word under the page bar places nothing and holds its own Error state (#577)', async () => {
+    const low = {...place, rect: {left: 372, top: 2460, right: 572, bottom: 2532}};
+    const d = press({read: jest.fn(async () => ok({query: 'apple', place: low}))});
+    expect(await pictureLasso(illustration, d)).toBeNull();
+    expect(d.insert).not.toHaveBeenCalled();
+    expect(d.write).not.toHaveBeenCalled();
+    expect(d.fail).toHaveBeenCalledWith(UNDER_BAR);
   });
 
   test("a pasted selection's local rect places nothing and holds the Error state (#165, #428)", async () => {

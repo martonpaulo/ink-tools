@@ -78,6 +78,20 @@ describe('checkLookup', () => {
     expect(checkLookup(pasted)).toMatchObject({ok: false, why: 'unplaced', place: null});
   });
 
+  it('stops a word under the page bar with its own reason, a word above it and a pasted rect as before (#577)', () => {
+    const MANTA = {width: 1920, height: 2560};
+    const at = (top: number, bottom: number) => ({
+      ...word,
+      place: {...word.place!, rect: {left: 372, top, right: 572, bottom}, pageSize: MANTA},
+    });
+    for (const [top, bottom] of [[2460, 2532], [2440, 2540], [2440, 2560]]) {
+      expect(checkLookup(at(top, bottom))).toMatchObject({ok: false, why: 'underBar', place: null});
+    }
+    expect(checkLookup(at(2362, 2402))).toMatchObject({ok: true});
+    const pasted = {...word, place: {...word.place!, rect: PASTED, pageSize: MANTA}};
+    expect(checkLookup(pasted)).toMatchObject({ok: false, why: 'unplaced'});
+  });
+
   it('stops a recognition with no word, keeping the place for a note (#166)', () => {
     expect(checkLookup({...word, query: STICKER_TEXT})).toMatchObject({
       ok: false,

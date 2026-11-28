@@ -39,7 +39,7 @@ import {
   thumbUri,
 } from './profile';
 import type {Problem} from '@ink-tools/ui-kit';
-import {UNPLACED} from './textBox';
+import {refusalProblem} from './textBox';
 import {working} from './working';
 
 /** The lassoed word the Choose screen is for, and where its picture goes. */
@@ -132,7 +132,7 @@ export async function openChoose(deps: ChooseDeps = DEVICE): Promise<boolean> {
     const checked = checkLookup(query.value);
     if (!checked.ok) {
       log(`choose: ${checked.why}, ${checked.message}`);
-      deps.fail(checked.why === 'unplaced' ? UNPLACED : UNREADABLE);
+      deps.fail(refusalProblem(checked.why) ?? UNREADABLE);
       return false;
     }
     log(`choose: "${checked.value.query}"`);

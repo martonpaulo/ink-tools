@@ -15,7 +15,7 @@ import {
   resetChooseForTests,
 } from '../src/choose';
 import {copy, pictureCopy} from '../src/copy';
-import {UNPLACED} from '../src/textBox';
+import {UNDER_BAR, UNPLACED} from '../src/textBox';
 import {pickedFor, resetPicksForTests} from '../src/picks';
 import {MODES} from '../src/modes';
 import type {QuickInsertDeps} from '../src/profile';
@@ -296,6 +296,15 @@ test('Close drops the word and inserts nothing', async () => {
       d,
     ),
   ).toBeNull();
+});
+
+test('a word under the page bar holds its own Error state, never Choose (#577)', async () => {
+  const held = jest.fn();
+  const low = {...place, rect: {left: 372, top: 2460, right: 572, bottom: 2532}};
+  const under = deps({read: async () => ok({query: 'apple', place: low}), fail: held});
+  expect(await openChoose(under)).toBe(false);
+  expect(under.show).not.toHaveBeenCalled();
+  expect(held.mock.calls).toEqual([[UNDER_BAR]]);
 });
 
 test('a pasted rect or a text with no letter holds the Error state, never Choose (#165, #166, #428)', async () => {

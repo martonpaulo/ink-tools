@@ -28,7 +28,7 @@ import {copy, pictureCopy} from './copy';
 import {boxRect, FONT_SIZE} from './definition';
 import {pickedFor} from './picks';
 import {PICTURE_LANGUAGES} from './pictureLanguages';
-import {UNPLACED} from './textBox';
+import {refusalProblem} from './textBox';
 import {working} from './working';
 import {Mode, modeAdapters} from './modes';
 import {findKept, privatePicturesDir, recordKept} from './library';
@@ -387,8 +387,9 @@ export async function pictureLasso(
     const checked = checkLookup(query.value);
     if (!checked.ok) {
       log(`${name}: ${checked.why}, ${checked.message}`);
-      if (checked.why === 'unplaced') {
-        deps.fail(UNPLACED);
+      const problem = refusalProblem(checked.why);
+      if (problem) {
+        deps.fail(problem);
       } else if (checked.place) {
         await writeNote(deps, checked.place, copy['error.unreadable']);
       }

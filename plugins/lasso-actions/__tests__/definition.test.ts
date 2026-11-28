@@ -21,7 +21,7 @@ import {
 import {iconUri} from '../src/icons';
 import {FIRST_BUTTON_ID, MODES} from '../src/modes';
 import {copy} from '../src/copy';
-import {UNPLACED} from '../src/textBox';
+import {UNDER_BAR, UNPLACED} from '../src/textBox';
 import {defaultSettings} from '../src/settings';
 
 const place: LassoPlace = {
@@ -242,6 +242,15 @@ describe('a read it may not use stops before the dictionary (#165, #166)', () =>
     expect(await defineLasso(d)).toEqual({ok: false, text: copy['error.unreadable']});
     expect(define).not.toHaveBeenCalled();
     expect((d.insert as jest.Mock).mock.calls[0][0].text).toBe(copy['error.unreadable']);
+  });
+
+  test('a word under the page bar writes nothing and says so, not that the selection has no place (#577)', async () => {
+    const low = {...place, rect: {left: 372, top: 2460, right: 572, bottom: 2532}};
+    const d = deps({read: async () => ({ok: true, value: {query: 'maçã', place: low}})});
+    expect(await defineLasso(d)).toEqual({ok: false, text: copy['error.underBar']});
+    expect(d.insert).not.toHaveBeenCalled();
+    expect(d.fail).toHaveBeenCalledWith(UNDER_BAR);
+    expect(copy['error.underBarWhat']).toMatch(/page bar/);
   });
 
   test("a pasted selection's local rect writes nothing and holds the Error state (#428)", async () => {
