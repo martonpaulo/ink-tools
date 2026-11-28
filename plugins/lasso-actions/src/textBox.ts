@@ -4,14 +4,17 @@
  */
 import {ToastAndroid} from 'react-native';
 import {
+  charsPerLine,
   checkLookup,
   isFree,
   LassoPlace,
   LassoQuery,
+  lineHeight,
   Outcome,
   placeRect,
   readLassoQuery,
   Rect,
+  TEXT_FONT_SIZE,
 } from '@ink-tools/ink-core';
 import {
   CallFailure,
@@ -32,11 +35,8 @@ import {
 import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 
-/** The text size in page pixels, as Ink2Pic's definition box [INFERENCE]. */
-export const FONT_SIZE = 32;
-const LINE_HEIGHT = Math.round(FONT_SIZE * 1.5);
-/** About how wide one character is, as a share of the font size [INFERENCE]. */
-const CHAR_WIDTH = 0.55;
+/** The definition box's text size in page pixels; ink-core's page text owns it (#295). */
+export const FONT_SIZE = TEXT_FONT_SIZE;
 /**
  * The box's width in page pixels: at 200 px «Substantivo» broke inside the word on the tablet
  * (#115, device round 2026-11-16); 640 px is Ink2Pic's fixed width since d537180.
@@ -67,7 +67,7 @@ export function readLasso(): Promise<Outcome<LassoQuery, CallFailure>> {
 
 /** The box below the lassoed word, BOX_WIDTH wide, as tall as its wrapped lines. */
 export function boxRect(text: string, place: LassoPlace): Rect | null {
-  const perLine = Math.max(1, Math.floor(BOX_WIDTH / (FONT_SIZE * CHAR_WIDTH)));
+  const perLine = charsPerLine(BOX_WIDTH, FONT_SIZE);
   const lines = text
     .split('\n')
     .reduce(
@@ -76,7 +76,7 @@ export function boxRect(text: string, place: LassoPlace): Rect | null {
     );
   return placeRect(
     place.rect,
-    {width: BOX_WIDTH, height: lines * LINE_HEIGHT},
+    {width: BOX_WIDTH, height: lines * lineHeight(FONT_SIZE)},
     place.pageSize,
     'below',
     place.occupied,

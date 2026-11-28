@@ -150,6 +150,18 @@ class Boundaries(unittest.TestCase):
         }), [("plugins/a/index.js", "buttons"), ("plugins/b/src/c.ts", "buttons"),
              ("plugins/ink-tools-probe/src/register.ts", "buttons")])
 
+    def test_plugins_take_the_page_text_typography_from_ink_core(self):
+        # Allowed: ink-core's owner file, an import, a derived line height, a test (#295).
+        self.assertEqual(self.tree({
+            "packages/ink-core/src/pageText.ts": "export const LINE_SHARE = 1.5;\n",
+            "plugins/a/src/b.ts": "const LINE_HEIGHT = lineHeight(TEXT_FONT_SIZE);\n",
+            "plugins/a/__tests__/b.test.ts": "const CHAR_WIDTH = 0.55;\n",
+        }), [])
+        self.assertEqual(self.tree({
+            "plugins/a/src/b.ts": "const CHAR_WIDTH = 0.55;\n",
+            "plugins/c/src/d.ts": "const LINE_HEIGHT = Math.round(FONT_SIZE * 1.5);\n",
+        }), [("plugins/a/src/b.ts", "page-text"), ("plugins/c/src/d.ts", "page-text")])
+
     def test_every_full_view_shows_the_kits_close(self):
         # Allowed: a bar with onClose on one line or several, a full view on the Error state (#259).
         self.assertEqual(self.tree({

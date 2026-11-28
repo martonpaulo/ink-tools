@@ -7,6 +7,7 @@ export * from './lasso';
 export * from './lookupCheck';
 export * from './outcome';
 export * from './pageArea';
+export * from './pageText';
 export * from './pairs';
 export * from './pinyin';
 export * from './place';

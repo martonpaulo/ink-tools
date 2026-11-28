@@ -31,6 +31,9 @@ The rules are `docs/architecture.md` › Layer rules:
 - `buttons`: no plugin declares its own sn-plugin-lib button, show or lasso-data value (a constant
   named `BUTTON_TYPE_…`, `SHOW_…VIEW`, `EDIT_DATA_…`, `SIDEBAR`, `LASSO`, `NO_VIEW` or
   `ANY_LASSO_DATA`); it imports them from `@ink-tools/sn-adapter/official` or `/buttons` (#295).
+- `page-text`: no plugin declares its own text-box typography (a `CHAR_WIDTH`, `CHAR_SHARE`,
+  `LINE_SHARE` or `LINE_HEIGHT` constant set to 0.55, 1.5 or a font size times 1.5); it imports
+  `charsPerLine`, `lineHeight` and `TEXT_FONT_SIZE` from `@ink-tools/ink-core` (#295).
 - `close`: every full view of a plugin shows ui-kit's one Close (#245, #259). In a plugin view's
   `.tsx`, each `<TitleBar` element passes `onClose=`, and a file that binds Back with `useBackKey(`,
   which every full view does (#204), passes `onClose=` to a `TitleBar`, `ErrorView`, `Needs` or
@@ -106,6 +109,10 @@ PENDING_CONTROLS = frozenset({
 # A plugin's own copy of an SDK button value (#295): sn-adapter's buttonValues.ts owns each one.
 OWN_BUTTON_VALUE = re.compile(
     r"\b(?:const|let|var)\s+(?:BUTTON_TYPE_\w+|SHOW_\w*VIEW|EDIT_DATA_\w+|SIDEBAR|LASSO|NO_VIEW|ANY_LASSO_DATA)\s*=")
+# A plugin's own copy of the text-box typography (#295): ink-core's pageText.ts owns it.
+OWN_PAGE_TEXT = re.compile(
+    r"\b(?:const|let|var)\s+(?:CHAR_WIDTH|CHAR_SHARE|LINE_SHARE|LINE_HEIGHT)\s*=\s*"
+    r"(?:0\.55\b|1\.5\b|Math\.round\(\s*\w+\s*\*\s*1\.5\s*\))")
 PLUGIN_CODE = re.compile(r"^plugins/[^/]+/")
 TITLE_BAR = re.compile(r"<TitleBar\b")
 ON_CLOSE = re.compile(r"\bonClose=")
@@ -362,6 +369,8 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None, pending_toasts=N
                 continue
             if suffix in SCRIPT and not test and PLUGIN_CODE.match(rel) and OWN_BUTTON_VALUE.search(line):
                 found.append((rel, number, "buttons", "declares its own SDK button value; import it from @ink-tools/sn-adapter/official or /buttons"))
+            if suffix in SCRIPT and not test and PLUGIN_CODE.match(rel) and OWN_PAGE_TEXT.search(line):
+                found.append((rel, number, "page-text", "declares its own text-box typography; import it from @ink-tools/ink-core's pageText"))
             if tablet and URL_USE.search(line):
                 found.append((rel, number, "url", "uses React Native's URL, whose getters throw; take parseUrl of sync-core"))
             if VENDOR.search(line) and not test and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and rel not in READER_FILES:

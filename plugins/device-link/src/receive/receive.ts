@@ -4,7 +4,17 @@
  * through `insertImage`, which the host shows as its own floating selection, and is then lassoed
  * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`).
  */
-import {freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP, writableSize} from '@ink-tools/ink-core';
+import {
+  charsPerLine,
+  freeRect,
+  inkUnderRect,
+  isFree,
+  lineHeight,
+  OccupiedRead,
+  PLACE_GAP,
+  TEXT_FONT_SIZE,
+  writableSize,
+} from '@ink-tools/ink-core';
 import {fail, Result, TextBoxInput, TIMEOUT_CODE} from '@ink-tools/sn-adapter/official';
 import type {HeldState, Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
@@ -39,10 +49,8 @@ export const BACKGROUND_WAIT_MS = 60 * 1000;
  */
 export const PAGE_READ_MS = 4500;
 
-export const TEXT_FONT_SIZE = 32;
-const LINE_HEIGHT = Math.round(TEXT_FONT_SIZE * 1.5);
-/** A character's width as a share of the font size, as Ink2Pic measures it. */
-const CHAR_WIDTH = 0.55;
+/** One received text line's height; ink-core's page text owns the typography (#295). */
+const LINE_HEIGHT = lineHeight(TEXT_FONT_SIZE);
 
 type Rect = TextBoxInput['rect'];
 export type Size = {width: number; height: number};
@@ -96,7 +104,7 @@ export function textBox(page: Size, text: string, after: number | null = null): 
 
 /** How many characters one line of a box `width` wide holds, by the same estimate everywhere. */
 function perLine(width: number): number {
-  return Math.max(1, Math.floor(width / (TEXT_FONT_SIZE * CHAR_WIDTH)));
+  return charsPerLine(width, TEXT_FONT_SIZE);
 }
 
 type Line = {text: string; tail: string};

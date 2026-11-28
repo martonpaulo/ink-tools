@@ -429,9 +429,6 @@
    "plugins/account-sync/native/com/bridge/files/BridgeFilesPackage.java": {
     "Ink2Pic": 1
    },
-   "plugins/device-link/src/receive/receive.ts": {
-    "Ink2Pic": 1
-   },
    "plugins/image-editing/index.js": {
     "Ink2Pic": 1
    },
@@ -493,7 +490,7 @@
     "Ink2Pic": 2
    },
    "plugins/lasso-actions/src/textBox.ts": {
-    "Ink2Pic": 2
+    "Ink2Pic": 1
    },
    "plugins/lasso-actions/src/ui/ChooseScreen.tsx": {
     "Ink2Pic": 2
@@ -608,12 +605,12 @@
     "apps/handwriting-language/scripts/build.cjs": 3,
     "apps/handwriting-language/src/com/supernotetools/lingo/ButtonPlace.java": 1,
     "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java": 1,
+    "apps/ink-tools-helper/scripts/build.cjs": 4,
     "apps/note-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
     "apps/note-editor/Sources/NoteEditorKit/Tablet.swift": 1,
-    "apps/ink-tools-helper/scripts/build.cjs": 4,
     "cli/inkctl/src/inkctl": 12,
-    "packages/ink-core/src/conversion/typed.ts": 1,
     "packages/ink-core/src/conversion/shapes.ts": 2,
+    "packages/ink-core/src/conversion/typed.ts": 1,
     "packages/ink-core/src/lasso.ts": 1,
     "packages/ink-core/src/place.ts": 1,
     "packages/native-build/host-tools.cjs": 1,
@@ -642,7 +639,7 @@
     "packages/ui-kit/src/problem.ts": 1,
     "plugins/account-sync/src/settingsStore.ts": 1,
     "plugins/device-link/native/src/com/relay/localsend/Timeouts.java": 1,
-    "plugins/device-link/src/receive/receive.ts": 3,
+    "plugins/device-link/src/receive/receive.ts": 2,
     "plugins/device-link/src/run.ts": 3,
     "plugins/image-editing/native/src/com/retouch/image/Retouch.java": 3,
     "plugins/image-editing/src/edits.ts": 2,
@@ -650,7 +647,7 @@
     "plugins/ink-tools-probe/src/helper.ts": 4,
     "plugins/ink-tools-probe/src/noteApi.ts": 4,
     "plugins/lasso-actions/src/pictures.ts": 1,
-    "plugins/lasso-actions/src/textBox.ts": 2,
+    "plugins/lasso-actions/src/textBox.ts": 1,
     "plugins/smart-pen/src/modules/shapes/geometry.ts": 1,
     "plugins/smart-pen/src/modules/text/buttons.ts": 3,
     "scripts/dry_cross.py": 1,

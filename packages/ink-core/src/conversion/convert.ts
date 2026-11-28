@@ -10,6 +10,7 @@
  */
 import type {Rect, Size} from '../lasso';
 import {writableSize} from '../pageArea';
+import {lineHeight} from '../pageText';
 import {
   edgeDistance,
   type EmrRange,
@@ -33,8 +34,7 @@ import {InkStroke, Point, rectOf, Word, WordOptions, WordTracker} from './words'
 /** The text size for a line's letter height [inference: a typed x-height near the written one]. */
 export const FONT_PER_LETTER = 1.4;
 export const MIN_FONT_SIZE = 24;
-/** A line of text is this many font sizes high, as Lookup's box [inference]. */
-export const LINE_SHARE = 1.5;
+export {LINE_SHARE} from '../pageText';
 
 /**
  * Logs, once per mode start, the first pen-up stroke's unit, point count, first point, raw and page
@@ -118,7 +118,7 @@ export function textBoxFor(text: string, word: Word, pageSize: Size): TextBoxInp
   // (#590). Whole pixels: the word's rect comes from converted EMR points and is fractional (#206).
   const boxWidth = Math.ceil(Math.max(word.rect.right - word.rect.left, typedWidth(text, fontSize))) + 2 * fontSize;
   const left = Math.max(0, Math.min(Math.round(word.rect.left), page.width - boxWidth));
-  const line = Math.round(fontSize * LINE_SHARE);
+  const line = lineHeight(fontSize);
   const top = Math.max(0, Math.min(Math.round(word.rect.top), page.height - line));
   const rect: Rect = {
     left,
