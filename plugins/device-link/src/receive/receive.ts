@@ -212,19 +212,45 @@ export function freeTextBox(
   return moved ? {rect: moved, free: true} : {rect, free: false};
 }
 
-/** Where the text is kept when it cannot go on pages: the note's own folder, else the waiting list. */
-async function keepText(native: Relay, host: NoteHost, dir: string, notePath: string | null, text: string): Promise<string> {
-  if (notePath !== null) {
-    const base = notePath.replace(/\.note$/, '');
-    const path = `${base} received text ${Date.now()}.txt`;
-    if ((await native.writeText(path, text)).ok) {
-      host.log(`receive: the text did not fit and its pages could not be added: saved whole as ${path}`);
-      return copy.textSavedAs(path.slice(path.lastIndexOf('/') + 1));
-    }
+/**
+ * How long the Note app is left to reload the note after one `insertNotePage` before the next
+ * call (#593). An `insertText` sent 0.3 s after the second of two inserts, while the Note app still
+ * reloaded the note's pages, aborted the Note app (`std::out_of_range` in the binder thread that
+ * took the call, then `DeadObjectException` for the plugin) and left both new pages blank; that
+ * reload of a three-page note took 1.3 s [measured, Manta, tablet row 141, 2026-11-28].
+ * The wait is twice that reload.
+ * shortcut: a wait, not a signal that the reload ended; measure a long note's reload and set it, or
+ * wait on a read the host answers only once loaded.
+ */
+export const PAGE_SETTLE_MS = 2 * 1300;
+
+/** The whole text, beside the note, written before any page goes in, so a host that dies keeps it (#593). */
+async function textCopy(native: Relay, notePath: string, text: string): Promise<string | null> {
+  const path = `${notePath.replace(/\.note$/, '')} received text ${Date.now()}.txt`;
+  return (await native.writeText(path, text)).ok ? path : null;
+}
+
+/**
+ * Where a text that did not all go on its `pages` pages is kept: its copy beside the note, written
+ * now when `copied` is null, else the waiting list. The line says where, and how many pages it needed.
+ */
+async function keepText(
+  native: Relay,
+  host: NoteHost,
+  dir: string,
+  notePath: string | null,
+  text: string,
+  pages: number,
+  copied: string | null,
+): Promise<string> {
+  const path = copied ?? (notePath === null ? null : await textCopy(native, notePath, text));
+  if (path !== null) {
+    host.log(`receive: the text did not all go on its ${pages} pages: saved whole as ${path}`);
+    return copy.textSavedAs(path.slice(path.lastIndexOf('/') + 1), pages);
   }
   const kept = await addPending(native, dir, {kind: 'text', text});
-  host.log(`receive: the text did not fit and its pages could not be added: ${kept ? 'it waits' : 'it could not be kept'}`);
-  return kept ? copy.textKeptWaiting : copy.insertFailed;
+  host.log(`receive: the text did not all go on its ${pages} pages: ${kept ? 'it waits' : 'it could not be kept'}`);
+  return kept ? copy.textKeptWaiting(pages) : copy.insertFailed;
 }
 
 /** The page and note an open-page key names, `<note path>#<page>`. */
@@ -235,22 +261,54 @@ function openPage(key: string | null): {notePath: string; page: number} | null {
 }
 
 /**
- * New pages after the open one for `rest`, the pieces of a text that went past the first page, one
- * piece each, clear of the page bar (#577). Every page is inserted first, as an insert drops the
- * ink written since the note's last save (#263). False when one could not be added.
+ * A text longer than the page, one piece a page, on new pages after the open one, never cut
+ * (#577, #593). The whole text is first saved beside the note, and that copy is removed only once
+ * every piece is in a box. Every page goes in before any text, as an insert drops what the note
+ * holds unsaved (#263), and each insert is given {@link PAGE_SETTLE_MS} to reload the note, as a
+ * text box sent during that reload killed the Note app. The first piece is not lassoed: each
+ * insert reloads the note, so the selection would not last.
  */
-async function addPages(host: NoteHost, at: {notePath: string; page: number}, count: number): Promise<boolean> {
+async function placeOverPages(
+  native: Relay,
+  host: NoteHost,
+  dir: string,
+  page: Size,
+  at: {notePath: string; page: number},
+  text: string,
+  pieces: string[],
+  rect: Rect,
+): Promise<string> {
+  const copied = await textCopy(native, at.notePath, text);
+  host.log(copied === null ? 'receive: the copy of the text beside the note could not be written' : `receive: the text is saved first as ${copied}`);
+  const kept = () => keepText(native, host, dir, at.notePath, text, pieces.length, copied);
   const template = await host.pageTemplate();
   if (!template.ok) {
-    return false;
+    return kept();
   }
-  for (let index = 0; index < count; index += 1) {
-    const inserted = await host.insertPage(at.notePath, at.page + 1 + index, template.value);
+  for (let index = 1; index < pieces.length; index += 1) {
+    const inserted = await host.insertPage(at.notePath, at.page + index, template.value);
     if (!inserted.ok || inserted.value !== true) {
-      return false;
+      return kept();
+    }
+    await host.wait(PAGE_SETTLE_MS);
+  }
+  const first = await host.insertText({text: pieces[0], rect, fontSize: TEXT_FONT_SIZE});
+  if (!first.ok || first.value !== true) {
+    return kept();
+  }
+  lastText = {page: `${at.notePath}#${at.page}`, bottom: rect.bottom};
+  for (let index = 1; index < pieces.length; index += 1) {
+    const box = {text: pieces[index], rect: textBox(page, pieces[index]), fontSize: TEXT_FONT_SIZE};
+    const placed = await host.insertTextOnPage(box, at.page + index);
+    if (!placed.ok || placed.value !== true) {
+      return kept();
     }
   }
-  return true;
+  host.log(`receive: lassoElements skipped, the text is on ${pieces.length} pages`);
+  if (copied !== null) {
+    await native.remove(copied);
+  }
+  return copy.receivedTextPages(pieces.length);
 }
 
 async function placeText(native: Relay, host: NoteHost, dir: string, text: string): Promise<string> {
@@ -277,16 +335,14 @@ async function placeText(native: Relay, host: NoteHost, dir: string, text: strin
     );
   }
   await host.closeView();
-  const more = pieces.slice(1);
-  if (more.length > 0) {
-    // Whole on pages after this one (#577); never cut.
-    if (at === null || !(await addPages(host, at, more.length))) {
-      return keepText(native, host, dir, at?.notePath ?? null, text);
-    }
+  if (pieces.length > 1) {
+    return at === null
+      ? keepText(native, host, dir, null, text, pieces.length, null)
+      : placeOverPages(native, host, dir, size.value, at, text, pieces, rect);
   }
-  const inserted = await host.insertText({text: pieces[0], rect, fontSize: TEXT_FONT_SIZE});
+  const inserted = await host.insertText({text, rect, fontSize: TEXT_FONT_SIZE});
   if (!inserted.ok || inserted.value !== true) {
-    return more.length > 0 && at !== null ? keepText(native, host, dir, at.notePath, text) : copy.insertFailed;
+    return copy.insertFailed;
   }
   lastText = page === null ? null : {page, bottom: rect.bottom};
   // Selected, so the person moves it at once, but never with the person's ink in it (#168).
@@ -297,15 +353,7 @@ async function placeText(native: Relay, host: NoteHost, dir: string, text: strin
     // A failed lasso still leaves the text in place.
     await host.lasso(rect);
   }
-  for (let index = 0; at !== null && index < more.length; index += 1) {
-    const box = {text: more[index], rect: textBox(size.value, more[index]), fontSize: TEXT_FONT_SIZE};
-    const placed = await host.insertTextOnPage(box, at.page + 1 + index);
-    if (!placed.ok || placed.value !== true) {
-      // The pages are in; what is not on one is kept, never dropped.
-      return keepText(native, host, dir, at.notePath, more.slice(index).join('\n'));
-    }
-  }
-  return pieces.length > 1 ? copy.receivedTextPages(pieces.length) : copy.receivedText;
+  return copy.receivedText;
 }
 
 /**

@@ -6,6 +6,7 @@ import {refusedProblem} from '../src/permissions';
 import {
   addedRect,
   centredRect,
+  PAGE_SETTLE_MS,
   PLACED_RETRY_MS,
   PLACED_WAIT_MS,
   freeTextBox,
@@ -382,7 +383,8 @@ describe('a received text longer than the page\'s room goes whole over new pages
   test('a text three pages long lands whole: two pages are inserted, no line is past any box', async () => {
     expect(pagesOf(MANTA, long).length).toBe(3);
     const h = host();
-    const result = await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]).api, h, 'Supernote');
+    const {api, calls} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]);
+    const result = await receiveOne(api, h, 'Supernote');
     expect(result).toBe(copy.receivedTextPages(3));
     expect((h.insertPage as jest.Mock).mock.calls).toEqual([
       ['/note.note', 1, 'style_white'],
@@ -398,6 +400,48 @@ describe('a received text longer than the page\'s room goes whole over new pages
     }
     // Every word, in order, and none twice.
     expect(wordsOf(boxes.map(box => box.text))).toEqual(words);
+    // The copy saved before the inserts is removed once every piece is in.
+    expect(calls.written).toEqual([long]);
+    expect(calls.removed).toEqual([expect.stringMatching(/^\/note received text \d+\.txt$/)]);
+  });
+
+  test('no text box goes in while the note reloads after a page insert (tablet row 141)', async () => {
+    const order: string[] = [];
+    const step = (name: string) => jest.fn(async () => {
+      order.push(name);
+      return ok(true);
+    });
+    const h = host({
+      insertPage: step('page'),
+      insertText: step('text'),
+      insertTextOnPage: step('text on page'),
+      wait: jest.fn(async (ms: number) => {
+        order.push(`wait ${ms}`);
+      }),
+    });
+    const {api} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]);
+    await receiveOne(api, h, 'Supernote');
+    const settle = `wait ${PAGE_SETTLE_MS}`;
+    expect(order).toEqual(['page', settle, 'page', settle, 'text', 'text on page', 'text on page']);
+  });
+
+  test.each([
+    ['a page cannot be inserted', {insertPage: jest.fn(async () => fail(MODULE_CODE, 'refused'))}],
+    ['the Note app dies at the first text box', {insertText: jest.fn(async () => fail(MODULE_CODE, 'DeadObjectException'))}],
+    ['a later piece is refused', {insertTextOnPage: jest.fn(async () => fail(MODULE_CODE, 'DeadObjectException'))}],
+  ])('when %s, the whole text stays saved beside the note and the line says where and how long', async (_name, overrides) => {
+    const h = host(overrides);
+    const {api, calls} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]);
+    const result = await receiveOne(api, h, 'Supernote');
+    expect(result).toEqual(expect.stringMatching(/^Text over 3 pages, not all added: saved whole as note received text \d+\.txt, beside the note$/));
+    expect(calls.written).toEqual([long]);
+    expect(calls.removed).toEqual([]);
+  });
+
+  test('when a page cannot be inserted no text goes in', async () => {
+    const h = host({insertPage: jest.fn(async () => fail(MODULE_CODE, 'refused'))});
+    await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]).api, h, 'Supernote');
+    expect(h.insertText).not.toHaveBeenCalled();
   });
 
   test('a text that fits is one box on the page, with no page inserted', async () => {
@@ -406,15 +450,6 @@ describe('a received text longer than the page\'s room goes whole over new pages
     expect(result).toBe(copy.receivedText);
     expect(h.insertPage).not.toHaveBeenCalled();
     expect(pagesOf(MANTA, 'one\ntwo')).toEqual(['one\ntwo']);
-  });
-
-  test('when a page cannot be inserted the whole text is saved beside the note, never dropped', async () => {
-    const h = host({insertPage: jest.fn(async () => fail(MODULE_CODE, 'refused'))});
-    const {api, calls} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]);
-    const result = await receiveOne(api, h, 'Supernote');
-    expect(result).toEqual(expect.stringContaining('saved whole as note received text'));
-    expect(calls.written).toEqual([long]);
-    expect(h.insertText).not.toHaveBeenCalled();
   });
 
   test('when that file cannot be written either, the text waits for the next note', async () => {
@@ -426,7 +461,7 @@ describe('a received text longer than the page\'s room goes whole over new pages
       return null;
     });
     const result = await receiveOne(fakeRelay({writeText}, [offer({t: {fileType: 'text/plain', preview: long}})]).api, h, 'Supernote');
-    expect(result).toBe(copy.textKeptWaiting);
+    expect(result).toBe(copy.textKeptWaiting(3));
     expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining('pending.json'), expect.stringContaining(words[1099]));
   });
 });

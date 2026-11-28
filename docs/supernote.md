@@ -603,6 +603,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   `Calling JS function after bridge has been destroyed` in the system log, until Close and a new
   press [measured, Manta, device round of 2026-11-27, [#386](https://github.com/martonpaulo/ink-tools/issues/386)].
   Puzzles closes its view before the insert and deletes its page files at the next game view.
+- A call sent while the Note app still reloads the note after `insertNotePage` can kill the Note
+  app: with the view closed, two inserts 0.6 s apart and an `insertText` 0.3 s after the second, the
+  Note app logged the box (`insertText adaptTextBoxHeight`) while it loaded the new pages, then
+  aborted 0.8 s later (`std::out_of_range` in the binder thread that took the call); the plugin's
+  call met `DeadObjectException`, the two new pages stayed blank and the tablet fell back to the last
+  app. The reload of that three-page note took 1.3 s from the second insert [measured, Manta,
+  tablet row 141, 2026-11-28, [#593](https://github.com/martonpaulo/ink-tools/issues/593)]. So
+  Device Link waits `PAGE_SETTLE_MS` after each insert and writes its text only after the last
+  one, with the whole text saved beside the note first.
 - `insertNotePage` on the open note drops the ink written on it since its last save: three notes
   inked page by page with an insert between pages kept no stroke at all, while inserting every page
   first, then writing, kept all of it [measured, Manta, device round 5, 2026-11-26,
