@@ -61,9 +61,9 @@ export class PageFitError extends Error {
  * half a millimetre; 3 keeps it 2.5 mm above the bar (#553), which the owner's photo of a layout 1 page
  * showed crowding the bar.
  */
-export type PageLayoutVersion = 1 | 2 | 3;
+export type PageLayoutVersion = 1 | 2 | typeof PAGE_LAYOUT;
 /** The layout a new page is drawn by. A change that moves a grid on the page adds a version. */
-export const PAGE_LAYOUT: PageLayoutVersion = 3;
+export const PAGE_LAYOUT = 3;
 
 interface LayoutMeasures {
   bottomMm: number;
