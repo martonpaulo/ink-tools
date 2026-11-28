@@ -105,7 +105,7 @@ export function PuzzlesView({
     case 'needs':
       return <Needs problem={screen.problem} onClose={close} />;
     case 'error':
-      return <ErrorView problem={CHECK_FAILED} onRetry={screen.retry} onBack={list} onClose={close} />;
+      return <ErrorView title={copy.title} problem={CHECK_FAILED} onRetry={screen.retry} onBack={list} onClose={close} />;
     case 'game': {
       const {View: GameView} = screen.game;
       return <GameView onBack={list} onClose={close} />;

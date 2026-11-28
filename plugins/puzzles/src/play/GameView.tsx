@@ -250,7 +250,7 @@ export function GameView({
     case 'working':
       return <LoadingView title={game.title} onClose={onClose} />;
     case 'error':
-      return <ErrorView problem={screen.problem} onRetry={screen.retry} onBack={onBack} onClose={onClose} />;
+      return <ErrorView title={game.title} problem={screen.problem} onRetry={screen.retry} onBack={onBack} onClose={onClose} />;
     case 'verdict': {
       const {verdict} = screen;
       const found = verdict.solved

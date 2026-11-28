@@ -103,6 +103,11 @@ describe('the maze game (#386)', () => {
     expect(calls.filter(call => call === 'here')).toHaveLength(2);
   });
 
+  test('the Error of a game has the game\'s name in the bar and its sentence in the body (#543)', async () => {
+    const tree = await mount(fakePages({failHere: true}).pages);
+    expect(shownTexts(tree.root).slice(0, 2)).toEqual([mazeCopy.title, playCopy['error.here']]);
+  });
+
   test('the Error of a game has ‹, which goes back to the game list, not out of Puzzles (#543)', async () => {
     const {pages} = fakePages({failHere: true});
     const onBack = jest.fn();

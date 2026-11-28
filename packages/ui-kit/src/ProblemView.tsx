@@ -22,6 +22,11 @@ export type ErrorViewProps = NeedsProps & {
   onRetry?: () => void;
   /** Returns to the screen the failure came from, as ‹ and the Back key; without it, Back closes (#543). */
   onBack?: () => void;
+  /**
+   * The bar's title, the tool's or the screen's name, with what failed as a sentence under it;
+   * without it, what failed is the bar's title (#543).
+   */
+  title?: string;
 };
 
 /** What a check found missing, why the tool needs it, and the one fix. */
@@ -35,9 +40,11 @@ export function ErrorView({
   onRetry,
   onBack,
   onClose,
+  title,
 }: ErrorViewProps): React.JSX.Element {
   return (
     <ProblemView
+      title={title}
       problem={problem}
       onClose={onClose}
       onRetry={onRetry}
@@ -75,6 +82,7 @@ function ProblemView({
   onClose,
   onRetry,
   onBack,
+  title,
   testID,
   alert = false,
 }: ErrorViewProps & {testID: string; alert?: boolean}) {
@@ -87,7 +95,12 @@ function ProblemView({
       testID={testID}
       accessibilityRole={alert ? 'alert' : undefined}
       accessibilityLiveRegion={alert ? 'assertive' : undefined}>
-      <TitleBar title={problem.what} onBack={onBack} onClose={onClose} />
+      <TitleBar title={title ?? problem.what} onBack={onBack} onClose={onClose} />
+      {title !== undefined && (
+        <Text style={shared.text} testID="problem-what">
+          {problem.what}
+        </Text>
+      )}
       {problem.reason !== undefined && (
         <Text style={shared.hint} testID="problem-reason">
           {problem.reason}

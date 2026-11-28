@@ -106,6 +106,15 @@ describe('ErrorView (#255)', () => {
   });
 });
 
+describe('ErrorView with a title of its own (#543)', () => {
+  it('puts the title in the bar and what failed, as a sentence, in the body', () => {
+    const tree = render(
+      <ErrorView title="Sample tool" problem={{what: 'Sample could not read this page.', reason: 'sample reason'}} onClose={jest.fn()} />,
+    );
+    expect(texts(tree)).toEqual(['Sample tool', 'Sample could not read this page.', 'sample reason']);
+  });
+});
+
 describe('ErrorView with a screen to go back to (#543)', () => {
   it('draws ‹ beside ×, and ‹ and the Back key both go back, never close', () => {
     const back = catchBackKey();
