@@ -43,6 +43,19 @@ export function settle(options: readonly PuzzleOption[], choices: Choices): Choi
   return out;
 }
 
+/**
+ * The choices a game's view opens on (#569): each option's kept value when it still offers it after
+ * the earlier ones, else its initial one; a game never used, `kept` null, opens on its defaults.
+ */
+export function recalled(options: readonly PuzzleOption[], kept: Choices | null): Choices {
+  const out: Record<string, string> = {};
+  for (const option of options) {
+    const value = kept?.[option.id];
+    out[option.id] = value !== undefined && offered(option, out).some(choice => choice.value === value) ? value : option.initial;
+  }
+  return settle(options, out);
+}
+
 /** The page a puzzle is drawn for. */
 export type PageShape = {orientation: Orientation; hand: Hand};
 

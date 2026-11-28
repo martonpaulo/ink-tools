@@ -40,7 +40,12 @@ the background of a new page after the current one once the note saved. A succes
 the note and ends the plugin's JavaScript, so the view closes before it and the next game view
 deletes the page files an earlier one left; each press of the button starts at the game list
 ([#386](https://github.com/martonpaulo/ink-tools/issues/386)). The page's background then reads
-`user_<code>`, so the view finds the puzzle of the current page from it and stores nothing.
+`user_<code>`, so the view finds the puzzle of the current page from it and stores no puzzle.
+Each game's view opens on the choices of its last «Add Page», kept across a plugin restart in
+`.data/plugin/inktools-puzzles/choices.json` by game id through `PuzzlesPages` (`src/play/kept.ts`);
+a game never used, a value the game no longer offers or a file that cannot be read opens on the
+game's defaults, and a file that cannot be read is never written over
+([#569](https://github.com/martonpaulo/ink-tools/issues/569)).
 The view outlives a close and the page can turn before the next press, so «Add Page», «Check» and
 «Show Solution» each read the page on screen again, never the read the view opened with; a page
 that holds another puzzle of the game is checked or solved as that one, and a page with none shows

@@ -8,6 +8,8 @@ import com.facebook.react.bridge.ReactMethod;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,7 +17,8 @@ import java.util.concurrent.Executors;
  * Writes a game page's PNG, which src/play/pages.ts passes as base64 (#386): sn-plugin-lib has no
  * call that writes bytes, and {@code insertNotePage} takes the page's background as a PNG path in
  * {@code MyStyle/} (#377). The file is written beside its target and renamed, so the host never reads
- * half a page, on a worker thread, as every file module here does.
+ * half a page, on a worker thread, as every file module here does. It also reads and writes the
+ * text of each game's last choices, {@code choices.json} (src/play/kept.ts, #569).
  */
 final class PageFileModule extends ReactContextBaseJavaModule {
   /** The module's name; src/play/pages.ts `PAGE_FILE_MODULE` names the same. */
@@ -48,6 +51,48 @@ final class PageFileModule extends ReactContextBaseJavaModule {
             }
           }
         });
+  }
+
+  /** Writes {@code text} as UTF-8 to {@code path}, as a page is written; resolves true once in place. */
+  @ReactMethod
+  public void writeText(final String path, final String text, final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              write(new File(path), text.getBytes(StandardCharsets.UTF_8));
+              promise.resolve(true);
+            } catch (Throwable error) {
+              String message = error.getMessage() == null ? error.toString() : error.getMessage();
+              promise.reject("IO", message, error);
+            }
+          }
+        });
+  }
+
+  /** Resolves with the UTF-8 text of {@code path}, or null when there is no such file. */
+  @ReactMethod
+  public void readText(final String path, final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              promise.resolve(read(new File(path)));
+            } catch (Throwable error) {
+              String message = error.getMessage() == null ? error.toString() : error.getMessage();
+              promise.reject("IO", message, error);
+            }
+          }
+        });
+  }
+
+  static String read(File file) throws IOException {
+    if (!file.exists()) {
+      return null;
+    }
+    return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
   }
 
   /**

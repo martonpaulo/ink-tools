@@ -6,6 +6,7 @@
  * Every control comes from ui-kit (#273); a failure stays on screen as its Error with Retry (#245).
  * Each of those presses reads the page on screen again, never the read the view kept: the view
  * outlives a close, and the page can turn before the next press (device round, #542).
+ * The view opens on the game's last choices, kept by each «Add Page» (#569).
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {Image, ScrollView, StyleSheet, View} from 'react-native';
@@ -26,7 +27,8 @@ import {encodePng, parsePuzzleCode, seedFromNumber, toBase64, type Raster} from 
 import type {Game, GameViewProps} from '../games';
 import {playCopy} from './copy';
 import {devicePages, type Here, type PagePorts} from './pages';
-import {offered, settle, type Choices, type GamePage, type PageShape, type Puzzle, type PuzzleGame, type Verdict} from './puzzle';
+import {deviceKept, type KeptChoices} from './kept';
+import {offered, recalled, settle, type Choices, type GamePage, type PageShape, type Puzzle, type PuzzleGame, type Verdict} from './puzzle';
 
 /** A fresh seed for each new puzzle: 40 bits, eight characters of the code's alphabet. */
 const SEED_RANGE = 2 ** 40;
@@ -38,6 +40,7 @@ const HAND = 'right' as const;
 export type GameViewDeps = {
   pages?: PagePorts;
   seed?: () => string;
+  kept?: KeptChoices;
 };
 
 type Screen =
@@ -59,12 +62,12 @@ export function GameView({
   onClose,
   pages: given,
   seed = freshSeed,
+  kept: givenKept,
 }: GameViewProps & GameViewDeps & {game: PuzzleGame}): React.JSX.Element {
   const pages = useMemo(() => given ?? devicePages(), [given]);
+  const kept = useMemo(() => givenKept ?? deviceKept(), [givenKept]);
   const [screen, setScreen] = useState<Screen>({kind: 'reading'});
-  const [choices, setChoices] = useState<Choices>(() =>
-    settle(game.options, Object.fromEntries(game.options.map(option => [option.id, option.initial]))),
-  );
+  const [choices, setChoices] = useState<Choices>(() => recalled(game.options, null));
 
   const failed = useCallback(
     (what: string, retry: () => void, why: string) => {
@@ -103,8 +106,16 @@ export function GameView({
   useEffect(() => {
     // The page files an earlier Add Page left, as its insert ended this JavaScript before it could.
     pages.clear();
-    read();
-  }, [pages, read]);
+    // The game's last choices first, so the view never shows its defaults and then changes (#569).
+    kept.recall(game.id).then(last => {
+      if (last.ok) {
+        setChoices(recalled(game.options, last.value));
+      } else {
+        pages.log(`${game.id}: the last choices were not read, so the defaults show: ${last.message}`);
+      }
+      read();
+    });
+  }, [game, kept, pages, read]);
 
   /**
    * The page on screen now and its puzzle of this game: `board` when the page still holds it, else
@@ -161,6 +172,9 @@ export function GameView({
       // view left open then stays frozen on Loading over a dead bridge (device round, #386). The note
       // shows the new page after the current one; only a failure opens the view again, on its Error.
       pages.log(`${game.id}: adding ${board.code} after page ${here.value.page}`);
+      // Kept before the insert, whose note reload can end this JavaScript; a failure only logs (#569).
+      const keptNow = await kept.keep(game.id, choices);
+      if (!keptNow.ok) {pages.log(`${game.id}: the choices were not kept: ${keptNow.message}`);}
       await pages.hide();
       const inserted = await pages.insert(here.value, board.code, png);
       if (!inserted.ok) {
@@ -170,7 +184,7 @@ export function GameView({
       pages.log(`${game.id}: added ${board.code}`);
       onBack();
     },
-    [choices, failed, game, onBack, pages, seed],
+    [choices, failed, game, kept, onBack, pages, seed],
   );
 
   const check = useCallback(

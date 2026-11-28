@@ -5,7 +5,8 @@
  * one; the note keeps the background (#377). A successful insert reloads the note and ends this
  * JavaScript (device round, #386), so nothing after it runs: the next game view deletes the page
  * files an earlier one left. The page's background then reads `user_<code>`, so «Check» and «Show
- * solution» find the puzzle of the current page again from it, and the plugin stores nothing.
+ * solution» find the puzzle of the current page again from it, and the plugin stores no puzzle; it
+ * keeps only each game's last choices (`kept.ts`, #569).
  */
 import {NativeModules} from 'react-native';
 import {

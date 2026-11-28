@@ -10,6 +10,7 @@ import {cellCenter, encodePng, type Grid, type InkStroke, type ReadText} from '@
 import {THROWN_CODE} from '@ink-tools/sn-adapter/official';
 import {GameView} from '../src/play/GameView';
 import type {Here, PagePorts} from '../src/play/pages';
+import type {KeptChoices} from '../src/play/kept';
 import type {Choices, PuzzleGame} from '../src/play/puzzle';
 import {playCopy} from '../src/play/copy';
 
@@ -73,11 +74,23 @@ export function fakePages({code = null, ink = [], read = () => ({ok: true, text:
   return {pages, calls, inserted, turn, failReads};
 }
 
-/** One game's view on these pages, with a fixed seed. */
-export async function mount(game: PuzzleGame, pages: PagePorts, onBack = () => {}) {
+/** Kept choices in memory (#569): `file` is what the device keeps, shared by every view given it. */
+export function fakeKept(file: Record<string, Choices> = {}): KeptChoices & {file: Record<string, Choices>} {
+  return {
+    file,
+    recall: async game => ({ok: true, value: file[game] ?? null}),
+    keep: async (game, choices) => {
+      file[game] = choices;
+      return {ok: true, value: true};
+    },
+  };
+}
+
+/** One game's view on these pages, with a fixed seed and, unless given, no kept choices. */
+export async function mount(game: PuzzleGame, pages: PagePorts, onBack = () => {}, kept: KeptChoices = fakeKept()) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = renderer.create(<GameView game={game} pages={pages} seed={() => SEED} onBack={onBack} onClose={() => {}} />);
+    tree = renderer.create(<GameView game={game} pages={pages} seed={() => SEED} kept={kept} onBack={onBack} onClose={() => {}} />);
   });
   return tree;
 }
