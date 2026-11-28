@@ -431,13 +431,26 @@ const DENSITY: Record<string, number> = { easy: 62, medium: 45, hard: 40 };
  */
 const MAX_EMPTY_LINE_SHARE = 0.2;
 const BLANK_CHECK_MIN_SIDE = 10;
+/**
+ * The mark a code's size token carries when its picture was drawn under the blank rule
+ * (`NO-15X15V2-H-…`). Pages made before the rule keep codes with no mark, and those still draw
+ * with no blank rule, so a page already in a note keeps checking against its own puzzle: the rule
+ * changed what a 15 x 15 hard code drew (tablet, shift 6, #384). A later change to the drawing
+ * takes the next mark and keeps reading every earlier one.
+ */
+const BLANK_RULE_MARK = 'V2';
+/** How a picture is drawn: under the blank rule, or as before it, for a code with no mark. */
+type DrawRules = 'blank-rule' | 'before-blank-rule';
+
+/** Whether the blank rule can hold a picture of this size: only then does its code carry the mark. */
+const blankRuleApplies = (width: number, height: number): boolean => Math.min(width, height) >= BLANK_CHECK_MIN_SIDE;
 
 /**
  * Whether a picture leaves more of its rows, or more of its columns, empty than
  * `MAX_EMPTY_LINE_SHARE` allows: each direction on its own, so a side never reads as blank.
  */
 function mostlyBlank(cells: readonly boolean[], width: number, height: number): boolean {
-  if (Math.min(width, height) < BLANK_CHECK_MIN_SIDE) return false;
+  if (!blankRuleApplies(width, height)) return false;
   let rows = 0;
   for (let r = 0; r < height; r++) if (!cells.slice(r * width, (r + 1) * width).some(Boolean)) rows++;
   let columns = 0;
@@ -458,9 +471,9 @@ function checkSize(size: NonogramSize, difficulty: Difficulty): void {
   if (!NONOGRAM_BANDS.includes(difficulty)) throw new RangeError(`a nonogram offers ${NONOGRAM_BANDS.join(', ')}, not ${difficulty}`);
 }
 
-function nonogramOf(seed: string, width: number, height: number, difficulty: Difficulty, solution: boolean[], grid: Grid): Nonogram {
+function nonogramOf(seed: string, width: number, height: number, difficulty: Difficulty, solution: boolean[], grid: Grid, marked = false): Nonogram {
   return {
-    id: { game: 'nonogram', size: `${width}X${height}`, difficulty, seed },
+    id: { game: 'nonogram', size: `${width}X${height}${marked ? BLANK_RULE_MARK : ''}`, difficulty, seed },
     width,
     height,
     rows: grid.rows.map(r => r.slice()),
@@ -473,22 +486,25 @@ function nonogramOf(seed: string, width: number, height: number, difficulty: Dif
  * Draws a nonogram from the seed: seeded pictures, attempt after attempt, until one rates the band.
  * The same arguments always give the same puzzle. A large hard picture can take seconds on the
  * tablet, so `generateNonogram` reads the bank for the shapes and bands that do, and
- * `scripts/nonogram-bank.cjs` runs this on the Mac to write that bank (#434). Throws on a side
- * outside 5 to 25, a band not offered, or when the attempts run out.
+ * `scripts/nonogram-bank.cjs` runs this on the Mac to write that bank (#434). A picture the blank
+ * rule holds gets its mark in the code; `before-blank-rule` draws an unmarked code's picture as it
+ * was first drawn (#384). Throws on a side outside 5 to 25, a band not offered, or when the
+ * attempts run out.
  */
-export function drawNonogram(seed: string, size: NonogramSize, difficulty: Difficulty): Nonogram {
+export function drawNonogram(seed: string, size: NonogramSize, difficulty: Difficulty, rules: DrawRules = 'blank-rule'): Nonogram {
   checkSize(size, difficulty);
   const { width, height } = size;
+  const blankRule = rules === 'blank-rule';
   const attempts = attemptsFor(width * height);
   for (let i = 0; i < attempts; i++) {
     const random = createRandom(childSeed(seed, i));
     const solution = picture(random, width, height, DENSITY[difficulty]);
     const filled = solution.filter(Boolean).length;
-    if (filled === 0 || filled === solution.length || mostlyBlank(solution, width, height)) continue;
+    if (filled === 0 || filled === solution.length || (blankRule && mostlyBlank(solution, width, height))) continue;
     const grid = cluesOf(width, height, solution);
     // A rating proves uniqueness: every deduction it makes is forced, and it finishes the grid.
     if (rateTowards(grid, difficulty)?.difficulty !== difficulty) continue;
-    return nonogramOf(seed, width, height, difficulty, solution, grid);
+    return nonogramOf(seed, width, height, difficulty, solution, grid, blankRule && blankRuleApplies(width, height));
   }
   throw new Error(`no ${difficulty} ${width} x ${height} nonogram from seed «${seed}» in ${attempts} attempts`);
 }
@@ -567,10 +583,17 @@ export function generateNonogram(seed: string, size: NonogramSize, difficulty: D
   throw new Error(`no ${difficulty} ${width} x ${height} nonogram from seed «${seed}» in ${BANK_TRIES} views of the bank`);
 }
 
-/** The nonogram a puzzle code names (`NO-10X10-M-7K2Q9X`), the same one every time (#384). */
+/**
+ * The nonogram a puzzle code names (`NO-10X10-M-7K2Q9X`), the same one every time (#384): a code
+ * with the blank rule's mark is drawn under it, and one without, made before the rule, as it was
+ * then, from the bank or drawn with no blank rule.
+ */
 export function nonogramFromCode(code: string): Nonogram {
   const id = parsePuzzleCode(code);
-  if (id.game !== 'nonogram') throw new RangeError(`«${code}» is not a nonogram code`);
-  const [width, height] = id.size.split('X').map(Number);
-  return generateNonogram(id.seed, { width, height }, id.difficulty);
+  const match = new RegExp(`^(\\d+)X(\\d+)(${BLANK_RULE_MARK})?$`).exec(id.size);
+  if (id.game !== 'nonogram' || !match) throw new RangeError(`«${code}» is not a nonogram code`);
+  const size = { width: Number(match[1]), height: Number(match[2]) };
+  if (match[3]) return drawNonogram(id.seed, size, id.difficulty);
+  if (NONOGRAM_BANK[`${size.width}x${size.height}:${id.difficulty}`]) return generateNonogram(id.seed, size, id.difficulty);
+  return drawNonogram(id.seed, size, id.difficulty, 'before-blank-rule');
 }

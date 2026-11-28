@@ -26,11 +26,11 @@ const sha = (bytes: Uint8Array): string => createHash('sha256').update(bytes).di
 
 describe('a nonogram page from a fixed seed', () => {
   // Each pins the puzzle (digest), its solution count and the page's pixels. They change only when
-  // generation or drawing changes on purpose.
+  // generation or drawing changes on purpose; #384 changed them for the code's `V2` mark alone.
   const PINNED = [
-    ['10 x 10 easy', 'P1', { width: 10, height: 10 }, 'easy', '0618e637', 'd7600fdd7ad4f899'],
-    ['15 x 10 medium', 'P1', { width: 15, height: 10 }, 'medium', '3fabf2b7', '0948b31a71589aaf'],
-    ['15 x 15 hard', 'P1', { width: 15, height: 15 }, 'hard', '5e05574d', '2e4c723556414811'],
+    ['10 x 10 easy', 'P1', { width: 10, height: 10 }, 'easy', '26400e6f', '8c5e434f71cf977e'],
+    ['15 x 10 medium', 'P1', { width: 15, height: 10 }, 'medium', '7aba7333', 'a652c980b58e8a72'],
+    ['15 x 15 hard', 'P1', { width: 15, height: 15 }, 'hard', '9cacab75', '9ab12f0c5d30a724'],
   ] as const;
 
   test.each(PINNED)('%s has one solution and the same puzzle and page', (_name, seed, size, band, puzzleDigest, pageDigest) => {

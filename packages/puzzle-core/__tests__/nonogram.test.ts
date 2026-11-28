@@ -116,7 +116,7 @@ describe('generateNonogram', () => {
 
   test('a wide picture keeps its width and height apart', () => {
     const puzzle = generateNonogram('W', { width: 15, height: 10 }, 'medium');
-    expect([puzzle.rows.length, puzzle.columns.length, puzzle.id.size]).toEqual([10, 15, '15X10']);
+    expect([puzzle.rows.length, puzzle.columns.length, puzzle.id.size]).toEqual([10, 15, '15X10V2']);
   });
 
   test('the same seed gives the same picture', () => {
@@ -181,6 +181,23 @@ describe('nonogramFromCode (#384)', () => {
     const wide = generateNonogram('P1', { width: 15, height: 10 }, 'hard');
     expect(nonogramFromCode(puzzleCode(wide.id))).toEqual(wide);
     expect(() => nonogramFromCode('BR-7X7-E-7K2Q9X')).toThrow('not a nonogram code');
+  });
+
+  test('a page made before the blank rule keeps its puzzle: its code has no mark and draws as it did (#384)', () => {
+    // NO-15X15-H-7Z9GEKG7 was printed on the tablet in shift 5 with 34 shaded cells and 8 columns
+    // at «0»; the blank rule drew another picture for it, so «Check» and «Show Solution» went wrong.
+    const old = nonogramFromCode('NO-15X15-H-7Z9GEKG7');
+    const columns = Array.from({ length: 15 }, (_, c) => old.solution.some((on, cell) => on && cell % 15 === c));
+    expect([old.solution.filter(Boolean).length, columns.filter(any => !any).length, old.id.size]).toEqual([34, 8, '15X15']);
+    expect(old).toEqual(drawNonogram('7Z9GEKG7', { width: 15, height: 15 }, 'hard', 'before-blank-rule'));
+    // A new page of that size carries the mark, and its code names it again.
+    const fresh = generateNonogram('7Z9GEKG7', { width: 15, height: 15 }, 'hard');
+    expect(puzzleCode(fresh.id)).toBe('NO-15X15V2-H-7Z9GEKG7');
+    expect(nonogramFromCode(puzzleCode(fresh.id))).toEqual(fresh);
+    expect(fresh.solution).not.toEqual(old.solution);
+    // A size the rule never holds, and a banked one, keep their codes as they were.
+    expect(generateNonogram('P1', { width: 5, height: 5 }, 'easy').id.size).toBe('5X5');
+    expect(generateNonogram('P1', { width: 15, height: 14 }, 'hard').id.size).toBe('15X14');
   });
 });
 
