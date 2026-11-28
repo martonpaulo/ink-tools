@@ -35,7 +35,7 @@ grid over the editor: `src/styles.ts` renders the picture in every style switche
 `style-*.png` in its working folder, `src/StylesGrid.tsx` shows them, a tap runs that style through
 `runEdit`, and `styles.json` keeps the last style and the two options. **Enhance All Images** and
 **Undo All Images** ([#140](https://github.com/martonpaulo/ink-tools/issues/140)) lasso each picture of the page in turn by its rect and run
-Enhance or Undo on it through `runEdit` (`src/page.ts`), then the editor closes. Back or **Close**
+Enhance or Undo on it through `runEdit` (`src/page.ts`), then the editor closes. Back or the title bar's ×
 closes the editor and keeps the edited picture ([#204](https://github.com/martonpaulo/ink-tools/issues/204)). Settings
 live in memory until [#40](https://github.com/martonpaulo/supernote-tools/issues/40)'s storage, as Lingo's do. While an edit runs the editor shows «Loading…» and waits
 ([#103](https://github.com/martonpaulo/ink-tools/issues/103)); an edit that changes nothing says why in the editor, and a missing

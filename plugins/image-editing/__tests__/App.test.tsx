@@ -331,7 +331,7 @@ describe('the editor view (#226)', () => {
     expect(h.onClose).toHaveBeenCalledTimes(1);
   });
 
-  test('it keeps the size rules and shows every edit as a button, then Close', async () => {
+  test('it keeps the size rules and shows every edit as a button, with the title bar × as its one Close (#526)', async () => {
     const {tree, h} = await show(READY);
     layOut(tree);
     expect(screenBreaks(tree.root)).toEqual([]);
@@ -342,8 +342,9 @@ describe('the editor view (#226)', () => {
     }
     await act(async () => {
       tree.root.findAllByProps({label: 'Enhance'})[0].props.onPress();
-      tree.root.findAllByProps({label: 'Close'})[0].props.onPress();
+      tree.root.findAllByType(TitleBar)[0].props.onClose();
     });
+    expect(tree.root.findAllByProps({label: 'Close'})).toHaveLength(0);
     expect(h.onEdit).toHaveBeenCalledWith(
       expect.objectContaining({id: 'enhance'}),
     );

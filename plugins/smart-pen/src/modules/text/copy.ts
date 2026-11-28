@@ -1,4 +1,5 @@
 /** Every user-facing string of Smart Pen's Real-Time Text module. English only; never inline in components (#93). */
+import {closeThen} from '@ink-tools/ui-kit/problem';
 export const copy = {
   /** The sidebar switch (#184): Supernote's own wording, a noun in title case. */
   'button.mode': 'Real-Time Text',
@@ -20,7 +21,7 @@ export const copy = {
   'needs.allow': 'Allow',
   'toast.failed': 'Real-Time Text could not start',
   /** The Error state's reason under a failed conversion or undo (#257); the details go to the log. */
-  'error.again': 'Close, then press the button again.',
+  'error.again': closeThen('press the button again.'),
   'settings.start': 'Start with Real-Time Text on',
   'settings.spacing': 'Word spacing',
   'settings.wait': 'Wait before converting',

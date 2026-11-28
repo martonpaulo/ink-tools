@@ -1,5 +1,5 @@
 /**
- * The Puzzles full view (#453), every control from ui-kit (#273): the title bar with Close, then the
+ * The Puzzles full view (#453), every control from ui-kit (#273): the title bar with its ×, then the
  * game list. Opening a game first checks what it needs (`requirements.ts`): the plugin's declared
  * permissions and the game's own. While that runs, the Loading state; a missing one, the Needs
  * state with its fix; a check the host could not answer, the Error state with Retry (#245).

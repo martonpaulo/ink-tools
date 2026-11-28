@@ -1,13 +1,13 @@
 /**
  * The Styles grid (#133): two columns of large tiles, as Ink2Pic's results grid, each the lassoed
  * picture in one style on white paper, so a transparent picture lies on paper, never on black.
- * ui-kit's black title bar on top, as every full view opens (#311), whose × runs «Close». Two
- * switch rows below it, White to transparent and Thicker lines (#274); «Close» below. No slider and no
+ * ui-kit's black title bar on top, as every full view opens (#311), whose × is its one Close (#526).
+ * Two switch rows below it, White to transparent and Thicker lines (#274). No slider and no
  * animation: the grid shows once all its tiles are made.
  */
 import React from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Button, metrics, RowGroup, shared, SwitchRow, TitleBar} from '@ink-tools/ui-kit';
+import {metrics, RowGroup, shared, SwitchRow, TitleBar} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {GridState} from './styles';
 import {StyleId, StyleOptions} from './native';
@@ -88,11 +88,6 @@ export function StylesGrid({
             : copy['styles.making']}
         </Text>
       )}
-      <Button
-        label={copy['styles.close']}
-        disabled={state.phase === 'making'}
-        onPress={onClose}
-      />
     </View>
   );
 }

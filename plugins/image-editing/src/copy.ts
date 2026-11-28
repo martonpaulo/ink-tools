@@ -1,4 +1,5 @@
 /** Every user-facing string of Retouch. English only; never inline in components (#93). */
+import {closeThen} from '@ink-tools/ui-kit/problem';
 export const copy = {
   title: 'Image Editing',
   'settings.edits': 'Editor buttons',
@@ -8,9 +9,9 @@ export const copy = {
   'editor.noPreview': 'Image Editing could not read the lassoed picture.',
   /** Why an edit in the editor found no picture to change (#522); nothing was applied. */
   'editor.gone':
-    'The picture was deleted or moved. Close, lasso it again and press Image Editing.',
+    `The picture was deleted or moved. ${closeThen('lasso it again and press Image Editing.')}`,
   'editor.changed':
-    'The note or the page changed. Close, lasso the picture again and press Image Editing.',
+    `The note or the page changed. ${closeThen('lasso the picture again and press Image Editing.')}`,
   'editor.inkOnPicture':
     'Ink or shapes lie on this picture, so it cannot be edited alone. Move them off the picture, then press again.',
   'editor.picture': 'The lassoed picture',
@@ -43,7 +44,6 @@ export const copy = {
     'That stroke was not on the picture, so nothing was erased.',
   'editor.strokeFailed':
     'Image Editing could not erase that stroke. Draw it again.',
-  'editor.close': 'Close',
   'edit.enhance': 'Enhance',
   'edit.lighter': 'Lighter',
   'edit.darker': 'Darker',
@@ -72,7 +72,6 @@ export const copy = {
   'styles.thick': 'Thicker lines',
   'styles.making': 'Making the styles…',
   'styles.failed': 'Could not make the styles',
-  'styles.close': 'Close',
   'permission.files':
     'Image Editing keeps each picture as it was, for Undo and Restore original, in its own folder, which Supernote Cloud does not sync.',
   /** Toasts of a press that changed nothing (#170). */
@@ -101,7 +100,7 @@ export const copy = {
   /** The Error state of a press that failed on the tablet (#256); the details go to the log. */
   'press.failedTitle': (edit: string) => `${edit} did not work`,
   'page.failedTitle': 'The page could not be read',
-  'press.failedReason': 'Close, then press the edit again.',
+  'press.failedReason': closeThen('press the edit again.'),
   /** The toast of a page-wide press (#140). */
   'page.done': (edited: number, pictures: number) =>
     pictures === 0

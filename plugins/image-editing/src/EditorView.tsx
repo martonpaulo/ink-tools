@@ -1,6 +1,6 @@
 /**
  * The editor view (#226): the lassoed picture on top, every edit switched on in Settings as a
- * button below it, grouped, and «Close». Erase and Crop turn the picture into a pen canvas. A pen
+ * button below it, grouped; the title bar's × is its one Close (#526). Erase and Crop turn the picture into a pen canvas. A pen
  * move draws nothing, so it costs no refresh (#278); when the pen lifts, Erase shows the picture
  * with that stroke erased and Crop shows the stroke's dots, one refresh per stroke. «Done» keeps
  * the erased strokes and «Crop» runs the crop. No slider and no live preview.
@@ -28,7 +28,7 @@ const MIN_STEP = 6;
 const DOT = 6;
 /**
  * The least height the picture keeps, as a share of the screen: the edit list takes the height it
- * needs first, so every button shows above «Close» when it fits, and scrolls past this (#279).
+ * needs first, so every button shows when it fits, and scrolls past this (#279).
  */
 const PICTURE_FLOOR = '30%';
 
@@ -272,8 +272,8 @@ export function Editor({
 /**
  * The editor's frame: ui-kit's black title bar with the plugin title, as the Settings screen opens
  * (#311), a status line that keeps its two lines when empty, so a message
- * never moves the picture (one refresh less), the screen's content, and «Close». The bar's ×
- * runs the same close as «Close», and leaves the bar while «Close» is disabled (#311).
+ * never moves the picture (one refresh less), and the screen's content. The bar's × is the one
+ * Close (#526), and leaves the bar while closing is disabled (#311).
  */
 function EditorScreen({
   status,
@@ -295,13 +295,6 @@ function EditorScreen({
         {status ?? ''}
       </Text>
       {children}
-      <View style={shared.actions}>
-        <Button
-          label={copy['editor.close']}
-          disabled={closeDisabled}
-          onPress={onClose}
-        />
-      </View>
     </View>
   );
 }

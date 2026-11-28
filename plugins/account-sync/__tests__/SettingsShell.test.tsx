@@ -231,7 +231,7 @@ describe('SettingsShell (#93)', () => {
         'iCloud is not connected',
         'Account Sync reads iCloud with your own sign-in, which comes from the Mac.',
         '1. On the Mac, run inkctl secret set icloud.',
-        '2. Close this view and press Sync now.',
+        '2. Close with the × at the top left, then press Sync now.',
       ]);
       expect(screenBreaks(tree.root)).toEqual([]);
       // Its × goes back to Settings, never closes the plugin.

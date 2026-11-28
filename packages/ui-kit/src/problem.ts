@@ -19,6 +19,13 @@ export type Problem = {
 
 /** The one name of the button that closes a full view (#255, card D69). */
 export const CLOSE_TEXT = 'Close';
+/**
+ * A reason line's first step when the view must close before the next try: it names the title
+ * bar's ×, the one Close, never a «Close» button (#526).
+ */
+export function closeThen(next: string): string {
+  return `Close with the × at the top left, then ${next}`;
+}
 /** The spoken name of a fix's command (#405). */
 export const COMMAND_TEXT = 'Command';
 /** The button that runs a failed action again. */

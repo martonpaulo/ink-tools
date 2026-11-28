@@ -234,7 +234,7 @@ test('the send half announces the certificate fingerprint, the saved one only wi
   ).resolves.toBe('saved');
 });
 
-test('«Send Text» shows the text with one row per receiver and Cancel, or only Close when empty (#99, #307)', async () => {
+test('«Send Text» shows the text with one row per receiver and the title bar × as its one Cancel (#99, #307)', async () => {
   const device: Device = {
     alias: 'Mac',
     ip: lan(10, 0, 0, 2),
@@ -260,9 +260,9 @@ test('«Send Text» shows the text with one row per receiver and Cancel, or only
   });
   expect(onSend).toHaveBeenCalledTimes(1);
   expect(onSend).toHaveBeenCalledWith(iphone);
-  expect(ready.root.findAllByProps({label: 'Cancel'}).length).toBeGreaterThan(
-    0,
-  );
+  // The title bar's × is the one Cancel: no second button beside it (#526).
+  expect(ready.root.findAllByProps({label: 'Cancel'})).toHaveLength(0);
+  expect(ready.root.findAllByProps({accessibilityLabel: 'Close'}).length).toBeGreaterThan(0);
   let empty!: ReactTestRenderer;
   await act(async () => {
     empty = renderer.create(

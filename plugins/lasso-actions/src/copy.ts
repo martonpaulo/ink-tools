@@ -1,3 +1,4 @@
+import {closeThen} from '@ink-tools/ui-kit/problem';
 import {Direction, directionName} from '@ink-tools/ink-core';
 
 /** Every user-facing string of Lookup. English only; never inline in components (#93). */
@@ -72,7 +73,7 @@ export const copy = {
   'heading.noLasso': 'Lasso a handwritten line first, then press a heading.',
   'heading.failed': 'The heading could not be made.',
   /** The Error state's reason under a failed heading (#256); the details go to the log. */
-  'heading.failedReason': 'Close, then lasso the line and press the heading again.',
+  'heading.failedReason': closeThen('lasso the line and press the heading again.'),
   'heading.notMoved':
     'The heading was made, but it could not be moved to the margin.',
   /** The picture modes' lasso buttons and «Choose Image» (#156, #295). */
@@ -146,7 +147,7 @@ export const copy = {
   'error.unplaced':
     'Put the selection down on the page first, then press again.',
   /** The Error state's reason when «Choose picture» read no word (#166, #428). */
-  'error.unreadableReason': 'Close, then lasso the handwritten word and press again.',
+  'error.unreadableReason': closeThen('lasso the handwritten word and press again.'),
   'error.insert': 'The definition could not be inserted on the page.',
   /** Toasts that replace the «Loading…» strip (#103). */
   'working.failed': 'Lasso Actions stopped with an error.',

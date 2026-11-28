@@ -183,6 +183,10 @@ Every tool reports what it needs after a check and what failed after a failure i
   the static loading mark and «Loading…» centred under it ([#287](https://github.com/martonpaulo/ink-tools/issues/287)).
 - Close is the `TitleBar`'s × at the leading edge of the title bar, in every full view these
   states included ([#274](https://github.com/martonpaulo/ink-tools/issues/274)); Back does what it does.
+- The × is the one Close: no full view adds a second «Close» or «Cancel» button that does what the ×
+  does, and no text names a «Close» button. A reason line whose fix needs the view closed first
+  starts with `closeThen(next)`, from the entry `@ink-tools/ui-kit/problem`, which names the ×;
+  `scripts/boundaries.py` rule `close` refuses a second close ([#526](https://github.com/martonpaulo/ink-tools/issues/526)).
 
 ## The Back key
 

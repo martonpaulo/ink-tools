@@ -66,7 +66,7 @@ battery cost.
 
 **Send Text built, not yet on the device** ([#99](https://github.com/martonpaulo/ink-tools/issues/99)): «Send Text» (lasso toolbar, a view) reads the
 lassoed handwriting with `ink-core`'s `readLassoQuery`, shows it with the devices found, one tap
-each to send ([#307](https://github.com/martonpaulo/ink-tools/issues/307)), and «Cancel» (`src/send/textSession.ts`, `TextView`), and offers it as one `text/plain` file whose
+each to send ([#307](https://github.com/martonpaulo/ink-tools/issues/307)), the title bar's × its one Cancel ([#526](https://github.com/martonpaulo/ink-tools/issues/526); `src/send/textSession.ts`, `TextView`), and offers it as one `text/plain` file whose
 `preview` is the text (`textOffer`); a 204 is «sent», a 200 uploads the bytes
 (`src/send/sendText.ts`). To test on the device: how the iOS and macOS LocalSend apps show it.
 

@@ -1,4 +1,5 @@
 /** Every user-facing string of Bridge. English only; never inline in components (#93). */
+import {closeThen} from '@ink-tools/ui-kit/problem';
 export const copy = {
   title: 'Account Sync',
   'settings.loading': 'Loading the settings…',
@@ -60,7 +61,7 @@ export const copy = {
   'connect.what': '{provider} is not connected',
   'connect.why': 'Account Sync reads {provider} with your own sign-in, which comes from the Mac.',
   'connect.step.mac': 'On the Mac, run inkctl secret set {id}.',
-  'connect.step.sync': 'Close this view and press Sync now.',
+  'connect.step.sync': closeThen('press Sync now.'),
   'signIn.unreadable': 'The sign-in did not read: {reason}',
   'signOut.button': 'Sign out',
   'signOut.label': 'Sign out of {provider}',

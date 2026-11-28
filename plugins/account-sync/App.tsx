@@ -83,7 +83,7 @@ export function moduleRows(
 
 /**
  * Bridge's Settings view: the saved switches, loaded from and saved to the private folder (#40).
- * «Close» and Back close it, and do nothing while a pass runs (#204, #266). It shows the probe answer of the
+ * The title bar's × and Back close it, and do nothing while a pass runs (#204, #266). It shows the probe answer of the
  * runner's last pass and never probes itself: the probe runs only for a sync that needs it, and
  * only for the modules that are on (#43).
  */

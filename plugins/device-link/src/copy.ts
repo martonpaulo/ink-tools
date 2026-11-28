@@ -1,4 +1,5 @@
 /** Every line Relay shows (#98, #49), in one place. */
+import {closeThen} from '@ink-tools/ui-kit/problem';
 import {SendResult} from './localsend/protocol';
 
 export const copy = {
@@ -73,7 +74,7 @@ export const copy = {
     'Press the button again.',
   ],
   /** The Error state's reason under a send that failed on the tablet (#256). */
-  sendFailedReason: 'Close, then press the button again.',
+  sendFailedReason: closeThen('press the button again.'),
   permissionRefused: (name: string) =>
     `${name} permission not allowed: allow it in Settings > Apps > Plugins > Device Link`,
   result(result: SendResult, alias: string): string {

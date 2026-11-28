@@ -9,7 +9,7 @@ export {createWorking, WORKING_TEXT, WORKING_TIMEOUT_MS} from './working';
 export type {HeldState, Working, WorkingPorts, WorkingRun} from './working';
 export {useWorking, WorkingStrip} from './WorkingStrip';
 export {useArmOnRoot, useBackKey} from './backKey';
-export {CLOSE_TEXT, RETRY_TEXT} from './problem';
+export {CLOSE_TEXT, closeThen, RETRY_TEXT} from './problem';
 export type {Fix, Problem} from './problem';
 export {ErrorView, LoadingView, Needs} from './ProblemView';
 // The native controls (#273), one component each.

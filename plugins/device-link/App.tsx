@@ -98,8 +98,8 @@ export function ReceiveView({
 
 /**
  * «Send Text» (#99): the recognised text, read before it is sent, with the receivers found, one
- * tap each to send (#307), and «Cancel»; an empty recognition shows only its line. The title bar's ×
- * cancels too, except while the text is read or sent, which ends by itself (#256).
+ * tap each to send (#307); an empty recognition shows only its line. The title bar's × is its one
+ * Cancel, except while the text is read or sent, which ends by itself (#256, #526).
  */
 export function TextView({
   state,
@@ -127,11 +127,6 @@ export function TextView({
           <PickDevice
             devices={state.devices}
             onPick={state.phase === 'ready' ? onSend : undefined}
-          />
-          <Button
-            label={copy.cancel}
-            disabled={state.phase === 'sending'}
-            onPress={onCancel}
           />
         </>
       ) : state.phase === 'empty' ? (
