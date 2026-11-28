@@ -423,9 +423,20 @@ function isLeft(
   return m !== undefined && pixelKind(m) === 'blank' && !result.canonical;
 }
 
+/** Whether the picture measured near-black (`dark`); one not measured yet is not. */
+function measuresDark(
+  result: SearchResult,
+  measures: ReadonlyMap<string, Measures>,
+): boolean {
+  const m = measures.get(result.id);
+  return m !== undefined && pixelKind(m) === 'dark';
+}
+
 /**
  * Re-sorts the first MEASURED_RESULTS results by `einkScore + pixelScorer`; ties keep their
- * order. A canonical Wikidata picture keeps its index (brief section 5.5, rule 4). A blank
+ * order. A canonical Wikidata picture keeps its index (brief section 5.5, rule 4), unless it
+ * measures dark and does not lead: then it ranks after every light picture of those results,
+ * still among them (owner D105 A, #13: «ox»'s dark photo pushed its engraving off page 1). A blank
  * thumbnail goes to the end of the list; the next result fills its place. Later
  * results keep their order. `converted` names the pictures shown as their contour drawing.
  * `photos` is the person's «Photos too» style (#70): the same scorers as the search then (#92).
@@ -445,6 +456,10 @@ export function reorderByMeasures(
   const pixels = pixelScorer(measures, converted);
   const intent = intentFor(query, results);
   const blank = head.filter(result => isLeft(result, measures));
+  const yields = head.filter(
+    (result, index) =>
+      result.canonical && index > 0 && measuresDark(result, measures),
+  );
   const sorted = head
     .filter(result => !result.canonical && !isLeft(result, measures))
     .map((result, order) => ({
@@ -455,11 +470,22 @@ export function reorderByMeasures(
     }))
     .sort((a, b) => b.score - a.score || a.order - b.order)
     .map(entry => entry.result);
+  // A dark canonical picture that gave up its slot goes right after the last light one.
+  let lastLight = -1;
+  sorted.forEach((result, index) => {
+    if (!measuresDark(result, measures)) {
+      lastLight = index;
+    }
+  });
+  sorted.splice(lastLight + 1, 0, ...yields);
   const queue = [...sorted, ...results.slice(MEASURED_RESULTS)];
   const ordered: SearchResult[] = [];
   for (const result of head) {
     // Each other slot takes the next sorted result, or a later one when blanks left.
-    const keeps = result.canonical && !isLeft(result, measures);
+    const keeps =
+      result.canonical &&
+      !isLeft(result, measures) &&
+      !yields.includes(result);
     const next = keeps ? result : queue.shift();
     if (next) {
       ordered.push(next);

@@ -510,6 +510,33 @@ describe('reorderByMeasures (#66)', () => {
     expect(order(live)).toEqual(['line', 'wikidata', 'best']);
   });
 
+  it('sends a dark canonical picture that does not lead after every light one (D105 A, #13)', () => {
+    // «ox»: the Wikidata photo measured dark held slot 2 and pushed the engraving off page 1.
+    const list = [
+      result('best'),
+      result('wikidata', 'wikidata', true),
+      result('painting'),
+      result('engraving'),
+      result('line'),
+    ];
+    const measures = new Map([
+      ['best', outline],
+      ['wikidata', darkPainting],
+      ['painting', darkPainting],
+      ['engraving', outline],
+      ['line', outline],
+    ]);
+    const ordered = ids(reorderByMeasures(list, measures));
+    expect(ordered.indexOf('wikidata')).toBeGreaterThan(
+      Math.max(...['best', 'engraving', 'line'].map(id => ordered.indexOf(id))),
+    );
+    // Still on pages 1 and 2, and a dark picture that is not canonical ranks as before (D38 B).
+    expect(ordered).toHaveLength(5);
+    expect(ordered.slice(0, 3)).toEqual(
+      ids(reorderByMeasures(list.filter(r => r.id !== 'wikidata'), measures)).slice(0, 3),
+    );
+  });
+
   it('keeps a near-black canonical picture at its index (D38 B)', () => {
     const list = [
       result('wikidata', 'wikidata', true),
