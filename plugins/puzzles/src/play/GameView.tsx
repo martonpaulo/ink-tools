@@ -294,13 +294,17 @@ function Ready({
   ) : (
     <RowGroup caption={playCopy['here.caption']} note={playCopy['here.none'](game.title)} />
   );
+  // The «New page» caption heads the choices, so they never read as the open puzzle's (#549).
+  const newPage = <RowGroup caption={playCopy['new.caption']} note={game.open ? playCopy['new.note'] : playCopy['new.noteBoard']} />;
+  const hasChoices = game.options.length > 0;
   return (
     <View style={shared.screen}>
       <TitleBar title={game.title} onBack={onBack} onClose={onClose} />
       {/* A board with no choices has nothing to scroll: its «New page» part starts under the bar. */}
-      {(game.open || game.options.length > 0) && (
+      {(game.open || hasChoices) && (
         <ScrollView style={styles.choices}>
           {board && thisPage}
+          {hasChoices && newPage}
           {game.options.map(option => (
             <ChoiceList
               key={option.id}
@@ -313,8 +317,8 @@ function Ready({
           ))}
         </ScrollView>
       )}
+      {!hasChoices && newPage}
       {/* Fixed under the choices, so a long list never pushes the view's main action off screen (#383). */}
-      <RowGroup caption={playCopy['new.caption']} note={game.open ? playCopy['new.note'] : playCopy['new.noteBoard']} />
       <View style={[shared.buttons, styles.section]}>
         <Button kind="primary" label={playCopy['new.add']} onPress={onAdd} />
       </View>
