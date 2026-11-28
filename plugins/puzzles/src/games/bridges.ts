@@ -32,6 +32,7 @@ function board(puzzle: Bridges, shape: PageShape): Puzzle {
   const links = bridgesAnswers(puzzle);
   return {
     code: puzzleCode(puzzle.id),
+    size: playCopy.gridLabel(puzzle.width, puzzle.height),
     page,
     check: async ink => {
       const found = checkBridges(grid, puzzle, ink);

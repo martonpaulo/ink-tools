@@ -299,7 +299,7 @@ function Ready({
   const thisPage = !game.open ? null : board ? (
     <RowGroup caption={playCopy['here.caption']}>
       <ActionRow
-        title={playCopy['here.title'](game.title, playCopy.bands[parsePuzzleCode(board.code).difficulty])}
+        title={playCopy['here.title'](game.title, playCopy.bands[parsePuzzleCode(board.code).difficulty], board.size)}
         subtitle={board.code}
         action={{label: playCopy['here.check'], onPress: () => onCheck(board)}}
         secondAction={{label: playCopy['here.answer'], onPress: () => onAnswer(board)}}

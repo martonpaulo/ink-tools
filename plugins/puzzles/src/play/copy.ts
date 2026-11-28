@@ -3,7 +3,9 @@ export const playCopy = {
   difficulty: 'Difficulty',
   /** A game of several grid sizes: the choice's title and each size's label. */
   size: 'Size',
-  sizeLabel: (size: number) => `${size} x ${size}`,
+  sizeLabel: (size: number) => playCopy.gridLabel(size, size),
+  /** A grid's columns and rows, for a puzzle whose page names both. */
+  gridLabel: (width: number, height: number) => `${width} x ${height}`,
   bands: {easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert'} as Record<string, string>,
   'new.caption': 'New page',
   'new.add': 'Add Page',
@@ -16,8 +18,8 @@ export const playCopy = {
   'verdict.title': 'Checked Page',
   'answer.title': 'Solution',
   'here.none': (game: string) => `This page has no ${game}. Open a ${game} page to check it or see its solution.`,
-  /** The row of the page's puzzle: its game and difficulty, then its code. */
-  'here.title': (game: string, band: string) => `${game}, ${band}`,
+  /** The row of the page's puzzle: its game, its size when the game offers sizes (#545), its difficulty; then its code. */
+  'here.title': (game: string, band: string, size?: string) => (size === undefined ? `${game}, ${band}` : `${game}, ${size}, ${band}`),
   'verdict.solved': 'Solved. Nothing is wrong.',
   'verdict.open': 'Nothing is wrong so far.',
   'verdict.wrong': (count: number) => (count === 1 ? '1 mistake is circled.' : `${count} mistakes are circled.`),

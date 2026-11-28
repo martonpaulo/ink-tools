@@ -34,6 +34,7 @@ function board(puzzle: Slitherlink, shape: PageShape): Puzzle {
   const {grid} = layout;
   return {
     code: puzzleCode(puzzle.id),
+    size: playCopy.gridLabel(puzzle.width, puzzle.height),
     page,
     check: async ink => {
       const found = checkSlitherlink(puzzle, grid, ink);

@@ -64,7 +64,9 @@ instead ([#542](https://github.com/martonpaulo/ink-tools/issues/542)).
 2. A game is one `PuzzleGame` in `src/games/<game>.ts` (`src/play/puzzle.ts`): its choices (an
    option's choices may follow the earlier ones, as futoshiki's bands follow its size,
    [#390](https://github.com/martonpaulo/ink-tools/issues/390)) and `create`, and for a puzzle `open`, whose `Puzzle` has its `check` and `answer`, each a call into
-   puzzle-core; a pass-and-play board has no `open` ([#402](https://github.com/martonpaulo/ink-tools/issues/402)). Its
+   puzzle-core; a pass-and-play board has no `open` ([#402](https://github.com/martonpaulo/ink-tools/issues/402)). A game
+   with a size choice gives its `Puzzle` the `size` label its list shows, which «This page» names
+   ([#545](https://github.com/martonpaulo/ink-tools/issues/545)). Its
    strings are its own, the shared ones in `src/play/copy.ts`. Add it to `GAMES` in `src/games.ts`,
    with in `requires` what it needs beyond the plugin's permissions, which the view checks before
    the game opens. A game whose play the shared view cannot hold gives its own view, which takes

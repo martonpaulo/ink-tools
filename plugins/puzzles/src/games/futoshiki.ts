@@ -29,6 +29,7 @@ function board(puzzle: Futoshiki, shape: PageShape): Puzzle {
   const open = puzzle.givens.flatMap((given, cell) => (given === 0 ? [[cell, String(puzzle.solution[cell])] as const] : []));
   return {
     code: puzzleCode(puzzle.id),
+    size: playCopy.sizeLabel(puzzle.size),
     page,
     check: async (ink, read) => {
       const found = await checkFutoshiki(puzzle, layout.grid, ink, read);

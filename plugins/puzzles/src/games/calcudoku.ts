@@ -33,6 +33,7 @@ function board(puzzle: Calcudoku, shape: PageShape): Puzzle {
   const all = puzzle.solution.map((value, cell) => [cell, String(value)] as const);
   return {
     code: puzzleCode(puzzle.id),
+    size: playCopy.sizeLabel(puzzle.size),
     page,
     check: async (ink, read) => {
       const found = await checkCalcudoku(puzzle, layout, ink, read);
