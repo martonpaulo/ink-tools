@@ -84,6 +84,13 @@ and every other code, is made live ([#552](https://github.com/martonpaulo/ink-to
 `puzzle-core/scripts/seed-bank.cjs` rewrites a game's bank, and its header records which sizes and
 bands it holds and why.
 
+A page code keeps its puzzle for good: a change to a game's generation never changes what an older
+code decodes to. A new generation gets a mark in the code's size token, as a nonogram drawn under
+the blank rule carries `V2` (`NO-15X15V2-H-...`), and a code with no mark draws as before
+([#384](https://github.com/martonpaulo/ink-tools/issues/384)). `__tests__/older-codes.test.ts` pins codes made before the seed banks, and
+`__tests__/determinism.test.ts` pins one puzzle per game; a changed pin needs a new mark, never a
+new value ([#561](https://github.com/martonpaulo/ink-tools/issues/561)).
+
 `ink-core`'s pinyin index (3.4 MB) is not exported from `index.ts`, so a plugin bundles it only
 when it imports `src/pinyin-data.ts` itself. `ink-core/scripts/build-pinyin-index.cjs` rebuilds it;
 `--check` fails when the committed file differs ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).
