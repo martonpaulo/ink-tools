@@ -685,6 +685,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   of a lasso row saves a sticker, so a round makes its Collection pieces with the lasso row «Add to
   Collection» [measured, Ink Tools Probe from `main` `f807989`, Manta, 2026-11-26,
   [#249](https://github.com/martonpaulo/ink-tools/issues/249)].
+- `getLassoRect` pads the lassoed ink by about 70 px each side, so a word in the page's lowest
+  100 px answers a rect past the page's bottom edge: ink at y 2472-2512 gave
+  `{"top":2403,"bottom":2583}` on the 2560 px page [measured, Lasso Actions from `main` `bc1be921`,
+  Manta, tablet row 139, 2026-11-28, [#589](https://github.com/martonpaulo/ink-tools/issues/589)].
+  ink-core's `underPageBar` takes such a rect as a lasso on the page.
   On the same tablet and day as the first:
   - `lassoElements(rect)` selects strokes only: a text box inside the rect stayed out of the lasso
     and so out of the sticker. Whether a sticker keeps a text box or a picture lassoed by hand is

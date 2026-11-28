@@ -92,6 +92,24 @@ describe('checkLookup', () => {
     expect(checkLookup(pasted)).toMatchObject({ok: false, why: 'unplaced'});
   });
 
+  it('stops every word in the page\'s lowest 100 px as under the bar, its padded rect past the page too (#589)', () => {
+    const MANTA = {width: 1920, height: 2560};
+    // The lasso pads the ink by about 70 px each side (tablet row 139: ink 2472-2512, rect 2403-2583).
+    const lasso = (inkTop: number, inkBottom: number) => ({
+      ...word,
+      place: {...word.place!, rect: {left: 882, top: inkTop - 69, right: 1062, bottom: inkBottom + 71}, pageSize: MANTA},
+    });
+    for (let inkTop = 2460; inkTop <= 2530; inkTop += 10) {
+      expect(checkLookup(lasso(inkTop, inkTop + 30))).toMatchObject({ok: false, why: 'underBar', place: null});
+    }
+    expect(checkLookup(lasso(2472, 2512))).toMatchObject({ok: false, why: 'underBar'});
+    // Just above the bar (ink 2424-2454) the definition still goes in.
+    expect(checkLookup(lasso(2424, 2454))).toMatchObject({ok: true});
+    // A rect that starts past the page or passes its right side is no lasso on the page.
+    const off = {...word, place: {...word.place!, rect: {left: 1800, top: 2470, right: 1990, bottom: 2600}, pageSize: MANTA}};
+    expect(checkLookup(off)).toMatchObject({ok: false, why: 'unplaced'});
+  });
+
   it('stops a recognition with no word, keeping the place for a note (#166)', () => {
     expect(checkLookup({...word, query: STICKER_TEXT})).toMatchObject({
       ok: false,

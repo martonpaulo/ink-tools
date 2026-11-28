@@ -47,11 +47,17 @@ export function rectProblem(rect: Rect, pageSize: Size, occupied?: Rect[]): stri
 }
 
 /**
- * True when most of the rect lies under the note's page bar (#577): its middle is in the bar's
- * band, so the word has no room below or above it that a tool may use.
+ * True when the rect is a lasso on the page whose middle lies in the note's page bar's band (#577,
+ * #589): the word has no room below or above it that a tool may use. A lasso pads its ink, so a
+ * word in the page's lowest 100 px has a rect past the page's bottom edge (ink at y 2472-2512 gave
+ * `{top: 2403, bottom: 2583}` on a 2560 px page, tablet row 139); only its bottom may pass the page.
+ * A pasted selection's local rect stays at the page's top or has a negative side, never here.
  */
 export function underPageBar(rect: Rect, pageSize: Size): boolean {
-  return (rect.top + rect.bottom) / 2 >= writableSize(pageSize).height;
+  const onPage =
+    rect.left >= 0 && rect.top >= 0 && rect.left < rect.right && rect.top < rect.bottom &&
+    rect.right <= pageSize.width && rect.top < pageSize.height;
+  return onPage && (rect.top + rect.bottom) / 2 >= writableSize(pageSize).height;
 }
 
 /** True when the two rects overlap or share an edge. */
@@ -75,8 +81,7 @@ export type LookupRefusal = {
 export function checkLookup(
   read: LassoQuery,
 ): {ok: true; value: LassoQuery} | ({ok: false} & LookupRefusal) {
-  const shape = read.place ? rectProblem(read.place.rect, read.place.pageSize) : null;
-  if (read.place && !shape && underPageBar(read.place.rect, read.place.pageSize)) {
+  if (read.place && underPageBar(read.place.rect, read.place.pageSize)) {
     return {
       ok: false,
       why: 'underBar',
