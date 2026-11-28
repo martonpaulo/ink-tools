@@ -109,17 +109,24 @@ describe('layoutBreaks', () => {
   });
 
   it('fails a button label that wraps to a second line, and passes one line and a wrapping caption (#543)', () => {
-    expect(
-      layoutBreaks(
-        page({
-          texts: [
-            {name: 'a', text: 'Show Solution', fontSize: 21, glyphs: box(27, 110, 150, 170), within: [], contrast: 21, lines: 2, button: 'Show Solution'},
-            {name: 'b', text: 'Check', fontSize: 21, glyphs: box(27, 200, 120, 230), within: [], contrast: 21, lines: 1, button: 'Check'},
-            {name: 'c', text: 'A long caption that wraps', fontSize: 19, glyphs: box(27, 300, 400, 360), within: [], contrast: 21, lines: 2},
-          ],
-        }),
-        LIMITS,
-      ),
-    ).toEqual(['button «Show Solution» wraps its label to 2 lines: widen the button or shorten the label (#543)']);
+    const label = (text: string, top: number, extra: object) => ({
+      name: text,
+      text,
+      fontSize: 21,
+      glyphs: box(27, top, 150, top + 60),
+      within: [],
+      contrast: 21,
+      ...extra,
+    });
+    const screen = page({
+      texts: [
+        label('Show Solution', 110, {lines: 2, button: 'Show Solution'}),
+        label('Check', 200, {lines: 1, button: 'Check'}),
+        label('A long caption that wraps', 300, {lines: 2}),
+      ],
+    });
+    expect(layoutBreaks(screen, LIMITS)).toEqual([
+      'button «Show Solution» wraps its label to 2 lines: widen the button or shorten the label (#543)',
+    ]);
   });
 });
