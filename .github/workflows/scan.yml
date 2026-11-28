@@ -7,7 +7,8 @@ name: Scan
 # npm gates install from each lockfile when node_modules is missing (#135), and each plugin's native
 # build leaves no .snplg without its app.npk (#153). No two tracked paths differ only in case, so the
 # owner's Mac, whose disk ignores case, sees every file CI sees (#227), and no tracked file states the
-# method used on vendor software (#408). The weekly audit fails on any advisory
+# method used on vendor software (#408), and no user page asks for a terminal, Python, Homebrew,
+# adb or inkctl step (#507). The weekly audit fails on any advisory
 # audit-exceptions.json does not name (#154). The icons (#271), the licence (#276), the Quick check's
 # selection and each validate workflow's paths against gates.json (#301) are checked here too.
 on:
@@ -15,9 +16,9 @@ on:
     - cron: "0 6 * * 1"
   push:
     branches: [main]
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'site/icons/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', 'LICENSE', '.github/workflows/validate-*.yml', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'site/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', 'LICENSE', '.github/workflows/validate-*.yml', '.github/workflows/scan.yml']
   pull_request:
-    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'site/icons/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', 'LICENSE', '.github/workflows/validate-*.yml', '.github/workflows/scan.yml']
+    paths: ['*.md', 'docs/**', 'packages/**', 'plugins/**', 'apps/**', 'cli/**', 'design/**', 'site/**', 'templates/**', 'registry/**', 'scripts/**', 'scripts/boundaries.py', 'scripts/test_boundaries.py', 'gates.json', 'scripts/test_gate_install.py', 'scripts/test_cloud_config.py', '.github/cloud.json', 'scripts/test_native_package.py', 'scripts/npm_audit.py', 'scripts/test_npm_audit.py', 'audit-exceptions.json', '.github/workflows/prerelease-*.yml', 'scripts/plugin-version.cjs', 'LICENSE', '.github/workflows/validate-*.yml', '.github/workflows/scan.yml']
   workflow_dispatch:
 
 permissions:
@@ -70,6 +71,11 @@ jobs:
         run: |
           python3 scripts/public_wording.py --root .
           python3 -B -m unittest scripts/test_public_wording.py
+
+      - name: Check that no user page or user tool's text asks for a developer step (#507)
+        run: |
+          python3 scripts/user_steps.py --root .
+          python3 -B -m unittest scripts/test_user_steps.py
 
   boundaries:
     name: adapter boundaries

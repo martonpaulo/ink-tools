@@ -1,0 +1,50 @@
+{
+  "surfaces": [
+    "docs/install.md",
+    "site/*.html",
+    "plugins/*/README.md",
+    "apps/handwriting-language/README.md",
+    "apps/note-editor/README.md",
+    "plugins/*/src/*copy.ts",
+    "packages/ui-kit/src/*Copy.ts",
+    "apps/handwriting-language/src/*Copy.java",
+    "apps/note-editor/Sources/NoteEditor/Copy.swift"
+  ],
+  "developer": [
+    "plugins/ink-tools-probe/README.md",
+    "plugins/ink-tools-probe/src/copy.ts",
+    "plugins/lasso-actions/lab/README.md"
+  ],
+  "developer_headings": [
+    "Build from source",
+    "Development",
+    "For developers"
+  ],
+  "known": [
+    {
+      "path": "apps/note-editor/README.md",
+      "text": "/opt/homebrew/bin",
+      "issue": 493
+    },
+    {
+      "path": "apps/note-editor/README.md",
+      "text": "`inkctl note templates`",
+      "issue": 493
+    },
+    {
+      "path": "apps/note-editor/Sources/NoteEditor/Copy.swift",
+      "text": "Install inkctl as cli/inkctl/README.md says",
+      "issue": 493
+    },
+    {
+      "path": "plugins/account-sync/README.md",
+      "text": "with a `inkctl` command",
+      "issue": 487
+    },
+    {
+      "path": "plugins/account-sync/src/copy.ts",
+      "text": "run inkctl secret set",
+      "issue": 487
+    }
+  ]
+}
