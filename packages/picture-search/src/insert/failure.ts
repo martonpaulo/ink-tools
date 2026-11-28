@@ -11,6 +11,7 @@ import {
   PERMISSION_INTERNET,
   CallFailure,
   EMPTY_LASSO_CODE,
+  FILE_PERMISSION_CODE,
   TIMEOUT_CODE,
 } from '@ink-tools/sn-adapter/official';
 import type {Outcome} from '../types';
@@ -41,9 +42,6 @@ export type Done<T> = Outcome<T, StepFailure>;
 export function atStep(step: Step, failure: CallFailure): StepFailure {
   return {...failure, step};
 }
-
-/** sn-plugin-lib's code for a missing file permission (brief section 10.5). */
-export const FILE_PERMISSION_CODE = 1503;
 
 /** The module's code for an error Android raised; its text is the only cause it carries. */
 const OS_ERROR: FilesErrorCode = 'IO';

@@ -30,6 +30,13 @@ export const BAD_ARGUMENT_CODE = -5;
 /** The open note did not save, so a write on its page was refused before any change (#524). */
 export const UNSAVED_CODE = -6;
 
+/*
+ * The host's own codes a wrapper or a plugin reads (#295); a code only one call answers stays
+ * beside that call, as `NO_LASSO_CODE` in `lasso.ts`.
+ */
+/** sn-plugin-lib's code for a missing file permission (brief section 10.5). */
+export const FILE_PERMISSION_CODE = 1503;
+
 type SdkResponse = {
   success?: boolean;
   result?: unknown;
