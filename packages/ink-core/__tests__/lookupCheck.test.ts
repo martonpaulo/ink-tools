@@ -47,6 +47,12 @@ describe('rectProblem (#165)', () => {
     expect(rectProblem(word.place!.rect, NOMAD)).toBeNull();
   });
 
+  it('keeps a lasso padded past the page\'s bottom edge, refuses one that starts past it (#589)', () => {
+    const MANTA = {width: 1920, height: 2560};
+    expect(rectProblem({left: 882, top: 2403, right: 1062, bottom: 2583}, MANTA)).toBeNull();
+    expect(rectProblem({left: 882, top: 2560, right: 1062, bottom: 2640}, MANTA)).toMatch(/past the page/);
+  });
+
   it('refuses a local rect with no negative side that touches no element of the page (#165)', () => {
     expect(rectProblem(PASTED_AT_CORNER, NOMAD, PAGE_ELEMENTS)).toMatch(/touches no element/);
   });

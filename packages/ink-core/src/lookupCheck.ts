@@ -37,7 +37,9 @@ export function rectProblem(rect: Rect, pageSize: Size, occupied?: Rect[]): stri
   if (rect.right <= rect.left || rect.bottom <= rect.top) {
     return `the lasso rect ${text} is empty`;
   }
-  if (rect.right > pageSize.width || rect.bottom > pageSize.height) {
+  // A lasso pads its ink by about 70 px, so a word in the page's lowest 100 px answers a rect past
+  // the page's bottom edge (tablet row 139, #589): only a rect that starts past it is off the page.
+  if (rect.right > pageSize.width || rect.top >= pageSize.height) {
     return `the lasso rect ${text} is past the page`;
   }
   if (occupied && occupied.length > 0 && !occupied.some(element => touches(rect, element))) {
@@ -47,17 +49,11 @@ export function rectProblem(rect: Rect, pageSize: Size, occupied?: Rect[]): stri
 }
 
 /**
- * True when the rect is a lasso on the page whose middle lies in the note's page bar's band (#577,
- * #589): the word has no room below or above it that a tool may use. A lasso pads its ink, so a
- * word in the page's lowest 100 px has a rect past the page's bottom edge (ink at y 2472-2512 gave
- * `{top: 2403, bottom: 2583}` on a 2560 px page, tablet row 139); only its bottom may pass the page.
- * A pasted selection's local rect stays at the page's top or has a negative side, never here.
+ * True when the rect is a lasso on the page (`rectProblem`'s shape rules) whose middle lies in the
+ * note's page bar's band (#577, #589): the word has no room below or above it that a tool may use.
  */
 export function underPageBar(rect: Rect, pageSize: Size): boolean {
-  const onPage =
-    rect.left >= 0 && rect.top >= 0 && rect.left < rect.right && rect.top < rect.bottom &&
-    rect.right <= pageSize.width && rect.top < pageSize.height;
-  return onPage && (rect.top + rect.bottom) / 2 >= writableSize(pageSize).height;
+  return rectProblem(rect, pageSize) === null && (rect.top + rect.bottom) / 2 >= writableSize(pageSize).height;
 }
 
 /** True when the two rects overlap or share an edge. */

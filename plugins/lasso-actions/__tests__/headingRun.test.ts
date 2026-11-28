@@ -91,6 +91,14 @@ test('no lasso changes nothing and says to lasso first', async () => {
   expect(failures).toEqual([{what: copy['heading.noLasso']}]); // held, not a toast alone (#438)
 });
 
+test('a lasso padded past the page\'s bottom edge is moved back onto the page, not refused (#589)', async () => {
+  const {host, failures} = fakeHost({
+    lassoRect: async () => ok({left: 600, top: PAGE.height - 157, right: 800, bottom: PAGE.height + 23}),
+  });
+  expect(await applyHeading(1, host)).toMatchObject({ok: true});
+  expect(failures).toEqual([]);
+});
+
 test("a pasted selection's local rect places nothing and holds the Error state (#165, #428)", async () => {
   const {host, calls, failures} = fakeHost({
     lassoRect: async () => ok({left: -90, top: -90, right: 90, bottom: 90}),

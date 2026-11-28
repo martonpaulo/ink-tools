@@ -137,6 +137,13 @@ test('Cut to Collection deletes the lasso only after the sticker was written', a
   expect(failing.failures).toEqual([copy['collection.notSaved']]);
 });
 
+test('a lasso padded past the page\'s bottom edge, a word in its lowest 100 px, is added (#589)', async () => {
+  const fake = fakeHost();
+  fake.lassoAt(ok({left: 400, top: PAGE.height - 157, right: 580, bottom: PAGE.height + 23}));
+  expect(await addToCollection(fake.host, false)).toMatchObject({ok: true});
+  expect(fake.failures).toEqual([]);
+});
+
 test('no lasso, or a pasted selection with no page place, adds nothing', async () => {
   const fake = fakeHost();
   fake.lassoAt(fail(904, 'No lasso action has been performed'));
