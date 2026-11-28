@@ -157,10 +157,10 @@ test("one switch per translation direction, the owner's three on, and a tap save
   expect(shown('Translate PT→ES')).toBe(true);
   const [, text] = files.writeText.mock.calls[0] as unknown as [string, string];
   expect(JSON.parse(text).lookup.directions).toEqual({
-    'es-pt': true,
-    'pt-es': true,
-    'zh-pt': true,
-    'pt-zh': true,
+    'es-ES>pt-BR': true,
+    'pt-BR>es-ES': true,
+    'zh-CN>pt-BR': true,
+    'pt-BR>zh-CN': true,
   });
   expect(PluginManager.registerButton).toHaveBeenCalledWith(
     2,

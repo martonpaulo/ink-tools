@@ -9,6 +9,7 @@ import {
   ALL_DIRECTIONS,
   Direction,
   directionId,
+  legacyDirectionId,
 } from '@ink-tools/ink-core';
 import type {PictureMode, SourceAdapter} from '@ink-tools/picture-search';
 import {copy} from './copy';
@@ -96,7 +97,8 @@ export const TRANSLATIONS: readonly Translation[] = ALL_DIRECTIONS.map(
     key: directionId(direction),
     buttonId: CHOOSE_BUTTON_ID + 1 + index,
     name: copy['button.translate'](direction),
-    icon: `translate-${directionId(direction)}.png`,
+    // The icon files keep the key before #500: `translate-es-pt.png`.
+    icon: `translate-${legacyDirectionId(direction)}.png`,
   }),
 );
 

@@ -1,5 +1,5 @@
 import {LANGUAGES} from '../src/dictionary';
-import {ALL_DIRECTIONS, directionId, PAIRS} from '../src/pairs';
+import {ALL_DIRECTIONS, directionId, legacyDirectionId, PAIRS} from '../src/pairs';
 
 test('the pairs are PT with ES and PT with ZH, each id unique and of two known languages', () => {
   expect(PAIRS.map(p => p.id)).toEqual(['es-pt', 'zh-pt']);
@@ -12,5 +12,6 @@ test('the pairs are PT with ES and PT with ZH, each id unique and of two known l
 });
 
 test('every direction of every pair, both ways, in PAIRS order, each with its own id (#174)', () => {
-  expect(ALL_DIRECTIONS.map(directionId)).toEqual(['es-pt', 'pt-es', 'zh-pt', 'pt-zh']);
+  expect(ALL_DIRECTIONS.map(directionId)).toEqual(['es-ES>pt-BR', 'pt-BR>es-ES', 'zh-CN>pt-BR', 'pt-BR>zh-CN']);
+  expect(ALL_DIRECTIONS.map(legacyDirectionId)).toEqual(['es-pt', 'pt-es', 'zh-pt', 'pt-zh']);
 });

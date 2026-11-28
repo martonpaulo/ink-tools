@@ -113,10 +113,10 @@ test('a refused insert says the translation could not be inserted', async () => 
 
 test('one button per direction, named after it, with fixed ids after Choose Image', () => {
   expect(TRANSLATIONS.map(t => [t.key, t.buttonId, t.name])).toEqual([
-    ['es-pt', CHOOSE_BUTTON_ID + 1, 'Translate ES→PT'],
-    ['pt-es', CHOOSE_BUTTON_ID + 2, 'Translate PT→ES'],
-    ['zh-pt', CHOOSE_BUTTON_ID + 3, 'Translate ZH→PT'],
-    ['pt-zh', CHOOSE_BUTTON_ID + 4, 'Translate PT→ZH'],
+    ['es-ES>pt-BR', CHOOSE_BUTTON_ID + 1, 'Translate ES→PT'],
+    ['pt-BR>es-ES', CHOOSE_BUTTON_ID + 2, 'Translate PT→ES'],
+    ['zh-CN>pt-BR', CHOOSE_BUTTON_ID + 3, 'Translate ZH→PT'],
+    ['pt-BR>zh-CN', CHOOSE_BUTTON_ID + 4, 'Translate PT→ZH'],
   ]);
 });
 

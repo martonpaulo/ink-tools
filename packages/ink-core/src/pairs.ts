@@ -3,6 +3,7 @@
  * «Translate ES→PT» buttons read (#174). Pure data; Lookup stores which directions are on.
  */
 import type {LanguageCode} from './dictionary';
+import {pairId} from './languages';
 
 export interface LanguagePair {
   /** Stable Settings key, as docs/architecture.md writes it: the other language, then `pt`. */
@@ -37,5 +38,11 @@ const bothWays = (pairs: readonly LanguagePair[]): Direction[] =>
  */
 export const ALL_DIRECTIONS: readonly Direction[] = bothWays(PAIRS);
 
-/** A direction's stable Settings key: `es-pt` for Spanish to Portuguese. */
-export const directionId = ({from, to}: Direction): string => `${from}-${to}`;
+/** A direction's stable Settings key, the registry's pair id: `es-ES>pt-BR` for Spanish to Portuguese (#500). */
+export const directionId = ({from, to}: Direction): string => pairId(from, to);
+
+/**
+ * A direction's key before #500, `es-pt`: what settings files saved, which a reader migrates, and
+ * the name of its icon file, which stays.
+ */
+export const legacyDirectionId = ({from, to}: Direction): string => `${from}-${to}`;

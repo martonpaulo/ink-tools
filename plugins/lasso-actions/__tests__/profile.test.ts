@@ -70,10 +70,10 @@ describe('the settings file', () => {
       photo: true,
       choose: false,
       directions: {
-        'es-pt': true,
-        'pt-es': true,
-        'zh-pt': false,
-        'pt-zh': false,
+        'es-ES>pt-BR': true,
+        'pt-BR>es-ES': true,
+        'zh-CN>pt-BR': false,
+        'pt-BR>zh-CN': false,
       },
       sourcesOff: ['openmoji'],
       dataSaver: true,
@@ -120,13 +120,27 @@ describe('the settings file', () => {
       '{"version": 1, "definition": true, "translation": true, "pairs": {"es-pt": true, "zh-pt": false}}',
     );
     expect(parsed.settings.directions).toEqual({
-      'es-pt': true,
-      'pt-es': false,
-      'zh-pt': true,
-      'pt-zh': true,
+      'es-ES>pt-BR': true,
+      'pt-BR>es-ES': false,
+      'zh-CN>pt-BR': true,
+      'pt-BR>zh-CN': true,
     });
     expect(parsed.settings).not.toHaveProperty('pairs');
     expect(parsed.problems).toEqual([]);
+  });
+
+  test('a file written before #500 keeps each direction on or off under its new key', () => {
+    const parsed = parseSettings(
+      '{"directions": {"es-pt": false, "pt-es": true, "zh-pt": false, "pt-zh": true}}',
+    );
+    expect(parsed.settings.directions).toEqual({
+      'es-ES>pt-BR': false,
+      'pt-BR>es-ES': true,
+      'zh-CN>pt-BR': false,
+      'pt-BR>zh-CN': true,
+    });
+    expect(parsed.problems).toEqual([]);
+    expect(JSON.parse(serializeSettings(parsed.settings)).directions).toEqual(parsed.settings.directions);
   });
 
   test('a direction that is not true or false takes its default and is named; an unknown one is dropped', () => {
@@ -134,10 +148,10 @@ describe('the settings file', () => {
       '{"directions": {"es-pt": "yes", "pt-es": true, "en-pt": true}}',
     );
     expect(parsed.settings.directions).toEqual({
-      'es-pt': true,
-      'pt-es': true,
-      'zh-pt': true,
-      'pt-zh': true,
+      'es-ES>pt-BR': true,
+      'pt-BR>es-ES': true,
+      'zh-CN>pt-BR': true,
+      'pt-BR>zh-CN': true,
     });
     expect(parsed.problems).toEqual([
       'settings: directions.es-pt is not true or false; the default is used',
@@ -149,8 +163,8 @@ describe('the settings file', () => {
 
   test('a parsed file never shares its direction map with the defaults', () => {
     const parsed = parseSettings(null).settings;
-    parsed.directions['pt-es'] = true;
-    expect(defaultSettings.directions['pt-es']).toBe(false);
+    parsed.directions['pt-BR>es-ES'] = true;
+    expect(defaultSettings.directions['pt-BR>es-ES']).toBe(false);
   });
 
   test('a switch that is not true or false takes its default and is named', () => {

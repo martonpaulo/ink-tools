@@ -5,7 +5,7 @@
  * before (#115). Each translation direction has its own switch and button (#174, owner 2026-11-16:
  * no automatic direction); the owner's three directions start on, every other one off.
  */
-import {ALL_DIRECTIONS, directionId} from '@ink-tools/ink-core';
+import {ALL_DIRECTIONS, directionId, legacyDirectionId} from '@ink-tools/ink-core';
 import {DEFAULT_ADAPTERS} from '@ink-tools/picture-search';
 import type {SettingsCodec} from './profile';
 import {MODULE_IDS, type ModuleId} from './moduleIds';
@@ -82,8 +82,16 @@ export const SWITCH_KEYS: readonly SwitchKey[] = [
   'summary',
 ];
 
-/** The owner's directions, on in a new install (owner, 2026-11-16, #174). */
-const DIRECTIONS_ON: readonly string[] = ['es-pt', 'zh-pt', 'pt-zh'];
+/** The owner's directions, on in a new install (owner, 2026-11-16, #174), by their key before #500. */
+const DIRECTIONS_ON_BEFORE: readonly string[] = ['es-pt', 'zh-pt', 'pt-zh'];
+const DIRECTIONS_ON: readonly string[] = ALL_DIRECTIONS.filter(d =>
+  DIRECTIONS_ON_BEFORE.includes(legacyDirectionId(d)),
+).map(directionId);
+
+/** Each direction's key before #500 (`es-pt`), by its key now (`es-ES>pt-BR`): a saved file is migrated. */
+const LEGACY_KEYS: Readonly<Record<string, string>> = Object.fromEntries(
+  ALL_DIRECTIONS.map(d => [directionId(d), legacyDirectionId(d)]),
+);
 
 export const defaultSettings: LookupSettings = {
   definition: false,
@@ -164,13 +172,16 @@ export function parseSettings(text: string | null): {
     typeof directions === 'object' &&
     !Array.isArray(directions)
   ) {
+    const saved = directions as Record<string, unknown>;
     for (const id of Object.keys(settings.directions)) {
-      const value = (directions as Record<string, unknown>)[id];
+      // A file written before #500 holds `es-pt`; the new key wins when both are there.
+      const key = saved[id] === undefined ? LEGACY_KEYS[id] : id;
+      const value = saved[key];
       if (typeof value === 'boolean') {
         settings.directions[id] = value;
       } else if (value !== undefined) {
         problems.push(
-          `settings: directions.${id} is not true or false; the default is used`,
+          `settings: directions.${key} is not true or false; the default is used`,
         );
       }
     }
