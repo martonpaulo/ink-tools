@@ -37,6 +37,13 @@ export function levelStyle(level: HeadingLevel): TitleStyle {
 export const HEADING_MARGIN = 96;
 
 /**
+ * The space NOTE's lasso rect holds around its ink on each side, in page pixels (device round 12,
+ * #252: an Own Size heading sent to x 96 to 352 saved its TITLERECT at 101 to 347, and a Full Width
+ * one sent to 96 to 1824 saved 121 to 1803, the same space scaled with the strokes).
+ */
+export const LASSO_SPACE = 5;
+
+/**
  * Where the heading of the lassoed `rect` goes on a page of `page` size: at the leading margin, at
  * the lasso's own top and height, so it stays on its line. With `own` it keeps the handwriting's
  * width and proportions: `resizeLassoRect` scales the strokes to the rect it is given, and the
@@ -56,14 +63,31 @@ export function placement(
   if (rect.right - rect.left <= 0 || height <= 0 || page.width <= 2 * margin) {
     return null;
   }
-  const width = size === 'full' ? page.width - 2 * margin : rect.right - rect.left;
+  if (size === 'full') {
+    return {...fullWidth(rect.right - rect.left, page.width, margin), ...rows(rect, page, height)};
+  }
+  const width = rect.right - rect.left;
   const left = Math.min(margin, Math.max(0, page.width - width));
+  return {left: Math.round(left), right: Math.round(left + width), ...rows(rect, page, height)};
+}
+
+/** The lasso's own top and height, moved back onto the page when it reaches past the foot. */
+function rows(rect: Rect, page: Size, height: number): Pick<Rect, 'top' | 'bottom'> {
   const tall = Math.min(height, page.height);
   const top = Math.min(Math.max(0, rect.top), page.height - tall);
+  return {top: Math.round(top), bottom: Math.round(top + tall)};
+}
+
+/**
+ * The lasso rect whose ink spans the writing width: `resizeLassoRect` scales the whole lasso rect,
+ * its space around the ink too, so the rect grows past each margin by that space at the new scale,
+ * and the ink, not the rect, lands on the margins (device round 12, #252). Kept inside the page.
+ */
+function fullWidth(lassoWidth: number, pageWidth: number, margin: number): Pick<Rect, 'left' | 'right'> {
+  const ink = lassoWidth - 2 * LASSO_SPACE;
+  const grow = ink > 0 ? (LASSO_SPACE * (pageWidth - 2 * margin)) / ink : 0;
   return {
-    left: Math.round(left),
-    top: Math.round(top),
-    right: Math.round(left + width),
-    bottom: Math.round(top + tall),
+    left: Math.round(Math.max(0, margin - grow)),
+    right: Math.round(Math.min(pageWidth, pageWidth - margin + grow)),
   };
 }

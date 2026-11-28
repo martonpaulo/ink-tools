@@ -24,9 +24,9 @@ to a native title style (1 black, 2 shadow, 3 dark grey, 4 light grey) and place
 its own line at the leading margin (`HEADING_MARGIN`, inferred until the device probe, Task 1 of
 [#252](https://github.com/martonpaulo/ink-tools/issues/252), measures it), at the size Settings › «Heading Size» names, saved as
 `headings.size` and read at each press (owner D90): «Own Size», the default, keeps the
-handwriting's width; «Full Width» spans the writing width. `resizeLassoRect` scales the strokes to
-the rect it gets, and a title's box is its strokes' box (device round 7), so «Full Width» stretches
-the handwriting. `src/headings/run.ts` reads the lasso and the page size together, sets the title through
+handwriting's width; «Full Width» puts its ink on both margins, the target grown by the lasso's own
+space (`LASSO_SPACE`, device round 12). `resizeLassoRect` scales the strokes to the rect it gets,
+and a title's box is its strokes' box (device round 7), so «Full Width» stretches the handwriting. `src/headings/run.ts` reads the lasso and the page size together, sets the title through
 sn-adapter's `setLassoTitle`, lassoes its strokes again, then moves them with `resizeLassoRect`: a
 move sent before the title in the same press was lost (device round 9). A failed title changes
 nothing; a failed move keeps the title and says so.

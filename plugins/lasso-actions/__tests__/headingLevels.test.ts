@@ -3,6 +3,7 @@ import {TITLE_STYLE} from '@ink-tools/sn-adapter/official';
 import {
   HEADING_LEVELS,
   HEADING_MARGIN,
+  LASSO_SPACE,
   levelStyle,
   placement,
 } from '../src/headings/levels';
@@ -72,12 +73,23 @@ test('an empty rect or a page narrower than its margins places nothing', () => {
   ).toBeNull();
 });
 
-test('full width spans the writing width at the lasso\'s own top and height (owner D90)', () => {
-  expect(placement({left: 600, top: 400, right: 800, bottom: 460}, PAGE, 'full')).toEqual({
-    left: HEADING_MARGIN,
-    top: 400,
-    right: PAGE.width - HEADING_MARGIN,
-    bottom: 460,
-  });
+test('full width puts the ink, not the lasso\'s space, on both margins, at the lasso\'s own top and height (owner D90, #252)', () => {
+  const lasso = {left: 600, top: 400, right: 800, bottom: 460};
+  const target = placement(lasso, PAGE, 'full');
+  expect(target).toMatchObject({top: 400, bottom: 460});
+  // resizeLassoRect scales the lasso rect, its space around the ink with it (device round 12).
+  const scale = (target!.right - target!.left) / (lasso.right - lasso.left);
+  expect(target!.left + LASSO_SPACE * scale).toBeCloseTo(HEADING_MARGIN, 0);
+  expect(target!.right - LASSO_SPACE * scale).toBeCloseTo(PAGE.width - HEADING_MARGIN, 0);
+});
+
+test('full width stays inside the page, and a lasso with no room for its space spans the margins', () => {
+  const tiny = placement({left: 600, top: 400, right: 620, bottom: 460}, PAGE, 'full');
+  expect(tiny).toMatchObject({left: 0, right: PAGE.width});
+  const empty = placement({left: 600, top: 400, right: 610, bottom: 460}, PAGE, 'full');
+  expect(empty).toMatchObject({left: HEADING_MARGIN, right: PAGE.width - HEADING_MARGIN});
+});
+
+test('own size keeps the lasso\'s width at the margin', () => {
   expect(placement({left: 600, top: 400, right: 800, bottom: 460}, PAGE, 'own')?.right).toBe(HEADING_MARGIN + 200);
 });

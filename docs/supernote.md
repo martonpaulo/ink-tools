@@ -633,6 +633,12 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   lasso row press, `resizeLassoRect` then `setLassoTitle` 15 to 46 ms later answered success and
   left the title at its old place, unmoved, on 6 of 7 presses [measured, Lasso Actions 0.2.0
   beta 33, Manta, 2026-11-26, [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings titles first, then lassoes and moves.
+- `resizeLassoRect` scales the whole lasso rect, with the space NOTE's lasso holds around its ink:
+  a title sent to x 96 to 352 saved its `TITLERECT` at 101 to 347, and one stretched to 96 to 1824
+  saved 121 to 1803, about 5 px a side at the old scale [measured, Lasso Actions 0.2.0 beta 33,
+  Manta, 2026-11-26, [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings' «Full Width» grows the target by that space at the new
+  scale, so the ink lands on the margins; that it does is [unverified] until a device round reads the
+  saved `TITLERECT`.
 - A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
   Run Command, Snap and Send Page. Opening that menu clears a lasso: a lassoed drawing, then the
   menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been

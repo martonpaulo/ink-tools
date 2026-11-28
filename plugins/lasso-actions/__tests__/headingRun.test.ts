@@ -185,11 +185,12 @@ test('each press uses Settings › Heading Size: own size keeps the width, full 
   const own = fakeHost();
   expect(await applyHeading(2, own.host)).toMatchObject({ok: true, rect: {left: HEADING_MARGIN, right: HEADING_MARGIN + 200}});
   const full = fakeHost({size: async () => 'full'});
-  expect(await applyHeading(2, full.host)).toMatchObject({
-    ok: true,
-    rect: {left: HEADING_MARGIN, top: 400, right: PAGE.width - HEADING_MARGIN, bottom: 460},
-  });
-  expect(full.calls.at(-1)).toBe(`resize ${HEADING_MARGIN},400,${PAGE.width - HEADING_MARGIN},460`);
+  // The lasso rect grows past each margin by its own space at the new scale, so the ink lands on
+  // the margins (device round 12, #252): a 200 px lasso holds 190 px of ink.
+  const grow = Math.round((5 * (PAGE.width - 2 * HEADING_MARGIN)) / 190);
+  const rect = {left: HEADING_MARGIN - grow, top: 400, right: PAGE.width - HEADING_MARGIN + grow, bottom: 460};
+  expect(await applyHeading(2, full.host)).toMatchObject({ok: true, rect});
+  expect(full.calls.at(-1)).toBe(`resize ${rect.left},400,${rect.right},460`);
 });
 
 test("on the tablet a pasted selection holds ui-kit's Error state with its reason (#428)", async () => {
