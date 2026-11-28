@@ -120,7 +120,8 @@ export function GameView({
     (what: string, retry: () => void, why: string) => {
       pages.log(`${game.id}: ${what}: ${why}`);
       // Only a page that cannot be read points at the note; another failure has no known cause.
-      const reason = what === playCopy['error.here'] ? playCopy['error.hereHint'] : playCopy['error.hint'];
+      const reason =
+        what === playCopy['error.here'] ? playCopy['error.hereHint'] : what === playCopy['error.make'] ? playCopy['error.makeHint'] : playCopy['error.hint'];
       setScreen({kind: 'error', problem: {what, reason}, retry});
     },
     [game.id, pages],

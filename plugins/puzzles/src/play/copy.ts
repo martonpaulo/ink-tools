@@ -54,7 +54,8 @@ export const playCopy = {
   'error.here': 'Puzzles could not read this page.',
   'error.add': 'Puzzles could not add the page.',
   'error.check': 'Puzzles could not check this page.',
-  'error.make': 'Puzzles could not make the puzzle of this page.',
+  'error.make': 'Puzzles could not set up the puzzle on this page.',
+  'error.makeHint': 'Press Retry. If it fails again, add a new page of this game.',
   'error.hereHint': 'Make sure a note is open, then press Retry.',
   'error.hint': 'Press Retry. If it fails again, close Puzzles and open it again.',
 } as const;

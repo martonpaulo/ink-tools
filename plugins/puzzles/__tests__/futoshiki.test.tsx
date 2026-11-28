@@ -78,7 +78,7 @@ describe('the futoshiki game (#390)', () => {
     const {pages, lines} = fakePages({code: CODE, ink: written(), read: readDigits});
     const tree = await mount(broken, pages);
     await press(tree, playCopy['here.check']);
-    expect(shownTexts(tree.root)).toContain(playCopy['error.make']);
+    expect(shownTexts(tree.root)).toEqual(expect.arrayContaining([playCopy['error.make'], playCopy['error.makeHint']]));
     expect(shownTexts(tree.root)).not.toContain(playCopy['here.none'](futoshikiCopy.title));
     expect(lines.some(line => line.includes('is not a futoshiki page: Error: no such puzzle'))).toBe(true);
   });
