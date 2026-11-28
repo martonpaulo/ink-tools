@@ -4740,7 +4740,7 @@ LOCALGO_INSTALL = "go install github.com/bethropolis/localgo/cmd/localgo@v0.6.9"
 LOCALSEND_FOLDER = Path(__file__).resolve().parents[3] / ".scratch/localsend-received"
 LOCALSEND_STATE = Path.home() / ".cache/inkctl/localsend.json"
 LOCALSEND_ALIAS = SERVICES["testObjectName"]
-LOCALSEND_PORT = 53317  # LocalSend's own default port
+LOCALSEND_PORT = 53317  # LocalSend's own default port; plugins/device-link/src/localsend/protocol.json is its golden (#295)
 LOCALSEND_INFO = "/api/localsend/v2/info"
 LOCALSEND_START_TIMEOUT = 15.0
 

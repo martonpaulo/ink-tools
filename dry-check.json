@@ -163,19 +163,17 @@
    },
    {
     "rule": "LocalSend API path: /api/localsend/v2",
-    "owner": "plugins/device-link/src/localsend/protocol.ts",
-    "other": "plugins/device-link/native/src/com/relay/localsend",
+    "owner": "plugins/device-link/native/src/com/relay/localsend/Protocol.java",
+    "other": "cli/inkctl/src/inkctl",
     "pattern": "/api/localsend/v2",
-    "golden": "",
-    "open": 295
+    "golden": "plugins/device-link/src/localsend/protocol.json"
    },
    {
     "rule": "LocalSend JSON message limit: 64 KiB",
-    "owner": "plugins/device-link/src/localsend/protocol.ts",
-    "other": "plugins/device-link/native/src/com/relay/localsend",
+    "owner": "plugins/device-link/native/src/com/relay/localsend/Protocol.java",
+    "other": "plugins/device-link/src/localsend",
     "pattern": "MAX_\\w*BYTES = 64 \\* 1024",
-    "golden": "",
-    "open": 295
+    "golden": "plugins/device-link/src/localsend/protocol.json"
    },
    {
     "rule": "Account Sync native module name: BridgeFiles",
@@ -214,11 +212,10 @@
    },
    {
     "rule": "LocalSend default port: 53317",
-    "owner": "plugins/device-link/src/localsend",
-    "other": "cli/inkctl/src/inkctl",
+    "owner": "cli/inkctl/src/inkctl",
+    "other": "plugins/device-link/src/localsend",
     "pattern": "53317",
-    "golden": "",
-    "open": 295
+    "golden": "plugins/device-link/src/localsend/protocol.json"
    },
    {
     "rule": "A failure log's word for a firmware or app version it could not read: unread",
@@ -644,7 +641,7 @@
     "packages/sn-adapter/src/official/storage.ts": 1,
     "packages/ui-kit/src/problem.ts": 1,
     "plugins/account-sync/src/settingsStore.ts": 1,
-    "plugins/device-link/native/src/com/relay/localsend/Receiver.java": 1,
+    "plugins/device-link/native/src/com/relay/localsend/Timeouts.java": 1,
     "plugins/device-link/src/receive/receive.ts": 3,
     "plugins/device-link/src/run.ts": 3,
     "plugins/image-editing/native/src/com/retouch/image/Retouch.java": 3,

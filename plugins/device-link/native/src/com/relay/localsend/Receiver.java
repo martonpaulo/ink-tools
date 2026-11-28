@@ -28,11 +28,10 @@ import javax.net.ssl.SSLContext;
  * {@link PinnedClient} as the sender. Never logs a body, a token or a session id.
  */
 public final class Receiver {
-  public static final String BASE = "/api/localsend/v2/";
-  public static final int MAX_JSON_BYTES = 64 * 1024;
+  public static final String BASE = Protocol.API_BASE + "/";
+  public static final int MAX_JSON_BYTES = Protocol.MAX_MESSAGE_BYTES;
   public static final long MAX_FILE_BYTES = 30L * 1024 * 1024;
   static final int MAX_HEAD_BYTES = 16 * 1024;
-  static final int READ_MS = 15000;
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
   private static final SecureRandom RANDOM = new SecureRandom();
@@ -174,7 +173,7 @@ public final class Receiver {
         return;
       }
       try {
-        socket.setSoTimeout(READ_MS);
+        socket.setSoTimeout(Timeouts.RECEIVER_READ_MS);
         handle(socket);
       } catch (Exception dropped) {
         // A broken connection ends that request only.

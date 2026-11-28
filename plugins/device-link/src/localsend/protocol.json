@@ -1,0 +1,5 @@
+{
+  "apiBase": "/api/localsend/v2",
+  "maxMessageBytes": 65536,
+  "port": 53317
+}

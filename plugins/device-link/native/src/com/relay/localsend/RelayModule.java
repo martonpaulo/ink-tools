@@ -36,8 +36,6 @@ import java.util.concurrent.TimeUnit;
  */
 public final class RelayModule extends ReactContextBaseJavaModule {
   private static final Charset UTF_8 = Charset.forName("UTF-8");
-  /** How long the receiver waits for JS to decide an offer before it answers 500. */
-  private static final long DECIDE_MS = 10000;
 
   private final ExecutorService worker = Executors.newSingleThreadExecutor();
   private final LinkedBlockingQueue<WritableMap> arrivals = new LinkedBlockingQueue<>();
@@ -330,7 +328,7 @@ public final class RelayModule extends ReactContextBaseJavaModule {
                           offer.putString("token", token);
                           arrivals.add(offer);
                           Receiver.Decision decision =
-                              decisions.poll(DECIDE_MS, TimeUnit.MILLISECONDS);
+                              decisions.poll(Timeouts.DECIDE_MS, TimeUnit.MILLISECONDS);
                           if (decision == null) {
                             throw new SocketTimeoutException("no decision");
                           }

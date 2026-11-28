@@ -3,16 +3,18 @@
  * turned into our own types. The native module only moves bytes; everything it hands back is
  * untrusted and is checked here before use.
  *
- * Protocol: https://github.com/localsend/protocol (v2.1).
+ * Protocol: https://github.com/localsend/protocol (v2.1). The port, the API base and the message
+ * limit come from `protocol.json`, the golden file the Java tests and inkctl's test read too (#295).
  */
+import golden from './protocol.json';
 
 /** The LocalSend port and multicast group every receiver listens on by default. */
-export const LOCALSEND_PORT = 53317;
+export const LOCALSEND_PORT = golden.port;
 export const MULTICAST_GROUP = '224.0.0.167';
 export const PROTOCOL_VERSION = '2.1';
 
 /** The largest multicast or HTTP answer we parse; anything longer is dropped (Plan › Security). */
-export const MAX_ANSWER_BYTES = 64 * 1024;
+export const MAX_ANSWER_BYTES = golden.maxMessageBytes;
 
 export type Scheme = 'https' | 'http';
 
@@ -88,7 +90,7 @@ export function prepareUploadBody(sender: Sender, offer: Offer): string {
 }
 
 function baseUrl(device: Device): string {
-  return `${device.protocol}://${device.ip}:${device.port}/api/localsend/v2`;
+  return `${device.protocol}://${device.ip}:${device.port}${golden.apiBase}`;
 }
 
 export function prepareUploadUrl(device: Device): string {

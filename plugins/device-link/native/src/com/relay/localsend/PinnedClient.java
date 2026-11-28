@@ -33,7 +33,7 @@ import javax.net.ssl.X509TrustManager;
  */
 public final class PinnedClient {
   /** The largest answer we read; the protocol parser drops anything longer. */
-  public static final int MAX_ANSWER_BYTES = 64 * 1024;
+  public static final int MAX_ANSWER_BYTES = Protocol.MAX_MESSAGE_BYTES;
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
 

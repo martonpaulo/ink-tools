@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public final class Discovery {
   /** The largest datagram we keep; a longer one is dropped, as the protocol parser does. */
-  public static final int MAX_BYTES = 64 * 1024;
+  public static final int MAX_BYTES = Protocol.MAX_MESSAGE_BYTES;
 
   private static final Charset UTF_8 = Charset.forName("UTF-8");
 

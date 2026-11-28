@@ -8,7 +8,7 @@ const {defineBuild} = require('../../../packages/native-build/native-build.cjs')
 const hostTools = require('./host-tools.cjs');
 
 const root = path.resolve(__dirname, '..');
-const TESTED = ['Discovery', 'Identity', 'PinnedClient', 'Receiver', 'TextFiles'];
+const TESTED = ['Discovery', 'Identity', 'PinnedClient', 'Protocol', 'Receiver', 'TextFiles'];
 
 module.exports = defineBuild(
   {
@@ -21,7 +21,7 @@ module.exports = defineBuild(
       jvmTests({
         prefix: 'relay',
         files: [
-          ...TESTED.map(name => path.join(root, `native/src/com/relay/localsend/${name}.java`)),
+          ...[...TESTED, 'Timeouts'].map(name => path.join(root, `native/src/com/relay/localsend/${name}.java`)),
           ...javaSources(path.join(root, 'native/tests')),
         ],
         mains: TESTED.map(name => `com.relay.localsend.${name}Test`),
