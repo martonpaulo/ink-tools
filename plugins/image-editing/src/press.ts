@@ -2,8 +2,8 @@
  * One edit's press (#170), run from a button of the editor view (#226, src/editor.ts): a press
  * either changes the picture or shows why it did not, never nothing. A file permission the host does not hold now («Ask Every Time», or «Allow
  * This Time Only», which the host revokes when the next press starts: docs/supernote.md ›
- * Plugins) opens Settings, which asks for it while a view shows, and tells the person to choose
- * Always Allow. An edit past the owner's 2 s limit shows the «Loading…» strip (#103, #145).
+ * Plugins) opens Settings, which asks for it while a view shows; once the person allowed it, the same
+ * press goes on, and if not it says to choose Always Allow and press again (#538). An edit past the owner's 2 s limit shows the «Loading…» strip (#103, #145).
  */
 import {
   hasPermission,
@@ -148,12 +148,18 @@ export async function pressEdit(
   edit: EditDefinition,
   deps: PressDeps = PRESS_DEVICE,
 ): Promise<Done | PageDone | null> {
-  const missing = await deps.missing();
+  let missing = await deps.missing();
   if (missing.length > 0) {
     deps.log(`${edit.id}: missing ${missing.join(', ')}; opening Settings`);
-    deps.toast(copy['press.permission']);
     await deps.ask();
-    return null;
+    // The answer arrived while the question showed: when it was Allow, this same press goes on (#538).
+    missing = await deps.missing();
+    if (missing.length > 0) {
+      // Still not allowed: the person refused, so the view says what to do, and nothing runs (#538).
+      deps.fail({what: copy['press.permissionTitle'], reason: copy['press.permissionStep']});
+      return null;
+    }
+    deps.log(`${edit.id}: allowed in Settings; the press goes on`);
   }
   const each = PAGE_EDITS[edit.id];
   if (each) {

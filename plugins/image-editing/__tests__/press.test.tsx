@@ -28,7 +28,24 @@ function deps(missing: string[], done: Done) {
   return {d, toasts};
 }
 
-test('a permission revoked since the last press (Allow This Time Only) asks in Settings and says so', async () => {
+test('a permission answered Allow while the question showed lets the same press go on (#538)', async () => {
+  const {d, toasts} = deps(['plugin.permission.FILE:READ'], {kind: 'edited', edit: 'enhance', ms: 1});
+  let asked = false;
+  d.missing = async () => (asked ? [] : ['plugin.permission.FILE:READ']);
+  d.ask = jest.fn(async () => {
+    asked = true;
+  });
+  expect((await pressEdit(ENHANCE, d))?.kind).toBe('edited');
+  expect(d.ask).toHaveBeenCalledTimes(1);
+  expect(d.edit).toHaveBeenCalledTimes(1);
+  expect(toasts).toEqual([]);
+});
+
+test('the permission text names no question that was not asked (#538)', () => {
+  expect(copy['press.permission']).not.toMatch(/both|two/i);
+});
+
+test('a permission still missing after the question holds the file-access state and runs nothing (#538)', async () => {
   const {d, toasts} = deps(['plugin.permission.FILE:READ'], {
     kind: 'edited',
     edit: 'enhance',
@@ -37,7 +54,8 @@ test('a permission revoked since the last press (Allow This Time Only) asks in S
   expect(await pressEdit(ENHANCE, d)).toBeNull();
   expect(d.edit).not.toHaveBeenCalled();
   expect(d.ask).toHaveBeenCalledTimes(1);
-  expect(toasts).toEqual([copy['press.permission']]);
+  expect(d.fail).toHaveBeenCalledWith({what: copy['press.permissionTitle'], reason: copy['press.permissionStep']});
+  expect(toasts).toEqual([]);
 });
 
 test('a call refused for its file permission (1503) shows the permission toast', async () => {

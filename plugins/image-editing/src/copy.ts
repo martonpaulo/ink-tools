@@ -1,3 +1,7 @@
+/** The file-access text: its title is the Needs state's `what`, its step the `reason` (#538). */
+const PERMISSION_TITLE = 'Image Editing needs file access.';
+const PERMISSION_STEP = 'Choose Always Allow, then press again.';
+
 /** Every user-facing string of Retouch. English only; never inline in components (#93). */
 export const copy = {
   title: 'Image Editing',
@@ -76,8 +80,9 @@ export const copy = {
   'permission.files':
     'Image Editing keeps each picture as it was, for Undo and Restore original, in its own folder, which Supernote Cloud does not sync.',
   /** Toasts of a press that changed nothing (#170). */
-  'press.permission':
-    'Image Editing needs file access. Choose Always Allow for both questions, then press again.',
+  'press.permission': `${PERMISSION_TITLE} ${PERMISSION_STEP}`,
+  'press.permissionTitle': PERMISSION_TITLE,
+  'press.permissionStep': PERMISSION_STEP,
   'press.notPicture': 'Lasso one picture only, then press again.',
   /** An edit that reached the image step without its input (#295). */
   'edit.cropNoBox': 'Crop has no box',
