@@ -14,6 +14,7 @@ import {
   receiveOne,
   resetPlacedForTests,
   textBox,
+  fitText,
 } from '../src/receive/receive';
 import {receiveState, runReceive} from '../src/receive/session';
 import {fakeRelay} from '../test-support/fakeRelay';
@@ -362,6 +363,34 @@ describe('a received text keeps clear of the note\'s page bar (#577)', () => {
     for (const rect of rects) {
       expect(rect.bottom).toBeLessThanOrEqual(MANTA.height - PAGE_BAR_PX);
     }
+  });
+});
+
+describe('a received text longer than the page\'s room is cut at its box, not drawn over the bar (#577)', () => {
+  const MANTA = {width: 1920, height: 2560};
+  const long = 'word '.repeat(2000);
+
+  test('the inserted text fits its box and ends with the cut mark', async () => {
+    const host = note({
+      pageSize: jest.fn(async () => ok(MANTA)),
+      occupied: jest.fn(async () => ok({rects: [], complete: true})),
+    });
+    const result = await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]).api, host, 'Supernote');
+    expect(result).toBe(copy.receivedTextCut);
+    const box = (host.insertText as jest.Mock).mock.calls[0][0];
+    expect(box.rect.bottom).toBeLessThanOrEqual(MANTA.height - PAGE_BAR_PX);
+    expect(box.text.endsWith('…')).toBe(true);
+    expect(box.text.length).toBeLessThan(long.length);
+    // Cut again at the same box, it is whole: no line is left to draw past the box.
+    expect(fitText(box.text, box.rect).cut).toBe(false);
+  });
+
+  test('a text that fits, and each paragraph before the cut, stay whole', () => {
+    const rect = textBox(MANTA, 'one\ntwo');
+    expect(fitText('one\ntwo', rect)).toEqual({text: 'one\ntwo', cut: false});
+    const cut = fitText('first\n' + long, rect);
+    expect(cut.cut).toBe(true);
+    expect(cut.text.startsWith('first\n')).toBe(true);
   });
 });
 

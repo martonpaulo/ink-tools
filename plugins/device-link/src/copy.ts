@@ -35,6 +35,7 @@ export const copy = {
   starting: 'Starting…',
   stop: 'Stop',
   receivedText: 'Text added to the note',
+  receivedTextCut: 'Text added to the note, cut where the page ends',
   receivedImage: 'Picture added to the note',
   nothingArrived: 'Nothing arrived',
   receiveStopped: 'Receiving stopped',

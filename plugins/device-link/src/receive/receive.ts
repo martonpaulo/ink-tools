@@ -90,6 +90,31 @@ export function textBox(page: Size, text: string, after: number | null = null): 
 }
 
 /**
+ * `text` cut to the lines `rect` holds, with «…» where it was cut: the host draws a longer text
+ * past its box, over the page bar (#577, tablet row 134). Same line estimate as {@link textBox}.
+ * shortcut: the cut is by that estimate, not the host's own wrap; measure the real wrap to upgrade.
+ */
+export function fitText(text: string, rect: Rect): {text: string; cut: boolean} {
+  const perLine = Math.max(1, Math.floor((rect.right - rect.left) / (TEXT_FONT_SIZE * CHAR_WIDTH)));
+  let room = Math.max(1, Math.floor((rect.bottom - rect.top) / LINE_HEIGHT));
+  const kept: string[] = [];
+  const paragraphs = text.split('\n');
+  for (let index = 0; index < paragraphs.length; index += 1) {
+    const need = Math.max(1, Math.ceil(paragraphs[index].length / perLine));
+    if (need <= room) {
+      kept.push(paragraphs[index]);
+      room -= need;
+      continue;
+    }
+    // One character fewer than the room holds, so the «…» fits too.
+    const part = paragraphs[index].slice(0, Math.max(0, room * perLine - 1)).trimEnd();
+    kept.push(`${part}…`);
+    return {text: kept.join('\n'), cut: true};
+  }
+  return {text, cut: false};
+}
+
+/**
  * `host` with a page-size read that gives up after {@link PAGE_READ_MS}, on the host's own wait:
  * a JS timer never fires while the view is closed (#289). The device host is made with it
  * (`src/run.ts`); a test host whose wait ends at once is not, as every read would lose that race.
@@ -168,8 +193,12 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
         : `receive: no free band of ${rect.bottom - rect.top} px: the text goes over the ink`,
     );
   }
+  const fitted = fitText(text, rect);
+  if (fitted.cut) {
+    host.log(`receive: the text is longer than the page's room: cut to ${fitted.text.length} of ${text.length} characters`);
+  }
   await host.closeView();
-  const inserted = await host.insertText({text, rect, fontSize: TEXT_FONT_SIZE});
+  const inserted = await host.insertText({text: fitted.text, rect, fontSize: TEXT_FONT_SIZE});
   if (!inserted.ok || inserted.value !== true) {
     return copy.insertFailed;
   }
@@ -182,7 +211,7 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
     // A failed lasso still leaves the text in place.
     await host.lasso(rect);
   }
-  return copy.receivedText;
+  return fitted.cut ? copy.receivedTextCut : copy.receivedText;
 }
 
 /**
