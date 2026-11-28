@@ -30,6 +30,19 @@ const CROSS_END_SHARE = 0.1;
  * its nearest side, is a neighbour's mark spilling over the border, not a mark of this cell (#384).
  */
 export const SPILL_DEPTH = 0.15;
+/**
+ * [inference] a zigzag shades a cell when its ink turns back on itself at least this many times,
+ * each turn sharper than `ZIGZAG_TURN` and between legs at least `ZIGZAG_LEG` of the cell long, and
+ * the ink is at least `ZIGZAG_LENGTH` of the cell long (#574). A sparse zigzag of 22 px teeth in an
+ * 83 px cell covers too few sub-squares to be a shade by cover, and has no two lines that cross.
+ */
+const ZIGZAG_REVERSALS = 3;
+const ZIGZAG_TURN = (80 * Math.PI) / 180;
+const ZIGZAG_LEG = 0.12;
+const ZIGZAG_LENGTH = 0.9;
+/** [inference] the shortest leg of a two-turn zigzag, as a share of the cell, and how far its first and last legs may differ in direction. */
+const ZIGZAG_SHORT_LEG = 0.2;
+const ZIGZAG_PARALLEL = (30 * Math.PI) / 180;
 /** The sub-squares a cell is divided into, per side, to measure how much ink covers it. */
 const COVER_STEPS = 12;
 /** A segment counts as diagonal within 20 degrees of a quarter turn's half, in radians. */
@@ -256,7 +269,60 @@ function crossed(strokes: readonly InkStroke[], span: number): boolean {
 }
 
 /**
- * The kind of mark a cell's strokes make, in this order: none, a dot, a shade, a cross, else other.
+ * Whether a stroke zigzags: its direction, taken over a leg of `ZIGZAG_LEG` of the cell before a
+ * point and after it, changes by more than `ZIGZAG_TURN` at least `ZIGZAG_REVERSALS` times, so the
+ * jitter of a pen and the smooth turns of a circle or a 0 never count, and neighbouring points of one
+ * corner count once. With one turn fewer, the stroke still zigzags when its first and last legs
+ * run the same way and are each `ZIGZAG_SHORT_LEG` of the cell long: the end cell of a run, where the
+ * cut leaves a Z or an N, and not a 4, a U or a C.
+ * shortcut: a zigzag of two legs or fewer in one cell, a slash, has no turn to count and stays unread.
+ */
+function zigzags(strokes: readonly InkStroke[], size: number): boolean {
+  const leg = ZIGZAG_LEG * size;
+  const reach = (a: InkPoint, b: InkPoint): number => Math.hypot(b.x - a.x, b.y - a.y);
+  return strokes.some(({ points }) => {
+    const dense = densePoints(points, size * DENSE_SHARE);
+    const turns: number[] = [];
+    let turnStart = -1;
+    for (let i = 0; i < dense.length; i++) {
+      let before = i;
+      while (before > 0 && reach(dense[before], dense[i]) < leg) before--;
+      let after = i;
+      while (after < dense.length - 1 && reach(dense[i], dense[after]) < leg) after++;
+      const [first, second] = [reach(dense[before], dense[i]), reach(dense[i], dense[after])];
+      let sharp = false;
+      if (first >= leg && second >= leg) {
+        const dot = (dense[i].x - dense[before].x) * (dense[after].x - dense[i].x) + (dense[i].y - dense[before].y) * (dense[after].y - dense[i].y);
+        sharp = Math.acos(Math.max(-1, Math.min(1, dot / (first * second)))) > ZIGZAG_TURN;
+      }
+      // The corner is the middle of the run of sharp points around it.
+      if (sharp && turnStart < 0) turnStart = i;
+      if (!sharp && turnStart >= 0) {
+        turns.push(Math.floor((turnStart + i - 1) / 2));
+        turnStart = -1;
+      }
+    }
+    if (turnStart >= 0) turns.push(Math.floor((turnStart + dense.length - 1) / 2));
+    if (turns.length >= ZIGZAG_REVERSALS) return true;
+    if (turns.length !== ZIGZAG_REVERSALS - 1) return false;
+    const [t1, t2] = turns;
+    const first = [dense[t1].x - dense[0].x, dense[t1].y - dense[0].y];
+    const last = [dense[dense.length - 1].x - dense[t2].x, dense[dense.length - 1].y - dense[t2].y];
+    const [firstLength, lastLength] = [Math.hypot(first[0], first[1]), Math.hypot(last[0], last[1])];
+    if (firstLength < ZIGZAG_SHORT_LEG * size || lastLength < ZIGZAG_SHORT_LEG * size || reach(dense[t1], dense[t2]) < ZIGZAG_SHORT_LEG * size) return false;
+    return (first[0] * last[0] + first[1] * last[1]) / (firstLength * lastLength) > Math.cos(ZIGZAG_PARALLEL);
+  });
+}
+
+/** The length of the ink, in px. */
+function inkLength(strokes: readonly InkStroke[]): number {
+  let length = 0;
+  for (const { points } of strokes) for (let i = 1; i < points.length; i++) length += Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+  return length;
+}
+
+/**
+ * The kind of mark a cell's strokes make, in this order: none, a dot, a shade by cover, a cross, a shade by zigzag, else other.
  * A cross smaller than a dot counts as a dot; the letter x counts as a cross, so a letter game reads
  * its cells with `readCells`, never with this.
  */
@@ -269,5 +335,6 @@ export function classifyMark(grid: Grid, index: number, strokes: readonly InkStr
   if (Math.max(ink.right - ink.left, ink.bottom - ink.top) <= DOT_MAX_SHARE * size) return 'dot';
   if (coverOf(strokes, box, size) >= SHADE_MIN_COVER) return 'shade';
   if (crossed(strokes, CROSS_MIN_SPAN * size)) return 'cross';
+  if (inkLength(strokes) >= ZIGZAG_LENGTH * size && zigzags(strokes, size)) return 'shade';
   return 'other';
 }

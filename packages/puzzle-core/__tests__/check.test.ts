@@ -244,9 +244,20 @@ describe('marksByCell (#384)', () => {
     const zigzag = Array.from({ length: teeth + 1 }, (_, i) => ({ x: left + i * 22, y: i % 2 ? bottom : top }));
     const byCell = marksByCell(small, [stroke(zigzag)]);
     expect([0, 1, 2].map(cell => classifyMark(small, cell, byCell.get(cell) ?? []))).not.toContain('cross');
+    // And it reads as shaded in every cell of its run, as a quick zigzag is meant to (#574).
+    expect([0, 1, 2].map(cell => classifyMark(small, cell, byCell.get(cell) ?? []))).toEqual(['shade', 'shade', 'shade']);
     // Down and right, up, then down and left, without a lift: the two lines cross.
     const oneStroke = [...line(at(0.2, 0.2), at(0.8, 0.8)), ...line(at(0.8, 0.8), at(0.8, 0.2)), ...line(at(0.8, 0.2), at(0.2, 0.8))];
     expect(classifyMark(grid, 0, [stroke(oneStroke)])).toBe('cross');
+  });
+
+  test('a two-stroke cross, a slash and a circle on a small cell are no zigzag (#574)', () => {
+    const small: Grid = { lattice: 'square', x: 100, y: 100, cell: 83, columns: 15, rows: 15 };
+    const on = (u: number, v: number): InkPoint => ({ x: small.x + u * small.cell, y: small.y + v * small.cell });
+    expect(classifyMark(small, 0, [stroke(line(on(0.2, 0.2), on(0.8, 0.8))), stroke(line(on(0.8, 0.2), on(0.2, 0.8)))])).toBe('cross');
+    expect(classifyMark(small, 0, [stroke(line(on(0.2, 0.2), on(0.8, 0.8)))])).toBe('other');
+    const circle = Array.from({ length: 33 }, (_, i) => on(0.5 + 0.3 * Math.cos((i / 32) * 2 * Math.PI), 0.5 + 0.3 * Math.sin((i / 32) * 2 * Math.PI)));
+    expect(classifyMark(small, 0, [stroke(circle)])).toBe('other');
   });
 
   test('a cross spilling a little over its cell marks only its own cell', () => {
