@@ -43,8 +43,8 @@ describe('the jigsaw sudoku game (#397)', () => {
     const {pages, inserted, calls} = fakePages();
     const back = jest.fn();
     const tree = await mount(JIGSAW, pages, back);
-    expect(shownTexts(tree.root)).toEqual(expect.arrayContaining(['Difficulty', 'Easy', 'Medium', 'Hard']));
-    await press(tree, 'Difficulty: Medium');
+    expect(shownTexts(tree.root)).toEqual(expect.arrayContaining([playCopy.difficulty, 'Easy', 'Medium', 'Hard']));
+    await press(tree, `${playCopy.difficulty}: Medium`);
     await press(tree, playCopy['new.add']);
     const expected = generateJigsawSudoku(SEED, 'medium');
     expect(inserted.map(page => page.code)).toEqual([placedPageCode(puzzleCode(expected.id))]);

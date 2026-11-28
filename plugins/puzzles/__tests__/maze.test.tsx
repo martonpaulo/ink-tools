@@ -45,9 +45,9 @@ describe('the maze game (#386)', () => {
     const {pages, inserted, calls} = fakePages();
     const back = jest.fn();
     const tree = await mount(pages, back);
-    expect(shownTexts(tree.root)).toEqual(expect.arrayContaining(['Shape', 'Rectangle', 'Circle', 'Difficulty', 'Easy', 'Medium', 'Hard']));
+    expect(shownTexts(tree.root)).toEqual(expect.arrayContaining(['Shape', 'Rectangle', 'Circle', playCopy.difficulty, 'Easy', 'Medium', 'Hard']));
     await press(tree, 'Shape: Circle');
-    await press(tree, 'Difficulty: Hard');
+    await press(tree, `${playCopy.difficulty}: Hard`);
     await press(tree, playCopy['new.add']);
     const expected = generateMaze(SEED, mazePageSize('circle', 'hard', 'portrait'), 'hard');
     expect(inserted.map(page => page.code)).toEqual([placedPageCode(puzzleCode(expected.id))]);
