@@ -89,15 +89,16 @@ by the write path of [`AGENTS.md`](AGENTS.md#the-write-path).
 
 ## Memory
 
-Every drawn page is a grey raster of one byte per pixel: 2.6 MB on a 1404 x 1872 note, 4.9 MB on a
-1920 x 2560 one. The window keeps the pages in view and one on each side, and the pages of the last
-three moves of the view (a zoom or a scroll), so a zoom never ends on a grey placeholder
-([#564](https://github.com/martonpaulo/ink-tools/issues/564)). Measured by `PageImages.retainedExtraBytes`:
-- the extra memory is the pages of the last three moves outside the current window: about two pages
-  (5 to 10 MB) for a note read page by page or zoomed to the page's width;
-- at the smallest zoom of a large note, where a window holds a dozen pages, up to about two dozen extra
-  pages (60 to 120 MB), freed as the view settles on a few pages;
-- nothing else of a note stays in memory but thumbnails, which are small.
+Every drawn page is a grey raster of one byte per pixel, 4.7 MB on the tablet's 1920 x 2560 pages. The
+window keeps the pages in view and one on each side, and the pages of the last three moves of the view (a
+zoom or a scroll), so a zoom never ends on a grey placeholder
+([#564](https://github.com/martonpaulo/ink-tools/issues/564)). Measured with `PageImages.rasterBytes` and
+`retainedExtraBytes` on a 54-page note:
+- one page in view, moved by one page or zoomed in and out: 14 to 19 MB held, none of it extra, since the
+  windows overlap;
+- from the smallest zoom, with 12 pages in view, to one page: 66 MB at the most, then 42 MB beyond the
+  window of the page shown, freed after three more moves of the view;
+- thumbnails and the page list are small and stay on top of this.
 
 Where the app tells every feature's disk and memory is [#485](https://github.com/martonpaulo/ink-tools/issues/485);
 until its screen exists, this section is where the number is stated.
