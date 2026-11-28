@@ -8,7 +8,7 @@
  * shortcut: the box uses the tablet's default font, as the word conversion does, until the chosen
  * font of #144 has its device fact (`fontPath`); then the settings' font goes into the box here.
  */
-import type {Rect, Size} from '@ink-tools/ink-core';
+import {writableSize, type Rect, type Size} from '@ink-tools/ink-core';
 import type {
   Result,
   SavedStroke,
@@ -61,13 +61,15 @@ export function paragraphsOf(text: string): string {
 
 /**
  * The text box for `text` over the lasso's `rect`: from its top-left, at least as wide as the
- * lasso, each paragraph one line of a font sized from the lasso's height per line, inside the page.
+ * lasso, each paragraph one line of a font sized from the lasso's height per line, inside the page
+ * and above the note's page bar (#577), as the word box is.
  */
 export function lassoBoxFor(
   text: string,
   rect: Rect,
-  page: Size,
+  pageSize: Size,
 ): TextBoxInput {
+  const page = writableSize(pageSize);
   const lines = Math.max(1, text.split('\n').length);
   const inkLine = (rect.bottom - rect.top) / lines;
   const fontSize = Math.max(
@@ -80,10 +82,10 @@ export function lassoBoxFor(
     Math.ceil(rect.right - rect.left) + fontSize,
   );
   const left = Math.max(0, Math.min(Math.round(rect.left), page.width - width));
-  const top = Math.max(0, Math.round(rect.top));
   const height = Math.ceil(
     Math.max(rect.bottom - rect.top, lines * fontSize * LINE_SHARE),
   );
+  const top = Math.max(0, Math.min(Math.round(rect.top), page.height - height));
   return {
     text,
     fontSize,

@@ -10,6 +10,7 @@ import {
   setLastConversion,
   undoLast,
 } from '@ink-tools/ink-core/conversion';
+import {PAGE_BAR_PX} from '@ink-tools/ink-core';
 import {fakeTablet} from '../test-support/host';
 import {stroke} from '../../../packages/ink-core/testing/ink';
 
@@ -121,4 +122,18 @@ test('the box covers the lasso, one line per paragraph, inside the page', () => 
   expect(edge.rect.right).toBeLessThanOrEqual(PAGE.width);
   expect(edge.rect.bottom).toBeLessThanOrEqual(PAGE.height);
   expect(edge.fontSize).toBe(MIN_FONT_SIZE);
+});
+
+test('the box never reaches the note\'s page bar, for a word or a paragraph inside it (#577)', () => {
+  const manta = {width: 1920, height: 2560};
+  const floor = manta.height - PAGE_BAR_PX;
+  for (const top of [300, 2330, 2400, 2444, 2472, 2540]) {
+    for (const text of ['mesa', 'a\nb\nc']) {
+      const lines = text.split('\n').length;
+      const rect = {left: 100, top, right: 260, bottom: top + 40 * lines};
+      const box = lassoBoxFor(text, rect, manta);
+      expect(box.rect.bottom).toBeLessThanOrEqual(floor);
+      expect(box.rect.top).toBeGreaterThanOrEqual(0);
+    }
+  }
 });
