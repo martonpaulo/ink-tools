@@ -45,6 +45,17 @@ describe('paginate', () => {
     ]);
   });
 
+  it('moves a lone first row of a group to the next page, unless that leaves the page under half used (#594)', () => {
+    const other = (height: number) => ({height, group: {key: 'h', chrome: 50, gap: 1}});
+    // Page 1 would hold three rows of g and the first of h: that row goes with its caption to page 2.
+    expect(paginate([inGroup(80), inGroup(80), inGroup(80), other(80), other(80), other(80)], 50 + 3 * 80 + 2 + 50 + 80 + 60, 60)).toEqual([
+      {from: 0, to: 3},
+      {from: 3, to: 6},
+    ]);
+    // An intro and the first row of a list: the row stays, or the intro would be alone on its page.
+    expect(paginate([row(60), other(80), other(80), other(80)], 60 + 50 + 80 + 60 + 5, 60)[0]).toEqual({from: 0, to: 2});
+  });
+
   it('gives a part taller than a page a page of its own', () => {
     expect(paginate([row(500), row(80)], 300, 60)).toEqual([
       {from: 0, to: 1},

@@ -47,7 +47,7 @@ function pageHeight(units: readonly Unit[]): number {
 /**
  * The pages of `units` in `room`: one page when everything fits with no pager, else as many units
  * as fit beside `pager` on each page, at least one; a unit taller than a page gets one of its own.
- * A group's last row never stands alone on a page: the row before it moves with it (#594).
+ * A group's last or first row never stands alone on a page: the row beside it moves with it (#594).
  */
 export function paginate(units: readonly Unit[], room: number, pager: number): PageRange[] {
   if (pageHeight(units) <= room + TOLERANCE) {
@@ -59,9 +59,13 @@ export function paginate(units: readonly Unit[], room: number, pager: number): P
     while (to < units.length && pageHeight(units.slice(from, to + 1)) + pager <= room + TOLERANCE) {
       to += 1;
     }
-    // Never leave one row of a group alone on the next page: the page before gives it a neighbour (#594).
+    // Never leave one row of a group alone on a page, last or first: it moves with its neighbour,
+    // unless that leaves its page under half used, as the intro alone would be (#594).
     const [last, before, next, after] = [units[to - 1], units[to - 2], units[to], units[to + 1]];
-    if (to - from > 1 && last.group && before?.group?.key === last.group.key && next?.group?.key === last.group.key && after?.group?.key !== last.group.key) {
+    const sameAs = (unit: Unit | undefined) => Boolean(unit?.group && unit.group.key === last.group?.key);
+    const widow = sameAs(before) && sameAs(next) && !sameAs(after);
+    const orphan = !sameAs(before) && sameAs(next) && pageHeight(units.slice(from, to - 1)) + pager > room / 2;
+    if (to - from > 1 && last.group && (widow || orphan)) {
       to -= 1;
     }
     pages.push({from, to});
