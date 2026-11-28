@@ -1,6 +1,7 @@
 package com.relay.localsend;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.net.wifi.WifiManager;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
@@ -199,6 +200,32 @@ public final class RelayModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void exists(final String path, final Promise promise) {
     promise.resolve(new File(path).exists());
+  }
+
+  /**
+   * Resolves a picture file's `{width, height}` in pixels from its header, no pixel decoded
+   * (#540): React Native's `Image.getSize` gave no size for a received PNG on the tablet, so the
+   * picture went to the page centre over the writing. Rejects `NOT_IMAGE` when no size is read.
+   */
+  @ReactMethod
+  public void imageSize(final String path, final Promise promise) {
+    worker.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(path, bounds);
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+              promise.reject("NOT_IMAGE", "no picture size read");
+              return;
+            }
+            WritableMap out = Arguments.createMap();
+            out.putInt("width", bounds.outWidth);
+            out.putInt("height", bounds.outHeight);
+            promise.resolve(out);
+          }
+        });
   }
 
   /**

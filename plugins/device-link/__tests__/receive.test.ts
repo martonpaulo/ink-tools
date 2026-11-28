@@ -1,5 +1,5 @@
 /** One receive (#49): from the offer to the note, with a scripted module and note. */
-import {inkUnderRect, isFree, PAGE_BAR_PX} from '@ink-tools/ink-core';
+import {inkUnderRect, isFree, PAGE_BAR_PX, PLACE_GAP} from '@ink-tools/ink-core';
 import {fail, MODULE_CODE, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {refusedProblem} from '../src/permissions';
@@ -11,6 +11,7 @@ import {
   PLACED_WAIT_MS,
   freeTextBox,
   boundedPage,
+  lassoAround,
   NoteHost,
   receiveOne,
   resetPlacedForTests,
@@ -23,6 +24,16 @@ import {fakeRelay} from '../test-support/fakeRelay';
 import {pageInsertHost} from '../test-support/pageInsert';
 
 const PAGE = {width: 1404, height: 1872};
+
+/** The rect a placed item is lassoed by: its own, PLACE_GAP wider on each side, inside the page (#540). */
+function around(rect: {left: number; top: number; right: number; bottom: number}, page = PAGE) {
+  return {
+    left: Math.max(0, rect.left - PLACE_GAP),
+    top: Math.max(0, rect.top - PLACE_GAP),
+    right: Math.min(page.width, rect.right + PLACE_GAP),
+    bottom: Math.min(page.height, rect.bottom + PLACE_GAP),
+  };
+}
 
 beforeEach(resetPlacedForTests);
 
@@ -69,7 +80,7 @@ test('a text lands as a selected text box, and the receiver stops', async () => 
   expect(calls.answers).toEqual([[204, '', null, null]]);
   const rect = textBox(PAGE, 'Buy milk');
   expect(host.insertText).toHaveBeenCalledWith({text: 'Buy milk', rect, fontSize: 32});
-  expect(host.lasso).toHaveBeenCalledWith(rect);
+  expect(host.lasso).toHaveBeenCalledWith(around(rect));
   expect(calls.stopped).toBe(1);
   // Our info names the certificate's fingerprint, never a random one.
   expect(String(calls.started[0][4])).toContain('cert-fp');
@@ -121,7 +132,7 @@ describe('a received item never covers the writing, and is lassoed alone (#540)'
     expect(path).toBe('/tmp/e.png');
     expect(isFree(rect, [writing])).toBe(true);
     expect([rect.right - rect.left, rect.bottom - rect.top]).toEqual([400, 300]);
-    expect(host.lasso).toHaveBeenCalledWith(rect);
+    expect(host.lasso).toHaveBeenCalledWith(around(rect));
   });
 
   test('a picture placed to miss the writing stays above the page bar (#577)', async () => {
@@ -142,7 +153,32 @@ describe('a received item never covers the writing, and is lassoed alone (#540)'
     await receiveOne(fakeRelay({}, imageArrives('/tmp/f.png')).api, host, 'Supernote');
     expect(host.insertImage).toHaveBeenCalledWith('/tmp/f.png');
     expect(host.log).toHaveBeenCalledWith('receive: the picture element was not inserted: insertImage places it');
-    expect(host.lasso).toHaveBeenCalledWith(PLACED);
+    expect(host.lasso).toHaveBeenCalledWith(around(PLACED));
+  });
+
+  test('a picture whose size is not read goes where the host puts it, and the log says why', async () => {
+    // Tablet row 158 (2026-11-28): no size read, so the picture went to the centre over the word.
+    const host = note({imageSize: jest.fn(async () => fail(MODULE_CODE, 'no picture size read', 'NOT_IMAGE'))});
+    await receiveOne(fakeRelay({}, imageArrives('/tmp/h.png')).api, host, 'Supernote');
+    expect(host.insertImageAt).not.toHaveBeenCalled();
+    expect(host.log).toHaveBeenCalledWith("receive: the picture's size is not read (no picture size read): the host places it");
+  });
+
+  test('a placed text is lassoed around its frame, inside the page, and the lasso logged', async () => {
+    // Lassoed by its exact frame, the text showed no lasso on the tablet (row 158, 2026-11-28).
+    const frame = {left: 10, top: 5, right: 200, bottom: 50};
+    const host = note({occupied: pageReads([], frame)});
+    await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: 'Hi'}})]).api, host, 'Supernote');
+    const lassoed = {left: 0, top: 0, right: 200 + PLACE_GAP, bottom: 50 + PLACE_GAP};
+    expect(host.lasso).toHaveBeenCalledWith(lassoed);
+    expect(host.log).toHaveBeenCalledWith(`receive: lassoed the placed text at ${JSON.stringify(lassoed)}`);
+  });
+
+  test('ink just beside a placed item keeps its lasso to the item\'s own rect', () => {
+    const rect = {left: 100, top: 100, right: 300, bottom: 200};
+    const near = {left: 310, top: 120, right: 400, bottom: 180};
+    expect(lassoAround(rect, PAGE, {rects: [near], complete: true})).toEqual(rect);
+    expect(lassoAround(rect, PAGE, {rects: [], complete: true})).toEqual(around(rect));
   });
 
   test('a received text is lassoed by its text box\'s own frame, as the host stored it', async () => {
@@ -151,7 +187,7 @@ describe('a received item never covers the writing, and is lassoed alone (#540)'
     const host = note({occupied: pageReads([], frame)});
     await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: 'Buy milk'}})]).api, host, 'Supernote');
     expect(host.insertText).toHaveBeenCalledWith({text: 'Buy milk', rect: asked, fontSize: 32});
-    expect(host.lasso).toHaveBeenCalledWith(frame);
+    expect(host.lasso).toHaveBeenCalledWith(around(frame));
   });
 });
 
@@ -160,7 +196,7 @@ describe('the received picture is lassoed for another plugin\'s rows (#196)', ()
     const {api} = fakeRelay({}, imageArrives('/tmp/a.png'));
     const host = note({occupied: pageReads([], PLACED)});
     await expect(receiveOne(api, host, 'Supernote')).resolves.toBe(copy.receivedImage);
-    expect(host.lasso).toHaveBeenCalledWith(PLACED);
+    expect(host.lasso).toHaveBeenCalledWith(around(PLACED));
   });
 
   test('ink under the picture, a partial read or no new rect leaves it unlassoed, logged', async () => {
@@ -190,7 +226,7 @@ describe('the received picture is lassoed for another plugin\'s rows (#196)', ()
     await receiveOne(fakeRelay({}, imageArrives('/tmp/late.png')).api, host, 'Supernote');
     expect(host.wait).toHaveBeenCalledTimes(2);
     expect(host.wait).toHaveBeenCalledWith(PLACED_RETRY_MS);
-    expect(host.lasso).toHaveBeenCalledWith(PLACED);
+    expect(host.lasso).toHaveBeenCalledWith(around(PLACED));
   });
 
   test('a picture never seen on the page is lassoed at the centred rect the host places it at', async () => {
@@ -199,7 +235,7 @@ describe('the received picture is lassoed for another plugin\'s rows (#196)', ()
     await receiveOne(fakeRelay({}, imageArrives('/tmp/never.png')).api, host, 'Supernote');
     // Bounded: one read before, then one every PLACED_RETRY_MS up to PLACED_WAIT_MS.
     expect(host.wait).toHaveBeenCalledTimes(PLACED_WAIT_MS / PLACED_RETRY_MS);
-    expect(host.lasso).toHaveBeenCalledWith(PLACED);
+    expect(host.lasso).toHaveBeenCalledWith(around(PLACED, page));
     expect(host.log).toHaveBeenCalledWith(
       `receive: the placed picture is not on the page after ${PLACED_WAIT_MS} ms: lasso its centred rect`,
     );
@@ -216,7 +252,9 @@ describe('the received picture is lassoed for another plugin\'s rows (#196)', ()
     await expect(
       receiveOne(fakeRelay({}, imageArrives('/tmp/e.png')).api, host, 'Supernote'),
     ).resolves.toBe(copy.receivedImage);
-    expect(host.log).toHaveBeenCalledWith('receive: lassoElements did not lasso the placed picture');
+    expect(host.log).toHaveBeenCalledWith(
+      `receive: lassoElements did not lasso the placed picture at ${JSON.stringify(around(PLACED))}`,
+    );
   });
 
   test('addedRect finds only one new rect, on two complete reads', () => {
@@ -582,7 +620,7 @@ describe('a received text avoids the ink on the page (#199)', () => {
     );
     const rect = (host.insertText as jest.Mock).mock.calls[0][0].rect;
     expect(rect.top).toBeGreaterThanOrEqual(line.bottom);
-    expect(host.lasso).toHaveBeenCalledWith(rect);
+    expect(host.lasso).toHaveBeenCalledWith(around(rect, MANTA));
   });
 
   test('a partial page read places the box at its usual place, never by what was read (#152)', async () => {

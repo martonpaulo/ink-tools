@@ -72,6 +72,8 @@ export type RelayNative = {
   ): Promise<boolean>;
   stopReceive(): Promise<boolean>;
   exists(path: string): Promise<boolean>;
+  /** A picture file's size from its header (#540); rejects `NOT_IMAGE` when none is read. */
+  imageSize(path: string): Promise<{width: number; height: number}>;
   /** One PNG path per page; rejects `BROKEN` or `PAGES` (#143). */
   renderPdf(
     pdfPath: string,
@@ -124,6 +126,7 @@ export function relay(modules: Record<string, unknown> = NativeModules): Relay {
     answer: call('answer'),
     stopReceive: call('stopReceive'),
     exists: call('exists'),
+    imageSize: call('imageSize'),
     renderPdf: call('renderPdf'),
   } as Relay;
 }

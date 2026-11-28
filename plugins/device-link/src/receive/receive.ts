@@ -372,13 +372,7 @@ async function placeText(native: Relay, host: NoteHost, dir: string, text: strin
   // far below a short text on the tablet (#540).
   const frame = (await waitForAdded(host, read)) ?? rect;
   // Selected, so the person moves it at once, but never with the person's ink in it (#168).
-  const ink = inkUnderRect(frame, read);
-  if (ink) {
-    host.log(`receive: lassoElements skipped, ${ink}`);
-  } else {
-    // A failed lasso still leaves the text in place.
-    await host.lasso(frame);
-  }
+  await lassoPlaced(host, frame, read, 'text');
   return copy.receivedText;
 }
 
@@ -463,6 +457,9 @@ async function expectedRect(host: NoteHost, path: string): Promise<Rect | null> 
  */
 async function freeImageRect(host: NoteHost, path: string, read: OccupiedRead): Promise<Rect | null> {
   const [page, picture] = [await host.pageSize(), await host.imageSize(path)];
+  if (!picture.ok) {
+    host.log(`receive: the picture's size is not read (${picture.message}): the host places it`);
+  }
   if (!page.ok || !picture.ok) {
     return null;
   }
@@ -474,19 +471,41 @@ async function freeImageRect(host: NoteHost, path: string, read: OccupiedRead): 
   return rect;
 }
 
-/** Lassoes the placed picture by its rect, never with the person's ink in it (#168). */
-async function lassoPlaced(host: NoteHost, rect: Rect, before: OccupiedRead | null): Promise<string> {
+/**
+ * The rect a placed item is lassoed by: its own rect grown by PLACE_GAP on each side, inside the
+ * page, as the host selects only an element wholly inside the lasso (docs/supernote.md); a text
+ * lassoed by its stored frame alone showed no lasso on the tablet (#540). The frame itself when the
+ * grown rect would take other ink.
+ */
+export function lassoAround(rect: Rect, page: Size | null, read: OccupiedRead | null): Rect {
+  const grown = {
+    left: Math.max(0, rect.left - PLACE_GAP),
+    top: Math.max(0, rect.top - PLACE_GAP),
+    right: page === null ? rect.right + PLACE_GAP : Math.min(page.width, rect.right + PLACE_GAP),
+    bottom: page === null ? rect.bottom + PLACE_GAP : Math.min(page.height, rect.bottom + PLACE_GAP),
+  };
+  return inkUnderRect(grown, read) === null ? grown : rect;
+}
+
+/**
+ * Lassoes a placed item, picture or text, around its rect, never with the person's ink in it
+ * (#168); each outcome is logged, so a device run says why no lasso shows (#540).
+ */
+async function lassoPlaced(host: NoteHost, rect: Rect, before: OccupiedRead | null, what: string): Promise<void> {
   const ink = inkUnderRect(rect, before);
   if (ink) {
     host.log(`receive: lassoElements skipped, ${ink}`);
-    return copy.receivedImage;
+    return;
   }
-  const lassoed = await host.lasso(rect);
-  if (!lassoed.ok || lassoed.value !== true) {
-    // The picture stays placed; only the lasso is missing.
-    host.log('receive: lassoElements did not lasso the placed picture');
-  }
-  return copy.receivedImage;
+  const size = await host.pageSize();
+  const around = lassoAround(rect, size.ok ? size.value : null, before);
+  const lassoed = await host.lasso(around);
+  // A failed lasso still leaves the item placed; only the lasso is missing.
+  host.log(
+    lassoed.ok && lassoed.value === true
+      ? `receive: lassoed the placed ${what} at ${JSON.stringify(around)}`
+      : `receive: lassoElements did not lasso the placed ${what} at ${JSON.stringify(around)}`,
+  );
 }
 
 /**
@@ -507,7 +526,8 @@ async function placeImage(native: Relay, host: NoteHost, path: string): Promise<
     const placed = await host.insertImageAt(path, free);
     if (placed.ok && placed.value === true) {
       keptImages.push(path);
-      return lassoPlaced(host, free, beforeRead);
+      await lassoPlaced(host, free, beforeRead, 'picture');
+      return copy.receivedImage;
     }
     host.log('receive: the picture element was not inserted: insertImage places it');
   }
@@ -528,7 +548,8 @@ async function placeImage(native: Relay, host: NoteHost, path: string): Promise<
     host.log('receive: lassoElements skipped, the placed picture is not found on the page');
     return copy.receivedImage;
   }
-  return lassoPlaced(host, rect, beforeRead);
+  await lassoPlaced(host, rect, beforeRead, 'picture');
+  return copy.receivedImage;
 }
 
 function refusedLine(taken: Taken | null): string {

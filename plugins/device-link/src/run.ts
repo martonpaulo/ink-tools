@@ -56,7 +56,6 @@ import {Capture, PickDeps, startPick} from './send/pickSession';
 import {working} from './working';
 import {Device} from './localsend/protocol';
 import {copy} from './copy';
-import {Image} from 'react-native';
 import type {Problem} from '@ink-tools/ui-kit';
 import {boundedPage, NoteHost, Size} from './receive/receive';
 import {
@@ -283,15 +282,12 @@ async function insertImageAt(path: string, rect: Rect): Promise<Result<boolean>>
   return placed.ok ? ok(true) : placed;
 }
 
-/** A picture file's size from React Native's own decoder, with no pixels read (#196). */
+/**
+ * A picture file's size from its header, read by Relay's module (#540): `Image.getSize` gave no
+ * size for a received PNG on the tablet, so the picture went to the page centre, over the writing.
+ */
 function pictureSize(path: string): Promise<Result<Size>> {
-  return new Promise(resolve =>
-    Image.getSize(
-      `file://${path}`,
-      (width, height) => resolve(ok({width, height})),
-      error => resolve(fail(THROWN_CODE, String(error))),
-    ),
-  );
+  return relay().imageSize(path);
 }
 
 /** The open note, as a receive places into it. */
