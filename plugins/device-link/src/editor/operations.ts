@@ -413,9 +413,27 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
 }
 
 /**
+ * How far a Heading's lasso reaches past its elements' points: the host selects only an element
+ * wholly inside the lasso (docs/supernote.md), and a stroke's ink is wider than its points; a lasso
+ * of one stroke's point rect answered «Invalid selection area» (tablet row 156, #345) [inference].
+ */
+export const HEADING_LASSO_MARGIN = 24;
+
+/** The rect grown by HEADING_LASSO_MARGIN on each side, inside the page. */
+function lassoMargin(rect: EditRect): EditRect {
+  return {
+    left: Math.max(0, rect.left - HEADING_LASSO_MARGIN),
+    top: Math.max(0, rect.top - HEADING_LASSO_MARGIN),
+    right: Math.min(PAGE.width, rect.right + HEADING_LASSO_MARGIN),
+    bottom: Math.min(PAGE.height, rect.bottom + HEADING_LASSO_MARGIN),
+  };
+}
+
+/**
  * A Heading is made from a lasso, which the tablet takes only on the page on screen, so the note
  * must be the open one at that page. The elements' union rect is lassoed, then titled with the
  * level's style (sn-adapter's `headingStyle`, the map of the tablet's buttons, #252), or `none`.
+ * A picture is refused before any lasso: the tablet titles only strokes, shapes and text.
  * shortcut: the rect lasso also takes other ink inside the union rect; a lasso by element waits for
  * the device round of #345, which shows whether the host has one.
  */
@@ -436,6 +454,10 @@ async function setHeading(
   let rect: EditRect | null = null;
   for (const num of nums) {
     const element = await must(`element ${num}`, host.getElement(path, page, num), REFUSAL.noElement);
+    if ((element as {type?: unknown}).type === PICTURE_TYPE) {
+      // The tablet's own refusal: «The lasso selection is not a stroke, geometry, or plain text» (tablet row 156).
+      throw new Stopped(REFUSAL.badRequest, `element ${num} is a picture: the tablet makes a Heading only of strokes, shapes or text`);
+    }
     const bounds = await must(`bounds of element ${num}`, host.bounds(element));
     if (!bounds) {
       throw new Stopped(REFUSAL.badRequest, `element ${num} has no place on the page to lasso`);
@@ -444,7 +466,7 @@ async function setHeading(
       ? {left: Math.min(rect.left, bounds.left), top: Math.min(rect.top, bounds.top), right: Math.max(rect.right, bounds.right), bottom: Math.max(rect.bottom, bounds.bottom)}
       : bounds;
   }
-  const union = rect as EditRect;
+  const union = lassoMargin(rect as EditRect);
   if (!(await must('lassoElements', host.lasso(union)))) {
     throw new Stopped(REFUSAL.tabletRefused, 'lassoElements answered false: nothing was lassoed');
   }

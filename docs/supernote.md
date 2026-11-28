@@ -676,6 +676,16 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   lasso row press, `resizeLassoRect` then `setLassoTitle` 15 to 46 ms later answered success and
   left the title at its old place, unmoved, on 6 of 7 presses [measured, Lasso Actions 0.2.0
   beta 33, Manta, 2026-11-26, [#252](https://github.com/martonpaulo/ink-tools/issues/252)]. Headings titles first, then lassoes and moves.
+- `setLassoTitle` from Device Link's `setHeading` (`lassoElements` of the elements' union rect,
+  then the title) set a text box's title (873 ms) and removed it (221 ms). On the strokes of a
+  word written by `inkctl ink write`, with a received picture placed over the word, it answered
+  «The lasso selection is not a stroke, geometry, or plain text library data», and the lasso of
+  one stroke's point rect answered «Invalid selection area» [measured, Device Link from `main`
+  `3ff67e73`, Manta, tablet row 156, 2026-11-28, [#345](https://github.com/martonpaulo/ink-tools/issues/345)].
+  So the title takes strokes, shapes and text but no picture in the lasso, and the strokes over
+  the picture joined its selection, as a stroke drawn over a picture does (above); that a lasso
+  of a stroke's points alone holds no whole element is [inference]. `setHeading` refuses a named
+  picture and lassoes 24 px past the points; strokes with nothing under them are [unverified].
 - A plugin's type 1 button (`registerButton(1, ...)`) shows in NOTE's toolbar «Plugins» menu, with
   Run Command, Snap and Send Page. Opening that menu clears a lasso: a lassoed drawing, then the
   menu and Image Editing's button, and `getLassoElements` answered `904 No lasso action has been

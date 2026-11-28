@@ -1,6 +1,6 @@
 /** The Note Editor's tablet helper (#312): each operation's calls in order, each refusal, the pen pause. */
 import {ActionRefused, fail, HEADING_LEVELS, headingStyle, ok, TITLE_STYLE} from '@ink-tools/sn-adapter/official';
-import {EDITOR_FOLDER, editAction, LIMITS, NO_HEADING, NOTES_FOLDER, type EditHost} from '../src/editor/operations';
+import {EDITOR_FOLDER, editAction, HEADING_LASSO_MARGIN, LIMITS, NO_HEADING, NOTES_FOLDER, type EditHost} from '../src/editor/operations';
 import {PEN_PAUSE, PenGate} from '../src/editor/penGate';
 import {CUSTOM_TEMPLATE_FOLDER, templatesAction} from '../src/editor/templates';
 
@@ -234,11 +234,13 @@ describe('operations on the open note use the open-note calls', () => {
 });
 
 describe('a Heading is made from a lasso on the page on screen (#345)', () => {
-  it('saves, lassoes the union of the named elements, then sets the level\'s style', async () => {
+  it('saves, lassoes the union of the named elements with a margin, then sets the level\'s style', async () => {
     const rects = [RECT, {left: 50, top: 250, right: 200, bottom: 450}];
     const {fake, calls} = host(NOTE, {bounds: async () => ok(rects.shift() ?? RECT)});
     const answer = await editAction(fake)({path: NOTE, ops: [{op: 'setHeading', page: 1, nums: [2, 3], level: 2}]});
-    const union = {left: 50, top: 200, right: 300, bottom: 450};
+    // Wider than the points, as a lasso of one stroke's point rect was refused on the tablet (row 156).
+    const m = HEADING_LASSO_MARGIN;
+    const union = {left: 50 - m, top: 200 - m, right: 300 + m, bottom: 450 + m};
     expect(calls).toEqual([
       'save []',
       `getElement ${JSON.stringify([NOTE, 1, 2])}`,
@@ -273,6 +275,21 @@ describe('a Heading is made from a lasso on the page on screen (#345)', () => {
     if (name === 'not-open' || name === 'page-not-shown') {
       expect(calls.filter(call => call.startsWith('lasso') || call.startsWith('setTitle'))).toEqual([]);
     }
+  });
+
+  it('a picture among the elements is refused before any lasso, named', async () => {
+    // Tablet row 156: the tablet refused a lasso that held the picture, «not a stroke, geometry, or plain text».
+    const {fake, calls} = host(NOTE, {getElement: async () => ok({type: 200})});
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'setHeading', page: 1, nums: [7], level: 2}]}));
+    expect(refused.detail).toMatchObject({refusal: 'bad-request'});
+    expect(refused.message).toContain('element 7 is a picture');
+    expect(calls.filter(call => call.startsWith('lasso') || call.startsWith('setTitle'))).toEqual([]);
+  });
+
+  it('a lasso near the page edge stays on the page', async () => {
+    const {fake, calls} = host(NOTE, {bounds: async () => ok({left: 5, top: 10, right: 1910, bottom: 2550})});
+    await editAction(fake)({path: NOTE, ops: [{op: 'setHeading', page: 1, nums: [2], level: 1}]});
+    expect(calls).toContain(`lasso ${JSON.stringify([{left: 0, top: 0, right: 1920, bottom: 2560}])}`);
   });
 
   it.each([
