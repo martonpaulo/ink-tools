@@ -40,8 +40,6 @@ export const BACKGROUND_WAIT_MS = 60 * 1000;
 export const PAGE_READ_MS = 4500;
 
 export const TEXT_FONT_SIZE = 32;
-/** Where the first box starts, as a share of the page's height. */
-const FIRST_LINE_SHARE = 0.15;
 const LINE_HEIGHT = Math.round(TEXT_FONT_SIZE * 1.5);
 /** A character's width as a share of the font size, as Ink2Pic measures it. */
 const CHAR_WIDTH = 0.55;
@@ -84,7 +82,7 @@ export type NoteHost = NoteFiles & {
 export function textBox(page: Size, text: string, after: number | null = null): Rect {
   const width = Math.round(page.width / 2);
   const left = Math.round((page.width - width) / 2);
-  const first = Math.round(page.height * FIRST_LINE_SHARE);
+  const first = Math.round(page.height * 0.15);
   const lines = wrapLines(text, perLine(width)).length;
   // Never under the note's page bar (#577).
   const floor = writableSize(page).height - LINE_HEIGHT;
@@ -133,7 +131,7 @@ export function wrapLines(text: string, width: number): Line[] {
 /** The lines one page holds below the first box line and above the page bar. */
 function pageLines(page: Size): number {
   const floor = writableSize(page).height - LINE_HEIGHT;
-  return Math.max(1, Math.floor((floor - Math.round(page.height * FIRST_LINE_SHARE)) / LINE_HEIGHT));
+  return Math.max(1, Math.floor((floor - textBox(page, '').top) / LINE_HEIGHT));
 }
 
 /**
