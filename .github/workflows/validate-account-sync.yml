@@ -4,9 +4,9 @@ name: Validate Account Sync
 on:
   push:
     branches: [main]
-    paths: ['plugins/account-sync/**', 'plugins/image-editing/**', 'plugins/lasso-actions/**', 'plugins/device-link/**', 'plugins/smart-pen/**', 'plugins/puzzles/**', 'plugins/ink-tools-probe/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'scripts/plugin-version.cjs', 'packages/sync-core/**', 'packages/ink-core/**', '.github/workflows/validate-account-sync.yml']
+    paths: ['plugins/account-sync/**', 'plugins/image-editing/**', 'plugins/lasso-actions/**', 'plugins/device-link/**', 'plugins/smart-pen/**', 'plugins/puzzles/**', 'plugins/ink-tools-probe/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'scripts/plugin-version.cjs', 'docs/feature-defaults.md', 'packages/sync-core/**', 'packages/ink-core/**', '.github/workflows/validate-account-sync.yml']
   pull_request:
-    paths: ['plugins/account-sync/**', 'plugins/image-editing/**', 'plugins/lasso-actions/**', 'plugins/device-link/**', 'plugins/smart-pen/**', 'plugins/puzzles/**', 'plugins/ink-tools-probe/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'scripts/plugin-version.cjs', 'packages/sync-core/**', 'packages/ink-core/**', '.github/workflows/validate-account-sync.yml']
+    paths: ['plugins/account-sync/**', 'plugins/image-editing/**', 'plugins/lasso-actions/**', 'plugins/device-link/**', 'plugins/smart-pen/**', 'plugins/puzzles/**', 'plugins/ink-tools-probe/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'scripts/plugin-version.cjs', 'docs/feature-defaults.md', 'packages/sync-core/**', 'packages/ink-core/**', '.github/workflows/validate-account-sync.yml']
   workflow_dispatch:
 
 permissions:

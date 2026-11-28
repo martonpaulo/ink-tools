@@ -4,9 +4,9 @@ name: Validate Device Link
 on:
   push:
     branches: [main]
-    paths: ['plugins/device-link/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-device-link.yml']
+    paths: ['plugins/device-link/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', 'docs/feature-defaults.md', '.github/workflows/validate-device-link.yml']
   pull_request:
-    paths: ['plugins/device-link/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-device-link.yml']
+    paths: ['plugins/device-link/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', 'docs/feature-defaults.md', '.github/workflows/validate-device-link.yml']
   workflow_dispatch:
 
 permissions:

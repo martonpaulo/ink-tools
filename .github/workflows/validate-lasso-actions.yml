@@ -4,9 +4,9 @@ name: Validate Lasso Actions
 on:
   push:
     branches: [main]
-    paths: ['plugins/lasso-actions/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/lab.yml', '.github/workflows/validate-lasso-actions.yml']
+    paths: ['plugins/lasso-actions/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', 'docs/feature-defaults.md', '.github/workflows/lab.yml', '.github/workflows/validate-lasso-actions.yml']
   pull_request:
-    paths: ['plugins/lasso-actions/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', '.github/workflows/lab.yml', '.github/workflows/validate-lasso-actions.yml']
+    paths: ['plugins/lasso-actions/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/picture-search/**', 'packages/ink-core/**', 'scripts/plugin-version.cjs', 'docs/feature-defaults.md', '.github/workflows/lab.yml', '.github/workflows/validate-lasso-actions.yml']
   workflow_dispatch:
 
 permissions:
