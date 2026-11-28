@@ -5,7 +5,7 @@
 import {NativeModules} from 'react-native';
 import {PluginManager} from 'sn-plugin-lib';
 import '../testing/profile';
-import {closeLogFileForTests, resetSessionForTests} from '../src/storage';
+import {resetSessionForTests} from '../src/storage';
 import {
   cachedThumbUri,
   prepareThumbs,
@@ -51,7 +51,6 @@ beforeEach(() => {
   NativeModules.TestFiles = native;
   resetSessionForTests();
   resetThumbsForTests();
-  closeLogFileForTests();
   (PluginManager.getPluginDirPath as jest.Mock).mockResolvedValue(DIR);
   native.readText.mockResolvedValue(null);
   native.writeText.mockResolvedValue(null);

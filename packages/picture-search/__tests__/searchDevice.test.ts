@@ -1,10 +1,7 @@
 import {NativeModules} from 'react-native';
 import {FileUtils, PluginManager} from 'sn-plugin-lib';
 import '../testing/profile';
-import {
-  closeLogFileForTests,
-  resetSessionForTests,
-} from '../src/storage';
+import {resetSessionForTests} from '../src/storage';
 import {
   deviceContext,
   searchCached,
@@ -39,7 +36,6 @@ beforeEach(() => {
   NativeModules.TestFiles = native;
   settings = defaults();
   resetSessionForTests();
-  closeLogFileForTests();
   (FileUtils.getExternalDirPath as jest.Mock).mockResolvedValue([
     '/storage/emulated/0',
   ]);

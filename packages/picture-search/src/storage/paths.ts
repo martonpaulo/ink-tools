@@ -58,11 +58,6 @@ export function safeFileName(name: string): string {
   );
 }
 
-/** `<root>/<folder>/logs`, where the session log lives (#21). */
-export function logsDir(externalRoot = SHARED_ROOT): string {
-  return pluginPath("logs", externalRoot);
-}
-
 /**
  * `<root>/<folder>/settings.json`, where builds before #22 kept the person's settings (#68): read
  * once to move them into the private folder, and the fallback when there is none (`settingsFile`).

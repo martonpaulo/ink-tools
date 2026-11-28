@@ -18,7 +18,7 @@ import {
   unmeasured,
   wordKeptOptions as sharedWordKept,
 } from '../src/insert';
-import {closeLogFileForTests, resetSessionForTests} from '../src/storage';
+import {resetSessionForTests} from '../src/storage';
 import {CALL_TIMEOUT_MS, logLines, startLog} from '../src/log/memory';
 import type {SearchResult} from '../src/types';
 import {
@@ -74,7 +74,6 @@ beforeEach(() => {
   });
   resetSessionForTests();
   pictures = testPictures();
-  closeLogFileForTests();
   (PluginManager.getPluginDirPath as jest.Mock).mockResolvedValue(
     '/data/plugin',
   );

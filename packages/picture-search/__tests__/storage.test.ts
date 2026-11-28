@@ -3,7 +3,6 @@ import {TEST_PROFILE} from '../testing/profile';
 import {MODULE_CODE} from '@ink-tools/sn-adapter/official';
 import {
   downloadToFile,
-  logsDir,
   readText,
   safeFileName,
   setPluginProfile,
@@ -81,7 +80,6 @@ describe('the plugin profile (#142)', () => {
 
   it("keeps the files in the profile's folder", () => {
     expect(settingsPath(ROOT)).toBe(`${ROOT}/MyStyle/Test/settings.json`);
-    expect(logsDir(ROOT)).toBe(`${ROOT}/MyStyle/Test/logs`);
   });
 
   it("calls a second plugin's folder, modules and User-Agent", async () => {

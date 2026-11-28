@@ -9,7 +9,6 @@ import '../testing/profile';
 import {type EarlyDownload} from '../src/insert';
 import {dropEarly} from '../src/insert/insertPicture';
 import {
-  closeLogFileForTests,
   earlyDownloadPath,
   insertDownloadPath,
   isTemporaryDownload,
@@ -27,7 +26,6 @@ beforeEach(() => {
   (PluginManager.getPluginDirPath as jest.Mock).mockResolvedValue(DIR);
   jest.spyOn(console, 'log').mockImplementation(() => {});
   resetSessionForTests();
-  closeLogFileForTests();
 });
 
 describe('isTemporaryDownload', () => {

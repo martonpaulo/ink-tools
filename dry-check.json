@@ -399,9 +399,6 @@
    "packages/picture-search/src/storage/files.ts": {
     "Ink2Pic": 1
    },
-   "packages/picture-search/src/storage/logFile.ts": {
-    "Ink2Pic": 2
-   },
    "packages/picture-search/src/storage/profile.ts": {
     "Ink2Pic": 2
    },
