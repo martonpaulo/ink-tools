@@ -166,6 +166,26 @@ class Boundaries(unittest.TestCase):
         }), [("plugins/a/App.tsx", "close"), ("plugins/a/src/Bar.tsx", "close"),
              ("plugins/ink-tools-probe/App.tsx", "close"), ("plugins/ink-tools-probe/App.tsx", "close")])
 
+    def test_the_title_bars_x_is_the_one_close(self):
+        # Refused (#526): a «Close» button beside the ×, one bound to the ×'s handler, a «Cancel» that runs it.
+        self.assertEqual(self.tree({
+            "plugins/a/src/Editor.tsx": (
+                "<TitleBar title={t} onClose={closeDisabled ? undefined : onClose} />\n"
+                "<View>\n  <Button\n    label={copy['editor.close']}\n    disabled={closeDisabled}\n"
+                "    onPress={onClose}\n  />\n</View>\n"),
+            "plugins/a/src/Styles.tsx": "<TitleBar title={t} onClose={leave} />\n<Button label={CLOSE_TEXT} onPress={done} />\n",
+            "plugins/b/App.tsx": (
+                "<TitleBar\n  title={t}\n  onClose={ready ? onCancel : undefined}\n/>\n"
+                "<Button label={copy.cancel} onPress={onCancel} />\n"),
+        }), [("plugins/a/src/Editor.tsx", "close"), ("plugins/a/src/Styles.tsx", "close"), ("plugins/b/App.tsx", "close")])
+        # Allowed: the × alone, beside an action that is no close (Stop, a pen mode's Cancel).
+        self.assertEqual(self.tree({
+            "plugins/a/src/Editor.tsx": (
+                "<TitleBar title={t} onClose={closeDisabled ? undefined : onClose} />\n"
+                "<Button label={copy.stop} onPress={stop} />\n<Button label={copy['crop.cancel']} onPress={dropMarks} />\n"),
+            "plugins/a/src/Shell.tsx": "useBackKey(close);\nreturn <ErrorView problem={p} onClose={close} />;\n",
+        }), [])
+
     def test_a_failure_never_ends_in_a_toast_alone(self):
         # Allowed: a notice, a toast whose block holds the failure, the port and helper declarations.
         self.assertEqual(self.tree({

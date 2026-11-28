@@ -34,7 +34,9 @@ The rules are `docs/architecture.md` › Layer rules:
 - `close`: every full view of a plugin shows ui-kit's one Close (#245, #259). In a plugin view's
   `.tsx`, each `<TitleBar` element passes `onClose=`, and a file that binds Back with `useBackKey(`,
   which every full view does (#204), passes `onClose=` to a `TitleBar`, `ErrorView`, `Needs` or
-  `LoadingView`.
+  `LoadingView`. The title bar's × is the one Close (#526): a `<Button` whose `label` is ui-kit's
+  Close word (`CLOSE_TEXT`, the literal «Close» or a copy key named `close`) or whose `onPress` is
+  the handler a `TitleBar`'s `onClose` runs in the same file is a finding.
 - `toast`: no failure path of a plugin view ends in a toast alone (#245, #259): a failure stays on
   screen in ui-kit's Error or Needs state. A failure toast is a toast call (`ToastAndroid.show`,
   `showToast` or a `toast` port) inside a `catch`, or whose text names a failure (`error`, `fail`,
@@ -110,6 +112,13 @@ PLUGIN_CODE = re.compile(r"^plugins/[^/]+/")
 TITLE_BAR = re.compile(r"<TitleBar\b")
 ON_CLOSE = re.compile(r"\bonClose=")
 BACK_KEY = re.compile(r"\buseBackKey\(")
+BUTTON = re.compile(r"<Button\b")
+# One JSX attribute's braced expression, at most one level of nested braces.
+ATTRIBUTE = r"\b{}=\{{((?:[^{{}}]|\{{[^{{}}]*\}})*)\}}"
+# ui-kit's Close word as a label: its constant, the literal word, or a copy key named `close`.
+CLOSE_LABEL = re.compile(r"\bCLOSE_TEXT\b|^\s*['\"`]Close['\"`]\s*$|\.close\b|\[['\"][\w.]*\bclose['\"]\]")
+HANDLER = re.compile(r"[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*")
+NOT_HANDLERS = {"undefined", "null", "true", "false"}
 # `(deps.toast ?? showToast)(text)` calls the port or its default.
 TOAST_CALL = re.compile(r"\b(?:ToastAndroid\.show|showToast|toast)\s*\)?\s*\(")
 # A declaration of the port or the helper, never a call: `toast(line: string)`, `function showToast(`.
@@ -171,6 +180,51 @@ def own_controls(rel, lines):
             for pattern, text in OWN_CONTROLS if pattern.search(line)]
 
 
+def elements(code, start, tag):
+    """[(line number, element text)] for each `<tag` element in `code`, read to its end."""
+    found = []
+    for at, (number, line) in enumerate(code):
+        if not start.search(line):
+            continue
+        element = ""
+        for _n, rest in code[at:]:
+            element += rest[rest.find("<" + tag):] if not element else " " + rest
+            if "/>" in rest or rest.rstrip().endswith(">") and element.count("<") == 1:
+                break
+        found.append((number, element))
+    return found
+
+
+def attribute(element, name):
+    """The braced expression of attribute `name` in one JSX element, or None."""
+    match = re.search(ATTRIBUTE.format(name), element)
+    return match.group(1) if match else None
+
+
+def close_handlers(expression):
+    """The handlers an `onClose` expression runs: both branches of a `?:`, else its names."""
+    if "?" in expression:
+        expression = expression.split("?", 1)[1]
+    return {name for name in HANDLER.findall(expression) if name not in NOT_HANDLERS}
+
+
+def second_close(rel, code, bars):
+    """[(path, line number, rule, text)] for each Button that is a second Close beside a TitleBar's × (#526)."""
+    handlers = set()
+    for _number, bar in bars:
+        expression = attribute(bar, "onClose")
+        if expression is not None:
+            handlers |= close_handlers(expression)
+    found = []
+    for number, button in elements(code, BUTTON, "Button"):
+        label, press = attribute(button, "label"), attribute(button, "onPress")
+        if bars and label is not None and CLOSE_LABEL.search(label):
+            found.append((rel, number, "close", "a Button labelled Close beside the TitleBar's ×; the × is the one Close"))
+        elif press is not None and press.strip() in handlers:
+            found.append((rel, number, "close", f"a Button that runs the TitleBar's onClose ({press.strip()}); the × is the one Close"))
+    return found
+
+
 def no_close(rel, lines):
     """[(path, line number, rule, text)] for each full view of a `.tsx` file that shows no Close."""
     found = []
@@ -187,7 +241,7 @@ def no_close(rel, lines):
     back = next((number for number, line in code if BACK_KEY.search(line)), None)
     if back is not None and not any(ON_CLOSE.search(line) for _n, line in code):
         found.append((rel, back, "close", "a full view (it binds Back) that passes onClose to no TitleBar, ErrorView, Needs or LoadingView"))
-    return found
+    return found + second_close(rel, code, elements(code, TITLE_BAR, "TitleBar"))
 
 
 def lone_toasts(rel, lines):
