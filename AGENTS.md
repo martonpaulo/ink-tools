@@ -21,7 +21,8 @@ Every change follows [`docs/architecture.md` › Layer rules](docs/architecture.
 - Branch policy: Work on `main` only, no branch protection; branch only when the owner asks.
 - Commit policy: Commit each coherent task once it is complete and its subproject's validation passes; only the change's files, one concern per commit; issue commits end with `(#<issue number>)`.
 - Push policy: Push each validated commit to `origin/main` automatically; a cloud session pushes `main` for a `runs: cloud` issue whose gates ran there. Cloud setup command: `bash scripts/cloud-setup.sh`.
-- Quick check: `python3 scripts/quick_check.py` (`tsc --noEmit` in the subprojects `gates.json` maps the changed paths to, [#180](https://github.com/martonpaulo/ink-tools/issues/180); `make lint` where a Makefile has one).
+- Cloud hand-off: on (owner, 2026-11-28).
+- Quick check: `python3 scripts/quick_check.py` (`tsc --noEmit` in the subprojects `gates.json` maps the changed paths to; `make lint` where a Makefile has one).
 - Interface paths: `plugins/*/App.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/account-sync run renders` (light), `plugins/*/src/*.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/account-sync run renders` (light), `packages/ui-kit/src/*.tsx` by `RENDER_EVIDENCE=<dir> npm -C plugins/account-sync run renders` (light), `apps/handwriting-language/src/*.java` by `RENDER_EVIDENCE=<dir> node apps/handwriting-language/scripts/renders.cjs` (light), `apps/note-editor/Sources/NoteEditor/*.swift` by `RENDER_EVIDENCE=<dir> make -C apps/note-editor renders`
 - Product versioning: plugins and the Lingo app use SemVer with a numbered beta; the rule, tags and examples: [`docs/product.md`](docs/product.md#product-versioning) ([#155](https://github.com/martonpaulo/ink-tools/issues/155), [#157](https://github.com/martonpaulo/ink-tools/issues/157)). inkctl and the monorepo are unversioned.
 - Merge policy: merge commits, so every branch commit reaches `main`.
