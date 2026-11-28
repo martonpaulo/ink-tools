@@ -12,6 +12,7 @@ import {
 } from '../src/receive/pdfNote';
 import {receiveOne, NoteHost} from '../src/receive/receive';
 import {fakeRelay} from '../test-support/fakeRelay';
+import {pageInsertHost} from '../test-support/pageInsert';
 
 const PDF = '/tmp/received-sess.pdf';
 const AT = new Date(2026, 10, 16, 9, 5);
@@ -121,9 +122,7 @@ test('a PDF that arrives over LocalSend goes to a note, not into the open one', 
     log: () => {},
     closeView: async () => ok(true),
     insertText: jest.fn(async () => ok(true)),
-    insertTextOnPage: jest.fn(async () => ok(true)),
-    insertPage: jest.fn(async () => ok(true)),
-    pageTemplate: jest.fn(async () => ok('style_white')),
+    ...pageInsertHost(),
     lasso: async () => ok(true),
     insertImage: jest.fn(async () => ok(true)),
     imageSize: async () => ok({width: 1, height: 1}),

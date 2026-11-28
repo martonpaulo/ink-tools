@@ -19,6 +19,7 @@ import {
 } from '../src/receive/receive';
 import {receiveState, runReceive} from '../src/receive/session';
 import {fakeRelay} from '../test-support/fakeRelay';
+import {pageInsertHost} from '../test-support/pageInsert';
 
 const PAGE = {width: 1404, height: 1872};
 
@@ -34,9 +35,7 @@ function note(overrides: Partial<NoteHost> = {}) {
     log: jest.fn(),
     closeView: jest.fn(async () => ok(true)),
     insertText: jest.fn(async () => ok(true)),
-    insertTextOnPage: jest.fn(async () => ok(true)),
-    insertPage: jest.fn(async () => ok(true)),
-    pageTemplate: jest.fn(async () => ok('style_white')),
+    ...pageInsertHost(),
     lasso: jest.fn(async () => ok(true)),
     insertImage: jest.fn(async () => ok(true)),
     imageSize: jest.fn(async () => ok({width: 923, height: 1200})),
