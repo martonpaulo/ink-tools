@@ -20,10 +20,15 @@ import Testing
         let shown: CGSize
         let document: CGSize
         let page: CGSize
+        /// The clip view's frame and the two scroll bars', in the scroll view's own coordinates.
+        let clip: CGRect
+        let verticalBar: CGRect
+        let horizontalBar: CGRect
     }
 
     static func measure(
-        _ zoom: PageZoom, columns: NavigationSplitViewVisibility, note: String = "content.note"
+        _ zoom: PageZoom, columns: NavigationSplitViewVisibility, note: String = "content.note",
+        legacyBars: Bool = false
     ) async throws -> Measured {
         let pages = PageImages(note: try Fixtures.note(note))
         let viewer = PageViewer(zoom: zoom)
@@ -47,13 +52,23 @@ import Testing
             Self.scrollViews(in: hosting).max {
                 ($0.documentView?.frame.height ?? 0) < ($1.documentView?.frame.height ?? 0)
             })
+        if legacyBars {
+            scroll.scrollerStyle = .legacy
+            for _ in 0..<4 {
+                hosting.layoutSubtreeIfNeeded()
+                // timing-independent: turns of the main actor for the scroll view to tile its bars.
+                try await Task.sleep(for: .milliseconds(20))
+            }
+        }
         let clip = scroll.contentView.bounds.size
         let insets = scroll.contentInsets
         return Measured(
             shown: CGSize(
                 width: clip.width - insets.left - insets.right, height: clip.height - insets.top - insets.bottom),
             document: scroll.documentView?.frame.size ?? .zero,
-            page: viewer.zoom.size(of: viewer.page, in: viewer.viewport, scale: 1))
+            page: viewer.zoom.size(of: viewer.page, in: viewer.viewport, scale: 1),
+            clip: scroll.contentView.frame, verticalBar: scroll.verticalScroller?.frame ?? .zero,
+            horizontalBar: scroll.horizontalScroller?.frame ?? .zero)
     }
 
     static func scrollViews(in view: NSView) -> [NSScrollView] {
@@ -92,6 +107,18 @@ import Testing
     @Test func aNoteThatFitsKeepsTheWholeWidth() async throws {
         let measured = try await Self.measure(.fitPage, columns: .detailOnly, note: "blank.note")
         #expect(abs(measured.document.width - measured.shown.width) <= 1)
+    }
+
+    /// The Mac's always-shown scroll bars sit beside the pages, never over them: at a zoom wider and
+    /// taller than the window both bars show, and the clip view the pages draw in ends where they
+    /// begin (#457). SwiftUI's own scroll drew its pages under them.
+    @Test(arguments: [NavigationSplitViewVisibility.all, .detailOnly])
+    func thePagesNeverDrawUnderAlwaysShownScrollBars(columns: NavigationSplitViewVisibility) async throws {
+        let measured = try await Self.measure(.magnification(2), columns: columns, legacyBars: true)
+        #expect(measured.verticalBar.width > 0, "no vertical bar")
+        #expect(measured.horizontalBar.height > 0, "no horizontal bar")
+        #expect(measured.clip.maxX <= measured.verticalBar.minX + 0.5, "the pages draw under the vertical bar")
+        #expect(measured.clip.maxY <= measured.horizontalBar.minY + 0.5, "the pages draw under the horizontal bar")
     }
 
     /// A scroll bar shown always takes its width beside the pages; one shown only while scrolling

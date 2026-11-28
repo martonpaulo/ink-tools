@@ -488,7 +488,7 @@ struct PageScroll: View {
     let pages: PageImages
     @Binding var navigator: PageNavigator
     let viewer: PageViewer
-    @State private var position: ScrollPosition
+    @State private var scroller: PageScroller
     /// The page the scroll last reported, so a page the scroll set is not scrolled to again.
     @State private var inView: Int?
     /// The share of a page that counts it as on screen: any part of it.
@@ -505,14 +505,8 @@ struct PageScroll: View {
         _navigator = navigator
         self.viewer = viewer
         let page = navigator.wrappedValue.index ?? 0
-        _position = State(initialValue: Self.position(of: page))
+        _scroller = State(initialValue: PageScroller(opensAt: page))
         _inView = State(initialValue: page)
-    }
-
-    /// The scroll's place for `page`: the top of the content for the first page, so its margin
-    /// shows below the toolbar, as the safe area keeps it; else the page's top (#319).
-    static func position(of page: Int) -> ScrollPosition {
-        page == 0 ? ScrollPosition(edge: .top) : ScrollPosition(id: page, anchor: .top)
     }
 
     /// Posted when the Mac's scroll bar setting changes.
@@ -524,16 +518,12 @@ struct PageScroll: View {
         style == .legacy ? NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy) : 0
     }
 
-    private func scroll(to page: Int) {
-        if page == 0 { position.scrollTo(edge: .top) } else { position.scrollTo(id: page, anchor: .top) }
-    }
-
     var body: some View {
         GeometryReader { proxy in
             // The pages fit the width the scroll shows beside its vertical scroll bar: a page as wide
-            // as the window would scroll sideways by the bar's width (#457). The scroll reports its
-            // whole frame as visible, the bar and the page list over it included, so the bar's width
-            // comes from the Mac's setting.
+            // as the window would scroll sideways by the bar's width (#457). The frame the pages are laid
+            // out in holds the bar's strip, which `PageScrollHost` keeps clear, so its width comes from
+            // the Mac's setting.
             // Pages that fit the window's height at its whole width show no vertical bar.
             let whole = CGSize(
                 width: max(proxy.size.width - 2 * PageView.margin, 0),
@@ -543,83 +533,44 @@ struct PageScroll: View {
             let viewport = CGSize(
                 width: max(width - 2 * PageView.margin, 0),
                 height: max(proxy.size.height - 2 * PageView.margin, 0))
-            ScrollView([.vertical, .horizontal]) {
-                // Each page carries half the margin above and below it, so a page scrolled to the top
-                // keeps a margin above it, and two pages keep a whole margin between them.
-                // An eager stack, so every page sits where `PageStack` puts it: a lazy one laid the
-                // pages it had not drawn out at an estimate, and a zoom kept its place pages away
-                // while the title still named the page (#534). Only the pages in view draw.
-                // shortcut: measured on a 54-page note only; a lazy stack with known row heights is
-                // the upgrade if a long note opens slowly.
-                VStack(spacing: 0) {
-                    ForEach(pages.pageSizes, id: \.index) { page in
-                        let index = page.index
-                        PageView(
-                            page: page, count: navigator.pageCount, pages: pages,
-                            size: viewer.zoom.size(of: page.pixels, in: viewport, scale: displayScale),
-                            viewer: viewer
-                        )
-                        .padding(.vertical, PageView.margin / 2)
-                        .id(index)
-                    }
-                }
-                .scrollTargetLayout()
-                .padding(.horizontal, PageView.margin)
-                .padding(.vertical, PageView.margin / 2)
-                .frame(minWidth: width)
+            let laid = stack(viewer.zoom, viewport)
+            PageScrollView(
+                content: pageColumn(viewport: viewport),
+                documentSize: CGSize(
+                    width: max(widest(viewer.zoom, viewport) + 2 * PageView.margin, width),
+                    height: laid.top(of: pages.pageSizes.count)),
+                stack: laid, insets: proxy.safeAreaInsets, anchor: pinchAnchor, scroller: scroller
+            ) { report in
+                viewer.offset = report.offset
+                viewer.visible = report.visible
+                viewer.content = report.content
+                if viewer.pagesInView != report.pagesInView { viewer.pagesInView = report.pagesInView }
+                guard let page = report.middlePage, page != inView else { return }
+                inView = page
+                navigator.show(page)
             }
-            .scrollPosition($position, anchor: .top)
-            .onScrollGeometryChange(for: ScrollGeometry.self, of: { $0 }) { _, geometry in
-                viewer.offset = geometry.contentOffset
-                viewer.visible = geometry.visibleRect.size
-                viewer.content = geometry.contentSize
-            }
-            // A page scrolled under the toolbar stops at a hard edge, as a document does in Preview,
-            // so a white page never sits behind the toolbar's controls.
-            .scrollEdgeEffectStyle(.hard, for: .top)
-            .onScrollTargetVisibilityChange(idType: Int.self, threshold: Self.visibleShare) {
-                viewer.pagesInView = Set($0)
-            }
+            .ignoresSafeArea()
             // The pages in view and their neighbours draw, and no other page stays drawn. Before the
             // scroll reports its pages, the current page draws.
             .task(id: VisibleKey(pages: viewer.pagesInView, generation: pages.generation)) {
                 let visible = viewer.pagesInView
                 await pages.show(visible.isEmpty ? Set([navigator.index ?? 0]) : visible)
             }
-            .onChange(of: position.viewID(type: Int.self)) { _, page in
-                guard let page, page != inView else { return }
-                inView = page
-                navigator.show(page)
-            }
             .onChange(of: navigator.index) { _, page in
                 guard let page, page != inView else { return }
                 inView = page
-                scroll(to: page)
-            }
-            // The scroll opens at the current page; the initial position alone is not always applied
-            // before the first layout.
-            .onAppear {
-                if let page = navigator.index { scroll(to: page) }
+                scroller.scroll(to: .page(page))
             }
             // The viewer outlives the scroll (the grid replaces it), so the next scroll starts
             // from the current page, not from the pages this one last showed.
             .onDisappear { viewer.pagesInView = [] }
-            // A new zoom keeps the place under the fingers of a pinch, else at the middle of the
-            // window, where it was, and the same share of the width, as Preview zooms.
-            .onChange(of: viewer.zoom) { old, new in
-                let anchor = pinchAnchor ?? CGPoint(x: viewer.visible.width / 2, y: viewer.visible.height / 2)
-                let y = stack(old, viewport).keeping(anchor.y, at: viewer.offset.y, in: stack(new, viewport))
-                let share = viewer.content.width > 0 ? (viewer.offset.x + anchor.x) / viewer.content.width : 0.5
-                let width = max(widest(new, viewport) + 2 * PageView.margin, viewer.visible.width)
-                position.scrollTo(point: CGPoint(x: max(share * width - anchor.x, 0), y: y))
-            }
             .onChange(of: viewport, initial: true) { _, viewport in viewer.viewport = viewport }
             .onReceive(NotificationCenter.default.publisher(for: Self.scrollerStyleChanged)) { _ in
                 scrollerWidth = Self.verticalScrollerWidth()
             }
             .onChange(of: viewer.scrollTarget) { _, target in
                 guard let target else { return }
-                position.scrollTo(point: target)
+                scroller.scroll(to: .point(target))
                 viewer.scrollTarget = nil
             }
             .gesture(
@@ -636,6 +587,29 @@ struct PageScroll: View {
                     })
         }
         .background(.background.secondary)
+    }
+
+    /// Every page, one below the other, in the document the scroll shows.
+    private func pageColumn(viewport: CGSize) -> some View {
+        // Each page carries half the margin above and below it, so a page scrolled to the top
+        // keeps a margin above it, and two pages keep a whole margin between them.
+        // An eager stack, so every page sits where `PageStack` puts it: a lazy one laid the
+        // pages it had not drawn out at an estimate, and a zoom kept its place pages away
+        // while the title still named the page (#534). Only the pages in view draw.
+        // shortcut: measured on a 54-page note only; a lazy stack with known row heights is
+        // the upgrade if a long note opens slowly.
+        VStack(spacing: 0) {
+            ForEach(pages.pageSizes, id: \.index) { page in
+                PageView(
+                    page: page, count: navigator.pageCount, pages: pages,
+                    size: viewer.zoom.size(of: page.pixels, in: viewport, scale: displayScale),
+                    viewer: viewer
+                )
+                .padding(.vertical, PageView.margin / 2)
+            }
+        }
+        .padding(.horizontal, PageView.margin)
+        .padding(.vertical, PageView.margin / 2)
     }
 
     /// The pages' heights at `zoom`, for the place a zoom keeps.
