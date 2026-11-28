@@ -79,6 +79,9 @@ module.exports = {
     '^react/(.*)$': '<rootDir>/node_modules/react/$1',
     '^react-native$': '<rootDir>/node_modules/react-native',
   },
-  /** One test renders every screen: about 4 s idle, so 5 s timed out under load (#90). */
-  testTimeout: 120000,
+  /**
+   * One test renders every screen: about 60 s, laid out in up to eight rounds a screen (#548), and
+   * four times as many pictures with RENDER_EVIDENCE, so 120 s timed out under load (#90).
+   */
+  testTimeout: 900000,
 };
