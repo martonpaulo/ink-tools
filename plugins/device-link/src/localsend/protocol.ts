@@ -302,9 +302,16 @@ const IMAGE_TYPES: Record<string, 'png' | 'jpg'> = {
 /** A scanned PDF, which becomes a note with its pages as backgrounds (#143). */
 export const PDF_TYPE = 'application/pdf';
 
+/**
+ * Note Editor's own message over LocalSend (#493): one file of this type whose `preview` is the
+ * request JSON (`src/receive/remote.ts` reads it). No LocalSend app sends it.
+ */
+export const EDITOR_FILE_TYPE = 'application/vnd.inktools.note-editor+json';
+
 /** What an offer brings, or why it is refused. */
 export type Taken =
   | {kind: 'text'; text: string}
+  | {kind: 'editor'; message: string; info: unknown}
   | {kind: 'image'; fileId: string; extension: 'png' | 'jpg'}
   | {kind: 'pdf'; fileId: string}
   | {kind: 'refuse'; reason: 'type' | 'size' | 'shape'};
@@ -336,6 +343,11 @@ export function readOffer(text: string): Taken {
     return {kind: 'refuse', reason: 'shape'};
   }
   const fileType = file.fileType.toLowerCase();
+  if (fileType === EDITOR_FILE_TYPE) {
+    return typeof file.preview === 'string'
+      ? {kind: 'editor', message: file.preview, info: body.info}
+      : {kind: 'refuse', reason: 'shape'};
+  }
   if (fileType.startsWith('text/')) {
     return typeof file.preview === 'string' && file.preview.trim().length > 0
       ? {kind: 'text', text: file.preview}
@@ -371,6 +383,9 @@ export function decideOffer(
   switch (taken.kind) {
     case 'text':
       return {status: 204, body: '', fileId: null, extension: null, taken};
+    case 'editor':
+      // Answered by `src/receive/remote.ts`, once the request ran; this is only its placeholder.
+      return {status: 500, body: '', fileId: null, extension: null, taken};
     case 'image':
     case 'pdf':
       return {

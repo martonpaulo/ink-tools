@@ -37,11 +37,11 @@ export class PenGate {
     }
   }
 
-  /** True once the pen is up and quiet; false when it stayed down past PEN_PAUSE.waitMs. */
-  async idle(): Promise<boolean> {
+  /** True once the pen is up and quiet; false when it stayed down past `waitMs`. */
+  async idle(waitMs: number = PEN_PAUSE.waitMs): Promise<boolean> {
     const started = this.clock.now();
     while (this.down || this.clock.now() - this.liftedAt < PEN_PAUSE.quietMs) {
-      if (this.clock.now() - started >= PEN_PAUSE.waitMs) {
+      if (this.clock.now() - started >= waitMs) {
         return false;
       }
       await this.clock.sleep(PEN_PAUSE.stepMs);

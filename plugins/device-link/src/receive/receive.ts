@@ -22,6 +22,7 @@ import {refusedProblem} from '../permissions';
 import {tempDir} from '../send/sendPng';
 import {NoteFiles, pdfToNote} from './pdfNote';
 import {addPending, loadPending, PendingItem, savePending} from './pending';
+import {handleRemote} from './remote';
 
 /** How long one tap on «Receive» keeps the tablet visible. */
 export const RECEIVE_WINDOW_MS = 2 * 60 * 1000;
@@ -408,6 +409,19 @@ export async function receiveOne(
       }
       if (arrival.kind === 'offer') {
         const decision = decideOffer(arrival.body, arrival.sessionId, arrival.token);
+        if (decision.taken.kind === 'editor') {
+          // Note Editor's request (#493): its reply is the answer's body, and a pull sends after it.
+          const {taken} = decision;
+          const handled = await handleRemote(native, {...self, identityFolder: dir.value}, dir.value, taken.message, taken.info, arrival.token, line => host.log(line));
+          await native.answer(handled.status, handled.body, null, null);
+          if (handled.line !== null) {
+            onItem(handled.line);
+          }
+          if (handled.after !== null) {
+            host.log(`remote: pull: ${await handled.after()}`);
+          }
+          continue;
+        }
         await native.answer(
           decision.status,
           decision.body,

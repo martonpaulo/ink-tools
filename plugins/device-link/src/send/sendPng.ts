@@ -231,8 +231,9 @@ export function failureText(
 }
 
 /**
- * Offers and uploads one PNG, at the device's new address when the saved one does not answer
- * (`relocate`); the answer is the toast line, and a sent PNG's target goes to `delivered`.
+ * Offers and uploads one file, a PNG unless `fileType` names another (a pulled note, #493), at the
+ * device's new address when the saved one does not answer (`relocate`); the answer is the toast
+ * line, and a sent file's target goes to `delivered`.
  */
 export async function sendFile(
   native: Relay,
@@ -242,6 +243,7 @@ export async function sendFile(
   fileName: string,
   relocate?: Relocate,
   delivered?: Delivered,
+  fileType: string = 'image/png',
 ): Promise<string> {
   if (!isPrivateAddress(device.ip)) {
     return copy.notLocal(device.alias);
@@ -253,7 +255,7 @@ export async function sendFile(
   return withRelocation(
     device,
     relocate,
-    target => offerFile(native, sender, target, path, fileName, info.value),
+    target => offerFile(native, sender, target, path, fileName, info.value, fileType),
     delivered,
   );
 }
@@ -265,6 +267,7 @@ async function offerFile(
   path: string,
   fileName: string,
   info: FileInfo,
+  fileType: string,
 ): Promise<Attempt> {
   const pinned = device.protocol === 'https' ? device.fingerprint : null;
   const fileId = 'image';
@@ -276,7 +279,7 @@ async function offerFile(
         id: fileId,
         fileName,
         size: info.size,
-        fileType: 'image/png',
+        fileType,
         sha256: info.sha256,
       }),
       null,
@@ -308,7 +311,7 @@ async function offerFile(
   const uploaded = await loggedPost('upload', () =>
     native.post(
       uploadUrl(device, session, fileId),
-      {'Content-Type': 'image/png'},
+      {'Content-Type': fileType},
       null,
       path,
       pinned,

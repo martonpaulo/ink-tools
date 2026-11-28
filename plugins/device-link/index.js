@@ -43,6 +43,7 @@ import {editAction} from './src/editor/operations';
 import {templatesAction} from './src/editor/templates';
 import {deviceEditHost, readEditorRequest} from './src/editor/device';
 import {PenGate} from './src/editor/penGate';
+import {EDIT_PEN_MS, serveEdits} from './src/receive/remote';
 import {saveNoteAction} from './src/editor/save';
 
 AppRegistry.registerComponent(appName, () => App);
@@ -205,6 +206,9 @@ report(
   }),
 );
 const editHost = deviceEditHost(pen);
+// Note Editor's edits over Device Link (#493): the same action, with a pen wait the receiver's
+// answer window holds.
+serveEdits(editAction({...editHost, penIdle: () => pen.idle(EDIT_PEN_MS)}));
 startActionChannel({
   plugin: 'device-link',
   read: () => readEditorRequest(relay()),

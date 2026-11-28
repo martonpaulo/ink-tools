@@ -35,6 +35,10 @@ export const copy = {
   starting: 'Starting…',
   stop: 'Stop',
   receivedText: 'Text added to the note',
+  /** Note Editor's pairing (#493): the code the person types on the Mac, and how it went. */
+  pairCode: (alias: string, code: string) => `Pair with ${alias}: type ${code} in Note Editor`,
+  paired: (alias: string) => `${alias} is paired with this tablet`,
+  pairRefused: 'Pairing refused: the code did not match. Ask Note Editor for a new code.',
   receivedImage: 'Picture added to the note',
   nothingArrived: 'Nothing arrived',
   receiveStopped: 'Receiving stopped',

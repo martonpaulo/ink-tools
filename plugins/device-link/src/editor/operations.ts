@@ -305,7 +305,7 @@ function parseOperation(value: unknown): Operation {
 }
 
 /** The note's path, a `.note` in NOTES_FOLDER with no `.` or `..` part. */
-function isNotePath(value: unknown): value is string {
+export function isNotePath(value: unknown): value is string {
   const name = typeof value === 'string' && value.startsWith(NOTES_FOLDER) ? value.slice(NOTES_FOLDER.length) : '';
   return name.endsWith('.note') && name.split('/').every(part => part && part !== '.' && part !== '..');
 }

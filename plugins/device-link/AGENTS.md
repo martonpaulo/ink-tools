@@ -98,6 +98,16 @@ editor's Insert Page, the system ones by name and the PNGs straight in `MyStyle/
 which `insertPage` also takes ([#451](https://github.com/martonpaulo/ink-tools/issues/451)). `insertElements` and `modifyElements` take an optional target `layer`, 0 to 3: the open-note calls' `layer` argument, and by path each element's `layerNum`, whether the file API follows it waiting for the device round ([#334](https://github.com/martonpaulo/ink-tools/issues/334)). To test on the device: each operation with the screen
 untouched, whether a picture element takes a path in that folder, and a stroke's `setRange` move.
 
+**Note Editor over Device Link built, not yet on the device** ([#493](https://github.com/martonpaulo/ink-tools/issues/493)): the receiver also takes
+one offer of `EDITOR_FILE_TYPE` whose `preview` is Note Editor's request (`src/receive/remote.ts`), and
+the answer's body is the reply, so the user path needs no adb and opens only the LocalSend port. A Mac
+pairs once: `pair` shows a six-digit code on the tablet for 2 minutes, from the receiver's random offer
+token; `pair` with that code, from the same LocalSend fingerprint, answers a random grant, kept in
+`pairing.json`; one try per code. `edit` runs the helper's action `edit` with a 5 s pen wait
+(`EDIT_PEN_MS`, below `RelayModule.DECIDE_MS`), and `pull` sends the whole note back to the paired Mac's
+own LocalSend receiver, pinned to its fingerprint. Every other request from an unpaired device is a 403.
+Note Editor's adapter is still to come.
+
 ## What it is
 
 Send the current page, or a lasso selection, as a PNG to an iPhone or a Mac running LocalSend on
