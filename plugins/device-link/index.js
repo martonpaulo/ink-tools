@@ -24,7 +24,7 @@ import {
 import {copy} from './src/copy';
 import {
   ALIAS,
-  findForSend,
+  beginSend,
   noteHost,
   RECEIVE_ID,
   SEND_PAGE_ID,
@@ -33,7 +33,6 @@ import {
   textDeps,
 } from './src/run';
 import {startTextSend} from './src/send/textSession';
-import {startPick} from './src/send/pickSession';
 import {relay} from './src/native';
 import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
@@ -127,21 +126,9 @@ function receive() {
  * a tap there sends (#307). With none found, Settings opens on «No LocalSend device found».
  */
 function send(capture) {
-  working
-    .run(() => findForSend())
-    .then(found => {
-      if (found.kind === 'needs') {
-        // The view opens on the Needs state, with the steps that allow the permission (#256).
-        working.hold(found.problem, 'needs');
-        return;
-      }
-      if (found.kind === 'pick') {
-        startPick(capture, found.devices);
-      }
-      // The strip has closed the view; the list or Settings opens on its own.
-      showPluginView();
-    })
-    .catch(error => console.error(`Relay: send failed: ${error.message}`));
+  beginSend(capture, working).catch(error =>
+    console.error(`Relay: send failed: ${error.message}`),
+  );
 }
 
 report(

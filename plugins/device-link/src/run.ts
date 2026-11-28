@@ -45,7 +45,7 @@ import {
 } from './send/sendPng';
 import {sendText} from './send/sendText';
 import {TextDeps} from './send/textSession';
-import {Capture, PickDeps} from './send/pickSession';
+import {Capture, PickDeps, startPick} from './send/pickSession';
 import {working} from './working';
 import {Device} from './localsend/protocol';
 import {copy} from './copy';
@@ -123,6 +123,39 @@ export async function findForSend(
   const devices = await findReceivers(native, pluginDir);
   sendLog(`found ${devices.length} receivers`);
   return devices.length === 0 ? {kind: 'none'} : {kind: 'pick', devices};
+}
+
+/** The strip a send runs under: the one `working` of `src/working.ts`. */
+export type SendStrip = {
+  run: <T>(task: () => Promise<T>) => Promise<T>;
+  handOver: () => void;
+  hold: (problem: Problem, state?: 'needs' | 'error') => void;
+};
+
+/**
+ * The tap of «Send Page» or «Send Selection», end to end (#307, #582): the search runs under the
+ * «Loading…» strip, then the strip hands the view over to the list or to Settings with its «No
+ * LocalSend device found». The view is never closed and shown again: after a close the host
+ * ignored the next show on every press but the first, and the view stayed shut with no message.
+ */
+export async function beginSend(
+  capture: Capture,
+  strip: SendStrip,
+  find: () => Promise<Found> = () => findForSend(),
+  pick: (capture: Capture, devices: Device[]) => void = startPick,
+): Promise<void> {
+  await strip.run(async () => {
+    const result = await find();
+    if (result.kind === 'needs') {
+      // The view stays on the Needs state, with the steps that allow the permission (#256).
+      strip.hold(result.problem, 'needs');
+    } else {
+      if (result.kind === 'pick') {
+        pick(capture, result.devices);
+      }
+      strip.handOver();
+    }
+  });
 }
 
 /**
