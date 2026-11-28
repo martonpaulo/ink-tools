@@ -125,6 +125,7 @@ function device(
       read: async p =>
         p === 'google' ? 'refresh' : p === 'todoist' ? 'token' : null,
       remove: async () => {},
+      write: async () => {},
     },
     stores: createDeviceStores(rows(), () => NOW),
     probe: async capabilities =>
@@ -263,7 +264,7 @@ test('a missing Google client or sign-in is an error of the run, never an empty 
     device({googleClient: undefined}),
   ).syncNow();
   expect(noClient.runs.calendar?.errors).toEqual([
-    'google: the Google sign-in client is not on the tablet: on the Mac, run inkctl secret set google-client',
+    'google: the Google sign-in client is not on the tablet',
   ]);
   expect(noClient.runs.calendar?.notRun).toBe(true);
   const broken = await createSyncRunner(
@@ -277,13 +278,13 @@ test('a missing Google client or sign-in is an error of the run, never an empty 
     'google: the Google sign-in client did not read: secrets: the Google client has no client_secret',
   ]);
   const signedOut = await createSyncRunner(
-    device({secrets: {read: async () => null, remove: async () => {}}}),
+    device({secrets: {read: async () => null, remove: async () => {}, write: async () => {}}}),
   ).syncNow();
   expect(signedOut.runs.calendar?.errors[0]).toMatch(
-    /inkctl secret set google/,
+    /connect it in Account Sync's Settings/,
   );
   expect(signedOut.runs.todo?.errors).toEqual([
-    'Todoist is not signed in: on the Mac, run inkctl secret set todoist',
+    "Todoist is not connected: connect it in Account Sync's Settings",
   ]);
   expect(signedOut.runs.todo?.notRun).toBe(true);
 });
@@ -294,6 +295,7 @@ test('an unreadable Todoist sign-in fails the to-do run with its reason', async 
       read: async p =>
         p === 'todoist' ? Promise.reject(new Error('EACCES')) : 'refresh',
       remove: async () => {},
+      write: async () => {},
     },
   });
   const snap = await createSyncRunner(d).syncNow();
@@ -476,6 +478,7 @@ describe('iCloud and ICS on the tablet (#30)', () => {
       secrets: {
         read: async p => (p === 'icloud' ? 'tester@example.com:abcd-efgh-ijkl-mnop' : null),
         remove: async () => {},
+        write: async () => {},
       },
       stores: createDeviceStores(table, () => NOW),
     });
@@ -491,7 +494,7 @@ describe('iCloud and ICS on the tablet (#30)', () => {
   test('the pass gives the calendar module the chosen calendar for new tablet events (#29)', async () => {
     const d = device({
       fetch: apple().fetch,
-      secrets: {read: async () => 'tester@example.com:pw', remove: async () => {}},
+      secrets: {read: async () => 'tester@example.com:pw', remove: async () => {}, write: async () => {}},
     });
     expect((await buildModules(d, ['icloud'], [], CAL)).calendar?.defaultCalendarId).toBe(CAL);
     expect((await buildModules(d, ['icloud'], [])).calendar?.defaultCalendarId).toBeUndefined();
@@ -504,6 +507,7 @@ describe('iCloud and ICS on the tablet (#30)', () => {
       secrets: {
         read: async p => (p === 'icloud' ? 'tester@example.com:abcd-efgh-ijkl-mnop' : null),
         remove: async () => {},
+        write: async () => {},
       },
       stores: createDeviceStores(rows(), () => NOW),
     });
@@ -527,7 +531,7 @@ describe('iCloud and ICS on the tablet (#30)', () => {
         stored = s;
         return {ok: true};
       },
-      secrets: {read: async p => (p === 'icloud' ? 'tester@example.com:abcd-efgh-ijkl-mnop' : null), remove: async () => {}},
+      secrets: {read: async p => (p === 'icloud' ? 'tester@example.com:abcd-efgh-ijkl-mnop' : null), remove: async () => {}, write: async () => {}},
     });
     await createSyncRunner(d).syncNow();
     expect(stored.accounts).toEqual({ics: {[FEED]: 'Holidays'}});
@@ -536,7 +540,7 @@ describe('iCloud and ICS on the tablet (#30)', () => {
   test('iCloud gets the CalDAV writer and ICS none, so only iCloud takes tablet edits', async () => {
     const d = device({
       fetch: apple().fetch,
-      secrets: {read: async () => 'tester@example.com:pw', remove: async () => {}},
+      secrets: {read: async () => 'tester@example.com:pw', remove: async () => {}, write: async () => {}},
     });
     const modules = await buildModules(d, ['icloud', 'ics'], [FEED]);
     const [icloud, ics] = modules.calendar!.sources;
@@ -561,16 +565,16 @@ describe('iCloud and ICS on the tablet (#30)', () => {
         ),
       );
     };
-    expect(await reasons({secrets: {read: async () => null, remove: async () => {}}})).toEqual([
-      'not signed in: on the Mac, run inkctl secret set icloud',
+    expect(await reasons({secrets: {read: async () => null, remove: async () => {}, write: async () => {}}})).toEqual([
+      "not connected: connect it in Account Sync's Settings",
       'no ICS feed address in Settings',
     ]);
-    expect((await reasons({secrets: {read: async () => 'no-colon', remove: async () => {}}}))[0]).toMatch(
+    expect((await reasons({secrets: {read: async () => 'no-colon', remove: async () => {}, write: async () => {}}}))[0]).toMatch(
       /^the sign-in did not read: .*<Apple ID>:<app-specific password>/,
     );
     const refused: SyncDevice['fetch'] = async () => ({ok: false, status: 401, json: async () => ({}), text: async () => ''});
     expect(
-      (await reasons({fetch: refused, secrets: {read: async () => 'a@example.com:pw', remove: async () => {}}}))[0],
+      (await reasons({fetch: refused, secrets: {read: async () => 'a@example.com:pw', remove: async () => {}, write: async () => {}}}))[0],
     ).toMatch(/^the iCloud calendars did not read: CalDAV refused the sign-in/);
   });
 });

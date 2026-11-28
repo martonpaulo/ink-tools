@@ -1,8 +1,8 @@
 /**
  * The sign-in secrets in Bridge's private plugin folder (#90, owner D16 A): one file per provider,
- * named by sync-core's `secretFileName`, that `inkctl secret set <provider>` writes over ADB
- * (#116). Bridge reads them through its `BridgeFiles` module, as it reads its Settings (#40), and
- * deletes one to sign out. A refused read throws with the module's reason: an unreadable secret is
+ * named by sync-core's `secretFileName`, that Settings writes when a person connects on the tablet
+ * (#487) and `inkctl secret set <provider>` writes over ADB (#116). Bridge reads them through its
+ * `BridgeFiles` module, as it reads its Settings (#40), and deletes one to sign out. A refused read throws with the module's reason: an unreadable secret is
  * never shown as signed out, and never sent to a service.
  */
 import {REGISTRY} from '@ink-tools/sn-adapter/registry';
@@ -39,6 +39,15 @@ export function createSecretStore(
         throw new Error(read.message);
       }
       return read.value === null ? null : parseSecret(read.value);
+    },
+    async write(provider, value) {
+      // The value read back must be the value written: an empty one or a control character throws.
+      const secret = parseSecret(value);
+      const file = await path(provider);
+      const written = await callFiles(f => f.writeText(file, secret), files);
+      if (!written.ok) {
+        throw new Error(written.message);
+      }
     },
     async remove(provider) {
       const file = await path(provider);

@@ -221,22 +221,63 @@ describe('SettingsShell (#93)', () => {
       expect(tree.root.findAllByProps({accessibilityLabel: 'Sign out of iCloud'})).toHaveLength(0);
     });
 
-    it('offers Connect for a provider with no connection, which opens the Needs state with its steps (owner, 2026-11-26; #256)', async () => {
+    it('offers Connect for a provider with no connection, which opens its form typed on the tablet (#487)', async () => {
       const onClose = jest.fn();
-      const tree = render(READY, onClose, withSignIns(() => {}), settings);
+      const saved: string[] = [];
+      const rows = withSignIns(() => {});
+      rows[0].signIns![0] = {
+        ...rows[0].signIns![0],
+        onConnect: async secret => {
+          saved.push(secret);
+        },
+      };
+      const tree = render(READY, onClose, rows, settings);
       expect(tree.root.findAllByProps({accessibilityLabel: 'Connect Todoist'})).toHaveLength(0);
       await press(tree, 'Connect iCloud');
-      expect(tree.root.findByProps({testID: 'needs'})).toBeTruthy();
-      expect(texts(tree)).toEqual([
-        'iCloud is not connected',
-        'Account Sync reads iCloud with your own sign-in, which comes from the Mac.',
-        '1. On the Mac, run inkctl secret set icloud.',
-        '2. Close this view and press Sync now.',
-      ]);
+      expect(texts(tree)).toEqual(
+        expect.arrayContaining(['Connect iCloud', 'Apple ID', 'App-specific password', copy['connect.icloud.about']]),
+      );
       expect(screenBreaks(tree.root)).toEqual([]);
-      // Its × goes back to Settings, never closes the plugin.
-      await press(tree, CLOSE_TEXT);
+      const type = (label: string, text: string) =>
+        act(() => tree.root.find(n => n.props.accessibilityLabel === label && typeof n.props.onChangeText === 'function').props.onChangeText(text));
+      type('Apple ID', 'tester@example.com');
+      type('App-specific password', 'abcd-efgh-ijkl-mnop');
+      await press(tree, 'Connect iCloud');
+      expect(saved).toEqual(['tester@example.com:abcd-efgh-ijkl-mnop']);
+      // Saved, the form goes back to Settings, never closes the plugin.
       expect(onClose).not.toHaveBeenCalled();
+      expect(texts(tree)).toContain('iCloud account');
+    });
+
+    it('keeps the typed values and says why when the save fails (#487)', async () => {
+      const rows = withSignIns(() => {});
+      rows[0].signIns![0] = {
+        ...rows[0].signIns![0],
+        onConnect: async () => {
+          throw new Error('disk full');
+        },
+      };
+      const tree = render(READY, () => {}, rows, settings);
+      await press(tree, 'Connect iCloud');
+      act(() => tree.root.find(n => n.props.accessibilityLabel === 'Apple ID' && typeof n.props.onChangeText === 'function').props.onChangeText('a:b@example.com'));
+      act(() => tree.root.find(n => n.props.accessibilityLabel === 'App-specific password' && typeof n.props.onChangeText === 'function').props.onChangeText('pw'));
+      await press(tree, 'Connect iCloud');
+      expect(texts(tree)).toContain(copy['connect.icloud.colon']);
+      act(() => tree.root.find(n => n.props.accessibilityLabel === 'Apple ID' && typeof n.props.onChangeText === 'function').props.onChangeText('tester@example.com'));
+      await press(tree, 'Connect iCloud');
+      expect(texts(tree)).toContain('The iCloud sign-in was not saved: disk full');
+      expect(tree.root.find(n => n.props.accessibilityLabel === 'Apple ID' && typeof n.props.onChangeText === 'function').props.value).toBe('tester@example.com');
+    });
+
+    it('shows Google as not connectable on the tablet yet, with the reason and no step (#245, #487)', async () => {
+      const rows = withSignIns(() => {});
+      rows[0].signIns![1] = {id: 'google', name: 'Google', signIn: {state: 'signedOut'}, onSignOut: () => {}, onConnect: async () => {}};
+      const tree = render(READY, () => {}, rows, settings);
+      await press(tree, 'Connect Google');
+      expect(tree.root.findByProps({testID: 'needs'})).toBeTruthy();
+      expect(texts(tree)).toEqual(['Google is not connected', copy['connect.google.unavailable']]);
+      expect(screenBreaks(tree.root)).toEqual([]);
+      await press(tree, CLOSE_TEXT);
       expect(texts(tree)).toContain('iCloud account');
     });
 

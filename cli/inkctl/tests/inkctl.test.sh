@@ -2175,6 +2175,9 @@ check "secret status reads back nothing waiting" "$(run secret status | head -1)
 providers=$(grep '^export const SECRET_PROVIDERS' "$repo_root/../../packages/sync-core/src/secrets.ts" | grep -o "'[a-z-]*'" | tr -d "'" | paste -sd, -)
 check "the providers are sync-core's" "$providers" "todoist,icloud,google,google-client"
 check "the file name is sync-core's" "$(grep -c '`${provider}.secret`' "$repo_root/../../packages/sync-core/src/secrets.ts")" "1"
+# Account Sync's Settings writes the sign-in it takes on the tablet to the same file (#487), so both routes stay one contract.
+check "the tablet sign-in writes sync-core's file name" "$(grep -c 'secretFileName(provider)' "$repo_root/../../plugins/account-sync/src/secretStore.ts")" "1"
+check "the tablet sign-in has a write" "$(grep -c 'async write(provider, value)' "$repo_root/../../plugins/account-sync/src/secretStore.ts")" "1"
 
 # Every Keychain account inkctl names is the secret's name in upper snake case (credential naming rule, #277).
 check "each Keychain account is named by the rule" "$(grep -E '^[A-Z_]+_ACCOUNT = ' "$repo_root/src/inkctl" | grep -cvE '= "[A-Z][A-Z0-9_]+"$')" "0"

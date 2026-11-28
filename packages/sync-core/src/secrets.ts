@@ -1,8 +1,8 @@
 /**
- * The sign-in secrets Bridge's providers need (#90, owner decision D16 A). The first route is the
- * Mac command `inkctl secret set <provider>`, which writes one file per provider into Bridge's
- * private plugin folder; Bridge only reads that file and deletes it to sign out. Another route
- * (an on-tablet field, a file edited on a computer) is one more writer of the same file.
+ * The sign-in secrets Bridge's providers need (#90, owner decision D16 A): one file per provider in
+ * Bridge's private plugin folder. A person types them in Account Sync's Settings on the tablet
+ * (#487); the developer route, `inkctl secret set <provider>` on the Mac, writes the same files.
+ * Bridge deletes a file to sign out.
  */
 
 /**
@@ -19,6 +19,8 @@ export interface SecretStore {
   read(provider: SecretProvider): Promise<string | null>;
   /** Sign out: delete the provider's secret. */
   remove(provider: SecretProvider): Promise<void>;
+  /** Connect: keep the provider's secret, as typed on the tablet (#487). A failed write throws. */
+  write(provider: SecretProvider, value: string): Promise<void>;
 }
 
 /** The one owner of the file names; `inkctl` writes the same ones. */
@@ -73,6 +75,17 @@ export function parseICloudSignIn(raw: string): {appleId: string; password: stri
   if (!appleId) throw new Error('secrets: the iCloud sign-in has no Apple ID');
   if (!password) throw new Error('secrets: the iCloud sign-in has no app-specific password');
   return {appleId, password};
+}
+
+/**
+ * The stored iCloud sign-in from its two parts, typed on the tablet (#487): the form
+ * `parseICloudSignIn` reads. An Apple ID holding a colon cannot be stored this way, so it throws.
+ */
+export function composeICloudSignIn(appleId: string, appCode: string): string {
+  if (appleId.includes(':')) throw new Error('secrets: an Apple ID holds no colon');
+  const value = `${appleId}:${appCode}`;
+  parseICloudSignIn(value);
+  return value;
 }
 
 /**

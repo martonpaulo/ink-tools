@@ -228,6 +228,9 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
     remove: jest.fn(async provider => {
       delete stored[provider];
     }),
+    write: jest.fn(async (provider, value) => {
+      stored[provider] = value;
+    }),
   };
   const base = defaultSettings();
   files[`${DIR}/settings.json`] = JSON.stringify({
@@ -258,6 +261,19 @@ test('Settings shows whether Todoist is signed in and signs it out (#116)', asyn
   // The sign-out forgets the account it named (#433).
   expect(JSON.parse(files[`${DIR}/settings.json`]).accounts).toEqual({});
   expect(screenBreaks(tree.root)).toEqual([]);
+  // Connect again on the tablet, with no Mac (#487): the typed token is saved and the row reads it.
+  await act(async () => press('Connect Todoist').props.onPress());
+  expect(texts(tree)).toContain('Connect Todoist');
+  expect(screenBreaks(tree.root)).toEqual([]);
+  await act(async () => press('Connect Todoist').props.onPress());
+  expect(texts(tree)).toContain(copy['connect.empty']);
+  expect(secrets.write).not.toHaveBeenCalled();
+  const field = tree.root.find(n => n.props.accessibilityLabel === copy['connect.todoist.token'] && typeof n.props.onChangeText === 'function');
+  expect(field.props.secureTextEntry).toBe(true);
+  await act(async () => field.props.onChangeText(' synthetic-token-5678 '));
+  await act(async () => press('Connect Todoist').props.onPress());
+  expect(secrets.write).toHaveBeenCalledWith('todoist', 'synthetic-token-5678');
+  expect(texts(tree)).toEqual(expect.arrayContaining(['Todoist account', copy['signIn.in']]));
 });
 
 test('a sign-out that fails says so in one sentence and logs why (#116)', async () => {
@@ -266,6 +282,7 @@ test('a sign-out that fails says so in one sentence and logs why (#116)', async 
     remove: async () => {
       throw new Error('the file module cannot delete a file');
     },
+    write: async () => {},
   };
   const base = defaultSettings();
   files[`${DIR}/settings.json`] = JSON.stringify({
@@ -290,7 +307,7 @@ test('a sign-out that fails says so in one sentence and logs why (#116)', async 
 });
 
 test('a module that is on offers Connect for each provider with no connection, and runs as usual (owner, 2026-11-26)', async () => {
-  const secrets: SecretStore = {read: async () => null, remove: async () => {}};
+  const secrets: SecretStore = {read: async () => null, remove: async () => {}, write: async () => {}};
   const base = defaultSettings();
   files[`${DIR}/settings.json`] = JSON.stringify({
     ...base,

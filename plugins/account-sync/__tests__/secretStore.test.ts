@@ -1,4 +1,4 @@
-/** The sign-in files `inkctl secret set` writes, read and deleted in the private folder (#90). */
+/** The sign-in files Settings and `inkctl secret set` write, read and deleted in the private folder (#90, #487). */
 import {ok, fail, THROWN_CODE} from '@ink-tools/sn-adapter/official';
 import {signInState} from '@ink-tools/sync-core/secrets';
 import {TextFiles} from '../src/files';
@@ -67,6 +67,17 @@ test('sign out deletes the file; a delete that did not happen throws', async () 
   await expect(
     createSecretStore(folder, stuck).remove('todoist'),
   ).rejects.toThrow('the todoist sign-in was not deleted');
+});
+
+test('a sign-in typed on the tablet is saved where the sync reads it (#487)', async () => {
+  const {files, native} = disk();
+  const store = createSecretStore(folder, native);
+  await store.write('todoist', 'tok-SYNTHETIC-5678');
+  expect(files[`${DIR}todoist.secret`]).toBe('tok-SYNTHETIC-5678');
+  expect(await store.read('todoist')).toBe('tok-SYNTHETIC-5678');
+  await expect(store.write('icloud', '')).rejects.toThrow(/empty/);
+  const refused = {...native, writeText: () => Promise.reject(new Error('EACCES'))};
+  await expect(createSecretStore(folder, refused).write('todoist', 'tok')).rejects.toThrow('EACCES');
 });
 
 const DROP = `${SECRET_DROP_FOLDER}/todoist.secret`;

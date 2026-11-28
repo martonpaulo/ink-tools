@@ -56,11 +56,25 @@ export const copy = {
   'signIn.out': 'Not connected',
   'connect.button': 'Connect',
   'connect.label': 'Connect {provider}',
-  /** The Needs state «Connect» opens (#256): what is missing, why, and the steps only the owner can do. */
+  /** The Needs state of a provider that cannot connect on the tablet yet (#256, #487). */
   'connect.what': '{provider} is not connected',
-  'connect.why': 'Account Sync reads {provider} with your own sign-in, which comes from the Mac.',
-  'connect.step.mac': 'On the Mac, run inkctl secret set {id}.',
-  'connect.step.sync': 'Close this view and press Sync now.',
+  'connect.google.unavailable':
+    'Connecting Google on the tablet is not ready yet. Todoist and iCloud connect here.',
+  /** The form «Connect» opens (#487): typed on the tablet, saved only on the tablet. */
+  'connect.title': 'Connect {provider}',
+  'connect.save': 'Connect',
+  'connect.saving': 'Connecting…',
+  'connect.todoist.token': 'API token',
+  'connect.todoist.about':
+    'In Todoist, open Settings, then Integrations, then Developer, and copy the API token.',
+  'connect.icloud.appleId': 'Apple ID',
+  'connect.icloud.appSpecific': 'App-specific password',
+  'connect.icloud.about':
+    'Make an app-specific password at account.apple.com, under Sign-In and Security. Your Apple ID password does not work here.',
+  'connect.empty': 'Fill in every field.',
+  'connect.icloud.colon': 'An Apple ID holds no colon. Check the Apple ID.',
+  'connect.problem': 'The {provider} sign-in was not saved: {reason}',
+  'connect.next': 'Saved on this tablet only. The next sync uses it.',
   'signIn.unreadable': 'The sign-in did not read: {reason}',
   'signOut.button': 'Sign out',
   'signOut.label': 'Sign out of {provider}',

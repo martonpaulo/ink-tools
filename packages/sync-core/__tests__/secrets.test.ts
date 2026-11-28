@@ -1,5 +1,5 @@
 /** Sign-in secrets: file names, the account a row names and the parse of a stored value (#90, #433). */
-import {SecretStore, parseGoogleClient, parseICloudSignIn, parseSecret, secretFileName, signInState} from '../src';
+import {SecretStore, composeICloudSignIn, parseGoogleClient, parseICloudSignIn, parseSecret, secretFileName, signInState} from '../src';
 
 const SYNTHETIC = 'synthetic-token-0000-wxyz';
 
@@ -18,7 +18,7 @@ test('a piped newline is dropped; an empty value or a control character is refus
 });
 
 function store(read: SecretStore['read']): SecretStore {
-  return {read, remove: async () => {}};
+  return {read, remove: async () => {}, write: async () => {}};
 }
 
 test('the sign-in state: signed out, signed in with its account, and an unreadable file kept apart (#433)', async () => {
@@ -62,4 +62,13 @@ test('no sign-in state holds any part of its secret (#433)', async () => {
     const state = JSON.stringify(await signInState(store(async () => `tester@example.com:${SYNTHETIC}`), provider));
     for (let i = 0; i + 3 <= SYNTHETIC.length; i++) expect(state).not.toContain(SYNTHETIC.slice(i, i + 3));
   }
+});
+
+test('an iCloud sign-in typed in two parts is stored in the form the sync reads (#487)', () => {
+  const value = composeICloudSignIn('tester@example.com', SYNTHETIC);
+  expect(parseICloudSignIn(value).appleId).toBe('tester@example.com');
+  expect(parseICloudSignIn(value).password).toBe(SYNTHETIC);
+  expect(() => composeICloudSignIn('a:b@example.com', 'pw')).toThrow('no colon');
+  expect(() => composeICloudSignIn('', 'pw')).toThrow('no Apple ID');
+  expect(() => composeICloudSignIn('tester@example.com', '')).toThrow('no app-specific password');
 });

@@ -287,14 +287,18 @@ Older code names stay in npm packages, `pluginKey`, log prefixes, data folders a
     devices allows only `openid`, `email`, `profile`, two Drive scopes and two YouTube scopes; no
     Calendar scope (read 2026-11-14,
     [#64](https://github.com/martonpaulo/ink-tools/issues/64)). `packages/sync-core`
-    therefore has no device-code sign-in ([#124](https://github.com/martonpaulo/ink-tools/issues/124)). **Account Sync signs in on the Mac and gets the token
-    over ADB** (owner D39 A, [#64](https://github.com/martonpaulo/ink-tools/issues/64)): a `inkctl` command runs Google's
+    therefore has no device-code sign-in ([#124](https://github.com/martonpaulo/ink-tools/issues/124)). **Account Sync connects
+    its accounts on the tablet** ([#487](https://github.com/martonpaulo/ink-tools/issues/487)): «Connect» in its Settings takes
+    the Todoist token, and the Apple ID with its app-specific password, typed on the tablet, from the
+    form `src/signInForms.ts` declares, and saves each in Account Sync's private plugin folder, one
+    file per provider. Google signs in through the published app's own sign-in on the tablet, read
+    and write ([#372](https://github.com/martonpaulo/ink-tools/issues/372)); until that route exists, «Connect Google»
+    says it is not ready on the tablet. The developer route stays: an `inkctl` command runs Google's
     installed-app flow with a loopback redirect, which allows the Calendar scopes, in the Mac's
-    browser; the refresh token then goes to Account Sync's private plugin folder the way every sign-in
-    secret does, `inkctl secret set google` ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). The plugin only refreshes
-    access tokens. Not chosen: a browser on the tablet with a loopback redirect to the plugin (the
-    browser and the local listener are unconfirmed), and read-only Google through its secret iCal
-    address and the ICS provider ([#30](https://github.com/martonpaulo/ink-tools/issues/30)), which makes writing back
+    browser, and `inkctl secret set <provider>` writes the same files over ADB
+    ([#116](https://github.com/martonpaulo/ink-tools/issues/116), owner D39 A, [#64](https://github.com/martonpaulo/ink-tools/issues/64)). The plugin only
+    refreshes access tokens. Never chosen: read-only Google through its secret iCal address and the
+    ICS provider ([#30](https://github.com/martonpaulo/ink-tools/issues/30)), which makes writing back
     ([#29](https://github.com/martonpaulo/ink-tools/issues/29)) impossible.
 
     Any OAuth route: while the OAuth client's consent screen is in «Testing», Google's refresh

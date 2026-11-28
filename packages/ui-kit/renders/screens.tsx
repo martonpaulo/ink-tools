@@ -31,6 +31,8 @@ import PluginDiagnostics from '../../../plugins/ink-tools-probe/App';
 import {copy as diagnosticsCopy} from '../../../plugins/ink-tools-probe/src/copy';
 import type {ProbeOutcome} from '../../../plugins/ink-tools-probe/src/probe';
 import {connectProblem as accountSyncConnect, SettingsShell as AccountSyncSettings} from '../../../plugins/account-sync/src/SettingsShell';
+import {ConnectForm as AccountSyncConnectForm} from '../../../plugins/account-sync/src/ConnectForm';
+import {SIGN_IN_FORMS as ACCOUNT_SYNC_SIGN_IN_FORMS} from '../../../plugins/account-sync/src/signInForms';
 import {SettingsForm as AccountSyncForm} from '../../../plugins/account-sync/src/SettingsForm';
 import {moduleRows as accountSyncRows} from '../../../plugins/account-sync/App';
 import type {BridgeSettings as AccountSyncSettingsValue} from '@ink-tools/sync-core/settings';
@@ -489,6 +491,13 @@ const wordSearchInk = () => {
 };
 const puzzlesWordSearch = (code: string | null, steps: string[] = []) => puzzlesGame(WORD_SEARCH, wordSearchInk, code, steps);
 
+const ACCOUNT_SYNC_ICLOUD_FORM = (() => {
+  const form = ACCOUNT_SYNC_SIGN_IN_FORMS.icloud;
+  if (form?.kind !== 'typed') {
+    throw new Error('the iCloud sign-in form is not typed');
+  }
+  return form;
+})();
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
 const accountSync = (settings: AccountSyncSettingsValue, runs = {}, signIns = {}) =>
@@ -582,7 +591,8 @@ export const SCREENS: ScreenRender[] = [
   {name: 'account-sync-connect', render: () => accountSync(accountSyncModule(accountSyncDefaults(), 'calendar', true), {}, {google: {state: 'signedOut'}, icloud: {state: 'signedOut'}})},
   {name: 'account-sync-ics-feeds', render: () => accountSync(ICS_FEEDS)},
   {name: 'account-sync-error', render: () => mount(<AccountSyncSettings state={{kind: 'error', reason: 'The plugin folder did not answer.', onRetry: noop}} onClose={noop} />)},
-  {name: 'account-sync-needs-connect', render: () => mount(<Needs problem={accountSyncConnect({id: 'icloud', name: 'iCloud', signIn: {state: 'signedOut'}, onSignOut: noop})} onClose={noop} />)},
+  {name: 'account-sync-needs-connect', render: () => mount(<Needs problem={accountSyncConnect({id: 'google', name: 'Google', signIn: {state: 'signedOut'}, onSignOut: noop})} onClose={noop} />)},
+  {name: 'account-sync-connect-form', render: () => mount(<AccountSyncConnectForm provider={{id: 'icloud', name: 'iCloud', signIn: {state: 'signedOut'}, onSignOut: noop, onConnect: async () => {}}} form={ACCOUNT_SYNC_ICLOUD_FORM} onClose={noop} />)},
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
   {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />), notFullView: 'the «Loading…» box sits over the note, as the native loading box does'},
   {name: 'ui-kit-controls', render: () => mount(<ControlsSheet />)},

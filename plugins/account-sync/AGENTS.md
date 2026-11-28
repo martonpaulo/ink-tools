@@ -87,9 +87,14 @@ Supernote Calendar via the `com.ratta.supernote.calendar.provider` content provi
   `calendar.readonly`, each ICS feed's `X-WR-CALNAME`) and keeps it only in `settings.json`'s
   `accounts`, never in the log; iCloud's is the Apple ID of its sign-in. A read that fails keeps the
   earlier name, or the row says «Connected», and the log says why.
-  **Todoist** API token, **iCloud** app-specific password and **Google** refresh token (its
-  sign-in is [#64](https://github.com/martonpaulo/supernote-tools/issues/64)) all come from the Mac with `inkctl secret set <provider>`
-  ([#116](https://github.com/martonpaulo/ink-tools/issues/116)). `adb` cannot write the private folder, so the value arrives as a one-shot drop
+  A person connects **Todoist** (API token) and **iCloud** (Apple ID and app-specific password) on
+  the tablet: «Connect» opens `src/ConnectForm.tsx`, whose fields `src/signInForms.ts` declares,
+  and the secret store writes the file ([#487](https://github.com/martonpaulo/ink-tools/issues/487)). **Google** has no tablet route
+  until the published app's sign-in lands ([#372](https://github.com/martonpaulo/ink-tools/issues/372)); its «Connect» shows why. The
+  developer route, `inkctl secret set <provider>` on the Mac, writes the same files
+  ([#116](https://github.com/martonpaulo/ink-tools/issues/116)), and the Google refresh token comes only from it (its
+  sign-in is [#64](https://github.com/martonpaulo/supernote-tools/issues/64)).
+  No user-facing text names `inkctl`. On that route `adb` cannot write the private folder, so the value arrives as a one-shot drop
   file in `SECRET_DROP_FOLDER` (`src/secretStore.ts`, hidden, unsynced, allowed by the plugin file
   guard); each sync pass, at start and on «Sync now», moves it in and deletes the drop file at once
   (an assumption the owner may override, [`docs/decisions.md`](../../docs/decisions.md#decision-index)). Not yet run on the

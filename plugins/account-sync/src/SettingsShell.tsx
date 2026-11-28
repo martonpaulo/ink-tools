@@ -4,7 +4,8 @@
  * since Back never reaches the view on the Manta (#204, #266, #274), and the screen's one action,
  * «Sync now», at its trailing edge, as the native title bar puts a screen's action (#411). A
  * settings read that failed is ui-kit's Error state with its reason and Retry, and «Connect» opens
- * the Needs state with the steps that connect the account (#256); each keeps the ×.
+ * the provider's form, typed on the tablet (#487), or, for a provider that cannot connect on the
+ * tablet yet, the Needs state that says why (#256); each keeps the ×.
  */
 import React, {useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
@@ -12,7 +13,10 @@ import {ErrorView, metrics, Needs, shared, TitleBar} from '@ink-tools/ui-kit';
 import type {Problem} from '@ink-tools/ui-kit';
 import type {Result} from '@ink-tools/sn-adapter/official';
 import type {ModuleStatus, SignIn} from '@ink-tools/sync-core';
+import type {SecretProvider} from '@ink-tools/sync-core/secrets';
 import {copy, format} from './copy';
+import {ConnectForm} from './ConnectForm';
+import {SIGN_IN_FORMS} from './signInForms';
 
 export type ModuleRow = {
   id: string;
@@ -26,11 +30,13 @@ export type ModuleRow = {
 };
 
 export type ProviderSignIn = {
-  /** The provider's id, as `inkctl secret set <id>` takes it. */
-  id: string;
+  /** The provider's id, the name of its secret file. */
+  id: SecretProvider;
   name: string;
   signIn: SignIn;
   onSignOut: () => void;
+  /** Saves the sign-in typed in its «Connect» form (#487); throws with the reason when it fails. */
+  onConnect?: (secret: string) => Promise<void>;
 };
 
 /** «Sync now» (#40): «Syncing…» while a pass runs, with why the last pass did not start. */
@@ -81,6 +87,17 @@ export function SettingsShell({
     );
   }
   if (connecting !== null) {
+    const form = SIGN_IN_FORMS[connecting.id];
+    const onConnect = connecting.onConnect;
+    if (form?.kind === 'typed' && onConnect) {
+      return (
+        <ConnectForm
+          provider={{...connecting, onConnect}}
+          form={form}
+          onClose={() => setConnecting(null)}
+        />
+      );
+    }
     return <Needs problem={connectProblem(connecting)} onClose={() => setConnecting(null)} />;
   }
   const sync = state.kind === 'ready' ? state.sync : undefined;
@@ -115,13 +132,12 @@ export function SettingsShell({
   );
 }
 
-/** What a provider with no connection needs (#256): the Mac step only the owner can do, then a sync. */
+/** A provider that cannot connect on the tablet yet (#256, #487): what is missing and why, no step. */
 export function connectProblem(provider: ProviderSignIn): Problem {
-  const names = {provider: provider.name, id: provider.id};
+  const form = SIGN_IN_FORMS[provider.id];
   return {
-    what: format('connect.what', names),
-    reason: format('connect.why', names),
-    fix: {steps: [format('connect.step.mac', names), copy['connect.step.sync']]},
+    what: format('connect.what', {provider: provider.name}),
+    reason: form?.kind === 'unavailable' ? copy[form.reason] : undefined,
   };
 }
 

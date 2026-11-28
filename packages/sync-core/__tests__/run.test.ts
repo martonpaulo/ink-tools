@@ -200,7 +200,7 @@ test('a to-do module that is on with no sign-in is not run, and says how to sign
   const {runs, state} = await runBridgeSync(plan, {}, initialBridgeState(), () => 3);
   expect(runs.todo).toEqual({
     module: 'todo', at: 3, counts: {added: 0, changed: 0, removed: 0},
-    errors: ['Todoist is not signed in: on the Mac, run inkctl secret set todoist'], warnings: [], notRun: true,
+    errors: ["Todoist is not connected: connect it in Account Sync's Settings"], warnings: [], notRun: true,
   });
   expect(state.firstLinked.todo).toBeUndefined();
 });

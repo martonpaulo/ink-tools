@@ -119,8 +119,8 @@ const failing = (id: ProviderId, reason: string): CalendarSource => ({
   },
 });
 
-const signedOut = (id: string) =>
-  `not signed in: on the Mac, run inkctl secret set ${id}`;
+/** A provider with no sign-in names the tablet screen that connects it, never a command (#487). */
+const SIGNED_OUT = "not connected: connect it in Account Sync's Settings";
 
 /**
  * What a pass learns of the accounts it signs in to (#433): a reader per service, run after the
@@ -136,7 +136,7 @@ export const noAccountReads = (): AccountReads => ({readers: {}, ics: {}});
 async function googleSource(device: SyncDevice, accounts: AccountReads): Promise<CalendarSource> {
   const refresh = await device.secrets.read('google');
   if (refresh === null) {
-    return failing('google', signedOut('google'));
+    return failing('google', SIGNED_OUT);
   }
   // The OAuth client is its own file, `inkctl secret set google-client` (#200); a missing or
   // broken one fails this source with the reason, never an empty calendar.
@@ -147,10 +147,8 @@ async function googleSource(device: SyncDevice, accounts: AccountReads): Promise
     return failing('google', `the Google sign-in client did not read: ${(e as Error).message}`);
   }
   if (!client) {
-    return failing(
-      'google',
-      'the Google sign-in client is not on the tablet: on the Mac, run inkctl secret set google-client',
-    );
+    // The client comes only from the developer route, `inkctl secret set google-client` (#200).
+    return failing('google', 'the Google sign-in client is not on the tablet');
   }
   // One access token per pass: each request asks for it, and it lasts an hour.
   let pending: Promise<string> | undefined;
@@ -175,7 +173,7 @@ const warnTo = (device: SyncDevice, id: ProviderId) => (warnings: string[]) =>
 async function icloudSource(device: SyncDevice): Promise<CalendarSource> {
   const raw = await device.secrets.read('icloud');
   if (raw === null) {
-    return failing('icloud', signedOut('icloud'));
+    return failing('icloud', SIGNED_OUT);
   }
   const {appleId, password} = parseICloudSignIn(raw);
   const signIn = {

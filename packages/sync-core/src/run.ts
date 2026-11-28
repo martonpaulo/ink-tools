@@ -256,7 +256,7 @@ export async function runBridgeSync(
       } else if (id === 'todo') {
         const todo = modules.todo;
         if (!plan.providers.includes('todoist')) { runs.todo = notRun('todo', 'Todoist is not turned on'); continue; }
-        if (!todo) { runs.todo = notRun('todo', 'Todoist is not signed in: on the Mac, run inkctl secret set todoist'); continue; }
+        if (!todo) { runs.todo = notRun('todo', "Todoist is not connected: connect it in Account Sync's Settings"); continue; }
         const done = await runTodoModule(todo, state.links, now, policy('todo'));
         runs.todo = done.run;
         next.links = done.links;

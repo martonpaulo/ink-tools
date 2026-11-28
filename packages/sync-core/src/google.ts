@@ -27,7 +27,7 @@ const FORM = {'Content-Type': 'application/x-www-form-urlencoded'};
  */
 export class GoogleSignedOutError extends Error {
   constructor() {
-    super('Google sign-in was revoked or has expired: sign in again on the Mac with inkctl google login');
+    super("Google sign-in was revoked or has expired: connect Google again in Account Sync's Settings");
     this.name = 'GoogleSignedOutError';
   }
 }

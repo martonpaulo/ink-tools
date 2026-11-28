@@ -58,6 +58,8 @@ export function moduleRows(
   signIns: SignIns = {},
   onSignOut: (provider: SecretProvider) => void = () => {},
   onRemoveWritten?: (module: TwoWayModule) => void,
+  /** Saves a sign-in typed in a provider's «Connect» form (#487). */
+  onConnect?: (provider: SecretProvider, secret: string) => Promise<void>,
 ): ModuleRow[] {
   const writes = (id: ModuleId): id is TwoWayModule => (TWO_WAY_MODULES as ModuleId[]).includes(id);
   return MODULES.map(id => ({
@@ -74,6 +76,7 @@ export function moduleRows(
               name: copy[`provider.${p as 'todoist' | 'google' | 'icloud'}`],
               signIn,
               onSignOut: () => onSignOut(p),
+              ...(onConnect ? {onConnect: (secret: string) => onConnect(p, secret)} : {}),
             },
           ]
         : [];
@@ -163,6 +166,15 @@ export default function App({
     }
   };
 
+  // A sign-in typed on the tablet (#487): saved where the sync reads it, then the rows read it back.
+  const connect = async (provider: SecretProvider, secret: string) => {
+    try {
+      await store.write(provider, secret);
+    } finally {
+      await readSignIns();
+    }
+  };
+
   const [removeNotice, setRemoveNotice] = useState<string | null>(null);
   const removeWritten = async (module: TwoWayModule) => {
     setRemoveNotice(null);
@@ -236,7 +248,7 @@ export default function App({
               <SettingsForm
                 settings={settings}
                 onChange={change}
-                modules={moduleRows(settings, synced.probe, synced.runs, signIns, signOut, removeWritten)}
+                modules={moduleRows(settings, synced.probe, synced.runs, signIns, signOut, removeWritten, connect)}
                 onConnect={onConnect}
               />
             )
