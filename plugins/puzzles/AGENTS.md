@@ -23,6 +23,10 @@ data folder. Log lines start `Puzzles:`.
   (`src/requirements.ts`): ui-kit's Loading while that runs, Needs with «Allow» for a permission not
   granted, then the steps in Settings once the host refused it, and Error with Retry when the host
   cannot answer. Nothing is asked before a game is opened, so the empty list asks for nothing.
+- Each press of the button first reads the page on screen: a page whose background names a puzzle
+  of the list (any page layout «Check» knows) opens that game's view at once, with «This page»
+  first, and its Back leads to the list; any other page, or one that cannot be read, opens on the
+  list ([#601](https://github.com/martonpaulo/ink-tools/issues/601)).
 - Every control comes from `@ink-tools/ui-kit`, with its Close on every screen; Back goes through
   the native module `PuzzlesBack` (`native/com/puzzles/view/PuzzlesPackage.java`, built by
   `scripts/native-build.cjs`), so it never reaches the note behind the view.

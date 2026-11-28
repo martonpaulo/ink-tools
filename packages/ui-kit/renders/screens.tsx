@@ -272,6 +272,12 @@ const puzzlesPorts = (host: PuzzlesHost): PuzzlesPorts => ({
   request: async () => ({ok: true, value: host === 'denied' ? 0 : 1}),
   log: noop,
 });
+/** A page no game made, so the Puzzles view opens on its game list (#601). */
+const PUZZLES_BLANK_PAGE = {
+  here: async () => ({ok: true as const, value: {notePath: '/storage/emulated/0/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait' as const}}),
+  codeOf: async () => ({ok: true as const, value: null}),
+  log: noop,
+};
 /** Two synthetic games, so the list shows rows as a game issue adds them. */
 const PUZZLES_GAMES: PuzzlesGame[] = [
   {id: 'sample-grid', title: 'Sample grid', subtitle: 'Fill every row and column once', View: () => <View />},
@@ -282,7 +288,7 @@ const pressIn = (tree: ReactTestRenderer, label: string) =>
   act(async () => tree.root.find(node => node.props.accessibilityLabel === label && typeof node.props.onPress === 'function').props.onPress());
 /** The Puzzles view on this host; `steps` presses the first game, then each label after it. */
 const puzzles = async (host: PuzzlesHost, games: PuzzlesGame[] = [], steps: string[] = []) => {
-  const tree = await mount(<PuzzlesView close={noop} ports={puzzlesPorts(host)} games={games} />);
+  const tree = await mount(<PuzzlesView close={noop} ports={puzzlesPorts(host)} games={games} pages={PUZZLES_BLANK_PAGE} />);
   for (const label of steps) {
     await pressIn(tree, label);
   }

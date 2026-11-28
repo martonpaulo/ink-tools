@@ -8,10 +8,13 @@ import {catchBackKey, fakeBackKeyModule} from '@ink-tools/ui-kit/backKeyTest';
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {RETRY_TEXT} from '@ink-tools/ui-kit';
 import {PluginManager} from 'sn-plugin-lib';
-import {startButtonQueue} from '@ink-tools/sn-adapter/official';
+import {startButtonQueue, THROWN_CODE} from '@ink-tools/sn-adapter/official';
+import {PAGE_LAYOUT, placedPageCode, puzzleCode, type Game as CoreGame} from '@ink-tools/puzzle-core';
 import App from '../App';
 import {copy} from '../src/copy';
-import type {Game} from '../src/games';
+import {GAMES, PUZZLE_GAMES, type Game} from '../src/games';
+import {gameOfPage, type PageReader} from '../src/PuzzlesView';
+import {HERE} from '../testing/gameView';
 import type {RequirementPorts} from '../src/requirements';
 import {onToolbarPress, PUZZLES_ID} from '../src/toolbar';
 
@@ -52,10 +55,19 @@ const game = (requires: Game['requires'] = undefined): Game => ({
 const state = (tree: ReactTestRenderer, testID: string) =>
   tree.root.findAll(node => typeof node.type === 'string' && node.props.testID === testID);
 
+/** A page whose background is `name`, or none; `fail` makes the page unreadable. */
+function pageWith(name: string | null, {fail = false} = {}): PageReader {
+  return {
+    here: async () => (fail ? {ok: false, code: THROWN_CODE, message: 'The handwriting app is not open'} : {ok: true, value: HERE}),
+    codeOf: async () => ({ok: true, value: name}),
+    log: () => {},
+  };
+}
+
 async function mount(props: React.ComponentProps<typeof App>) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = renderer.create(<App {...props} />);
+    tree = renderer.create(<App pages={pageWith(null)} {...props} />);
   });
   return tree;
 }
@@ -173,4 +185,54 @@ test('a new press of the toolbar button starts at the game list, never where the
   expect(show).toHaveBeenCalledTimes(1);
   expect(shownTexts(tree.root)).toContain('Test game');
   expect(shownTexts(tree.root)).not.toContain('Playing');
+});
+
+/** A code of `game`, at a size every game's size token accepts. */
+const codeOf = (id: string) => puzzleCode({game: id as CoreGame, size: '9', difficulty: 'easy', seed: '7K2Q9X'});
+
+describe('a page that holds a puzzle opens on its game (#601)', () => {
+  // Every puzzle game: a board (no `open`) has no code of puzzle-core, so no page names it.
+  const puzzles = PUZZLE_GAMES.filter(entry => entry.open);
+
+  test.each(puzzles.map(entry => entry.id))('%s, by the name of the current page layout and the bare code of layout 1', id => {
+    expect(gameOfPage(placedPageCode(codeOf(id), PAGE_LAYOUT), GAMES)?.id).toBe(id);
+    expect(gameOfPage(codeOf(id), GAMES)?.id).toBe(id);
+  });
+
+  test('a background no game made, or a game not in the list, names none', () => {
+    expect(gameOfPage('style_white', GAMES)).toBeNull();
+    expect(gameOfPage(codeOf('sudoku'), [game()])).toBeNull();
+  });
+
+  const sudoku: Game = {...game(), id: 'sudoku', title: 'Sudoku'};
+
+  test('the view opens the game with no tap, after its requirements', async () => {
+    const ports = fakePorts(new Set([READ, WRITE]));
+    const tree = await mount({ports, games: [game(), sudoku], pages: pageWith(placedPageCode(codeOf('sudoku'), PAGE_LAYOUT))});
+    expect(shownTexts(tree.root)).toContain('Playing');
+    expect(ports.asked).toEqual([]);
+    // Its Back leads to the game list, for a new puzzle.
+    await act(async () => tree.root.findByType(Text).props.onPress());
+    expect(shownTexts(tree.root)).toContain(copy['games.caption']);
+  });
+
+  test('a page with none, or a page that cannot be read, shows the game list', async () => {
+    for (const pages of [pageWith(null), pageWith('style_white'), pageWith(codeOf('sudoku'), {fail: true})]) {
+      const tree = await mount({ports: fakePorts(new Set([READ, WRITE])), games: [sudoku], pages});
+      expect(shownTexts(tree.root)).toContain(copy['games.caption']);
+      expect(shownTexts(tree.root)).not.toContain('Playing');
+    }
+  });
+
+  test('a new press of the toolbar button reads the page again', async () => {
+    startButtonQueue(id => onToolbarPress(id, () => {}));
+    const listener = (PluginManager.registerButtonListener as jest.Mock).mock.calls.at(-1)[0];
+    let name: string | null = null;
+    const pages: PageReader = {...pageWith(null), codeOf: async () => ({ok: true, value: name})};
+    const tree = await mount({ports: fakePorts(new Set([READ, WRITE])), games: [sudoku], pages});
+    expect(shownTexts(tree.root)).not.toContain('Playing');
+    name = codeOf('sudoku');
+    await act(async () => listener.onButtonPress({id: PUZZLES_ID}));
+    expect(shownTexts(tree.root)).toContain('Playing');
+  });
 });
