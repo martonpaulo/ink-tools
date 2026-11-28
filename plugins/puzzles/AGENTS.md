@@ -23,10 +23,13 @@ data folder. Log lines start `Puzzles:`.
   (`src/requirements.ts`): ui-kit's Loading while that runs, Needs with «Allow» for a permission not
   granted, then the steps in Settings once the host refused it, and Error with Retry when the host
   cannot answer. Nothing is asked before a game is opened, so the empty list asks for nothing.
-- Each press of the button first reads the page on screen: a page whose background names a puzzle
-  of the list (any page layout «Check» knows) opens that game's view at once, with «This page»
-  first, and its Back leads to the list; any other page, or one that cannot be read, opens on the
-  list ([#601](https://github.com/martonpaulo/ink-tools/issues/601)).
+- Each press of the button first reads the page on screen, as «Check» reads it: a page whose
+  background names a puzzle of the list (any page layout «Check» knows) opens that game's view at
+  once, which starts from that read: «This page» with «Check» and «Show Solution» first, then an
+  «Other Games» row to the game list, then the new page's choices, with «Add Page» outlined, not
+  filled. ‹, «Other Games» and the Back key all go to the game list. Any other page, or one that
+  cannot be read, opens on the list. The read shows the title bar alone, no Loading mark, as it is
+  short ([#601](https://github.com/martonpaulo/ink-tools/issues/601)).
 - Every control comes from `@ink-tools/ui-kit`, with its Close on every screen; Back goes through
   the native module `PuzzlesBack` (`native/com/puzzles/view/PuzzlesPackage.java`, built by
   `scripts/native-build.cjs`), so it never reaches the note behind the view.
@@ -42,8 +45,8 @@ never `MyStyle/`, which Supernote Cloud syncs), written by the native module `Pu
 (`native/com/puzzles/view/PageFileModule.java`, as sn-plugin-lib writes no bytes), and inserted as
 the background of a new page after the current one once the note saved. A successful insert reloads
 the note and ends the plugin's JavaScript, so the view closes before it and the next game view
-deletes the page files an earlier one left; each press of the button starts at the game list
-([#386](https://github.com/martonpaulo/ink-tools/issues/386)). The page's background then reads
+deletes the page files an earlier one left; each press of the button starts again from the page on
+screen ([#386](https://github.com/martonpaulo/ink-tools/issues/386), [#601](https://github.com/martonpaulo/ink-tools/issues/601)). The page's background then reads
 `user_<code>`, so the view finds the puzzle of the current page from it and stores no puzzle.
 Each game's view opens on the choices of its last «Add Page», kept across a plugin restart in
 `.data/plugin/inktools-puzzles/choices.json` by game id through `PuzzlesPages` (`src/play/kept.ts`);

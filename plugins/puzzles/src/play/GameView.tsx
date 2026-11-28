@@ -16,8 +16,10 @@ import {StyleSheet, View} from 'react-native';
 import {
   ActionRow,
   Button,
+  Chevron,
   ChoiceList,
   ErrorView,
+  ListRow,
   LoadingView,
   MediaFrame,
   metrics,
@@ -55,7 +57,8 @@ export type GameViewDeps = {
 type PageBoard = {code: string; made: () => Puzzle | null; make: () => Puzzle};
 
 type Screen =
-  | {kind: 'reading'}
+  /** `quiet` while the view starts from the page the Puzzles view read: a wait that short shows no mark (#601). */
+  | {kind: 'reading'; quiet?: boolean}
   | {kind: 'ready'; board: PageBoard | null; newer?: boolean}
   | {kind: 'working'; text?: string}
   | {kind: 'verdict'; board: PageBoard; verdict: Verdict}
@@ -103,17 +106,31 @@ function sizeOf(game: PuzzleGame, name: string): string | undefined {
 /** Lets the Loading view draw before a long synchronous step, such as drawing a page. */
 const nextFrame = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 
+/**
+ * A view's first frame while a short read runs: its title bar alone, with no loading mark, as a
+ * wait under 300 ms shows none, and each frame costs an e-ink refresh (#601).
+ */
+export function Opening({title, onClose}: {title: string; onClose: () => void}): React.JSX.Element {
+  useBackKey(onClose);
+  return (
+    <View style={shared.screen}>
+      <TitleBar title={title} onClose={onClose} />
+    </View>
+  );
+}
+
 export function GameView({
   game,
   onBack,
   onClose,
+  opened,
   pages: given,
   seed = freshSeed,
   kept: givenKept,
 }: GameViewProps & GameViewDeps & {game: PuzzleGame}): React.JSX.Element {
   const pages = useMemo(() => given ?? devicePages(), [given]);
   const kept = useMemo(() => givenKept ?? deviceKept(), [givenKept]);
-  const [screen, setScreen] = useState<Screen>({kind: 'reading'});
+  const [screen, setScreen] = useState<Screen>({kind: 'reading', quiet: opened !== undefined});
   const [choices, setChoices] = useState<Choices>(() => recalled(game.options, null));
 
   const failed = useCallback(
@@ -142,6 +159,18 @@ export function GameView({
     [game, pages],
   );
 
+  /** Shows the page whose background is named `name`, and its puzzle when this game made it. */
+  const show = useCallback(
+    (here: Here, name: string | null) => {
+      // A page drawn by a layout this Puzzles does not know says so, not that it holds no puzzle.
+      const newer = name !== null && !knownPageLayout(name);
+      // The puzzle itself is made only when a press needs it, so «Check» shows at once (#595).
+      const board = name !== null && !newer ? boardOf(name, here) : null;
+      setScreen({kind: 'ready', board, newer});
+    },
+    [boardOf],
+  );
+
   /** Reads the current page, and the puzzle on it when this game made it. */
   const read = useCallback(async () => {
     setScreen({kind: 'reading'});
@@ -154,12 +183,8 @@ export function GameView({
     pages.log(`${game.id}: on page ${here.value.page}`);
     const code = await pages.codeOf(here.value);
     if (!code.ok) {return failed(playCopy['error.here'], retry, code.message);}
-    // A page drawn by a layout this Puzzles does not know says so, not that it holds no puzzle.
-    const newer = code.value !== null && !knownPageLayout(code.value);
-    // The puzzle itself is made only when a press needs it, so «Check» shows at once (#595).
-    const board = code.value !== null && !newer ? boardOf(code.value, here.value) : null;
-    setScreen({kind: 'ready', board, newer});
-  }, [boardOf, failed, game, pages]);
+    show(here.value, code.value);
+  }, [failed, game, pages, show]);
 
   useEffect(() => {
     // The page files an earlier Add Page left, as its insert ended this JavaScript before it could.
@@ -171,9 +196,14 @@ export function GameView({
       } else {
         pages.log(`${game.id}: the last choices were not read, so the defaults show: ${last.message}`);
       }
-      read();
+      // The page the Puzzles view read a moment ago, as it opened on it, is not read again (#601).
+      if (opened) {
+        show(opened.here, opened.name);
+      } else {
+        read();
+      }
     });
-  }, [game, kept, pages, read]);
+  }, [game, kept, opened, pages, read, show]);
 
   /**
    * The page on screen now and its puzzle of this game: `board` when the page still holds it, else
@@ -319,7 +349,7 @@ export function GameView({
 
   switch (screen.kind) {
     case 'reading':
-      return <LoadingView title={game.title} onClose={onClose} />;
+      return screen.quiet ? <Opening title={game.title} onClose={onClose} /> : <LoadingView title={game.title} onClose={onClose} />;
     case 'working':
       return <LoadingView title={game.title} text={screen.text} onClose={onClose} />;
     case 'error':
@@ -351,6 +381,7 @@ export function GameView({
           onAdd={add}
           onCheck={check}
           onAnswer={answer}
+          onOthers={opened ? onBack : undefined}
           onBack={onBack}
           onClose={onClose}
         />
@@ -376,10 +407,13 @@ function Ready({
   onAdd,
   onCheck,
   onAnswer,
+  onOthers,
   onBack,
   onClose,
 }: GameViewProps & {
   game: PuzzleGame;
+  /** The game list, offered as a row under the page's puzzle when Puzzles opened on it (#601). */
+  onOthers?: () => void;
   screen: {board: PageBoard | null; newer?: boolean};
   choices: Choices;
   onChoose: (id: string, value: string) => void;
@@ -412,6 +446,11 @@ function Ready({
       {(game.open || hasChoices) && (
         <PagedColumn>
           {board && thisPage}
+          {board && onOthers && (
+            <RowGroup>
+              <ListRow title={playCopy['here.others']} trailing={<Chevron />} onPress={onOthers} />
+            </RowGroup>
+          )}
           {hasChoices && newPage}
           {game.options.map(option => (
             <ChoiceList
@@ -428,7 +467,8 @@ function Ready({
       {!hasChoices && newPage}
       {/* Fixed under the choices, so a long list never pushes the view's main action off screen (#383). */}
       <View style={[shared.buttons, styles.section]}>
-        <Button kind="primary" label={playCopy['new.add']} onPress={onAdd} />
+        {/* On a page of this game, «Check» is the view's main action, so «Add Page» is not filled (#601). */}
+        <Button kind={board ? 'secondary' : 'primary'} label={playCopy['new.add']} onPress={onAdd} />
       </View>
       {/* With no puzzle on the page, its note comes last, out of the list, so a long list never cuts it. */}
       {!board && thisPage}

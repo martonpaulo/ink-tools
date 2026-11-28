@@ -17,6 +17,8 @@ export const playCopy = {
   'new.noteBoard': 'The board goes on a new page after this one, as its background, so erasing never erases the board.',
   'here.caption': 'This page',
   'here.check': 'Check',
+  /** The row under the page's puzzle when Puzzles opened on it, to the game list for another game (#601). */
+  'here.others': 'Other Games',
   'here.answer': 'Show Solution',
   /** The wait while a press makes the page's puzzle again from its code, seconds for a large one on the tablet (#595). */
   'here.preparing': 'Preparing the puzzle…',

@@ -6,6 +6,7 @@
  */
 import type React from 'react';
 import type {Requirement} from './requirements';
+import type {Here} from './play/pages';
 import {BINAIRO} from './games/binairo';
 import {BOARDS} from './games/boards';
 import {BRIDGES} from './games/bridges';
@@ -24,11 +25,19 @@ import {SUDOKU} from './games/sudoku';
 import {puzzleEntry} from './play/GameView';
 import type {PuzzleGame} from './play/puzzle';
 
+/** The page the Puzzles view read as it opened, and its background's name (#601). */
+export type OpenedPage = {here: Here; name: string};
+
 export type GameViewProps = {
   /** Back to the game list. */
   onBack: () => void;
   /** Closes the Puzzles view; the game's title bar shows ui-kit's Close. */
   onClose: () => void;
+  /**
+   * Set when the Puzzles view opened on this game's page: the game's view starts from that read,
+   * never reading the page again, and offers the other games under the page's puzzle (#601).
+   */
+  opened?: OpenedPage;
 };
 
 export type Game = {

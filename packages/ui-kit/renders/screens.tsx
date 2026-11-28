@@ -68,9 +68,9 @@ import {BINAIRO} from '../../../plugins/puzzles/src/games/binairo';
 import {HITORI} from '../../../plugins/puzzles/src/games/hitori';
 import {LIGHT_UP} from '../../../plugins/puzzles/src/games/lightUp';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
-import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
+import {GAMES as PUZZLES_LIST, PUZZLE_GAMES} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
-import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
+import {GameView as PuzzlesGameView, puzzleEntry} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
 import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, drawLightUpPage, lightUpFromCode, placedPageCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
@@ -460,6 +460,12 @@ const puzzlesGame = async (game: PuzzleGame, ink: () => InkStroke<object>[], cod
   }
   return tree;
 };
+/** The Puzzles view opened on a page `code` made, which opens on that game's «This page» (#601). */
+const puzzlesOnPage = (code: string, ink: () => InkStroke<object>[]) => {
+  const pages = gamePages(code, ink);
+  const games = PUZZLE_GAMES.map(game => puzzleEntry(game, {pages, seed: () => '7K2Q9X'}));
+  return mount(<PuzzlesView close={noop} ports={puzzlesPorts('granted')} games={games} pages={pages} />);
+};
 const puzzlesMaze = (code: string | null, steps: string[] = [], failing = false) => puzzlesGame(MAZE, mazeInk, code, steps, failing);
 const puzzlesJigsaw = (code: string | null, steps: string[] = []) => puzzlesGame(JIGSAW, jigsawInk, code, steps);
 const puzzlesFutoshiki = (code: string | null, steps: string[] = []) => puzzlesGame(FUTOSHIKI, futoshikiInk, code, steps);
@@ -535,6 +541,8 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-maze-solution', render: () => puzzlesMaze(MAZE_CODE, ['Show Solution'])},
   {name: 'puzzles-maze-error', render: () => puzzlesMaze(null, [], true)},
   {name: 'puzzles-list', render: () => puzzles('granted', [...PUZZLES_LIST])},
+  {name: 'puzzles-open-sudoku-page', render: () => puzzlesOnPage(SUDOKU_CODE, sudokuInk(SUDOKU_CODE))},
+  {name: 'puzzles-open-futoshiki-page', render: () => puzzlesOnPage(FUTOSHIKI_CODE, futoshikiInk)},
   {name: 'puzzles-jigsaw', render: () => puzzlesJigsaw(null)},
   {name: 'puzzles-jigsaw-page', render: () => puzzlesJigsaw(JIGSAW_CODE)},
   {name: 'puzzles-jigsaw-check', render: () => puzzlesJigsaw(JIGSAW_CODE, ['Check'])},
