@@ -33,9 +33,8 @@ Two surfaces ship in one build:
   choices as radio rows with a short name and a detail under it and «Reset Button Position» as an
   action row of that group, a switch row (the native pill with «ON» or «OFF» beside it) for each
   installed language in the cycle, a chevron row that opens Settings › Handwriting Recognition
-  Language, the floating button hidden while the screen is in front (`ButtonRule`), each missing permission with
-  the button to its system screen and the command that grants it, and the command that turns on writing detection when it
-  is off. An error shows in bold beside the control whose action failed. It is a plain sentence with the
+  Language, the floating button hidden while the screen is in front (`ButtonRule`), each missing permission as ui-kit's Needs state (what is missing in bold, why in the hint style, one primary
+  button to the system screen that grants it, [#258](https://github.com/martonpaulo/ink-tools/issues/258)), and a failed switch as its Error state (what failed, the reason, what to try, Retry and Close; the words in `Copy`, `ProblemStatesTest` checks them against `problem.ts`). Another error shows in bold beside the control whose action failed. It is a plain sentence with the
   next step, from `Copy`; the detail stays in the `LingoApp` log line, an `InternalFailure` log for a failed read or write of
   the language folder ([#280](https://github.com/martonpaulo/ink-tools/issues/280), [#294](https://github.com/martonpaulo/ink-tools/issues/294)). A tap redraws only its own rows; the
   page is rebuilt when it shows again or an error or note comes or goes

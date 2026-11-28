@@ -16,7 +16,9 @@ final class Copy {
   static final String TITLE = "Handwriting Language";
   static final String ACTIVE = "Active Language";
   static final String SWITCH_LANGUAGE = "Switch to Next Language";
+  /** The shared words of `packages/ui-kit` (problem.ts `CLOSE_TEXT`, `RETRY_TEXT`); the app cannot import them (#258). */
   static final String CLOSE = "Close";
+  static final String RETRY = "Retry";
   static final String NOT_READ = "Not read: All-files access is off.";
   static final String TURNED_OFF = "Turned off in this version";
   static final String FOLDER_NOT_READ = "Not read: the language folder could not be read.";
@@ -29,9 +31,15 @@ final class Copy {
   static final String BUTTON_HIDDEN = "Hidden";
   static final String BUTTON_HELP = "One tap switches to the next language; a long press opens this screen; drag it to move it. It hides while this screen is open.";
   static final String RESET_PLACE = "Reset Button Position";
-  static final String WATCHER_OFF = "Writing detection is off, so the floating button shows over every app.";
+  /** The Needs state of each missing permission: what is missing (bold) and why, in the hint style (ui-kit `Needs`, #258). */
+  static final String NEEDS_FILES_WHAT = "All-files access is off.";
+  static final String NEEDS_FILES_WHY = "Without it the language cannot be read or switched.";
+  static final String NEEDS_OVERLAY_WHAT = "Display over other apps is off.";
+  static final String NEEDS_OVERLAY_WHY = "Without it the floating button cannot show.";
+  static final String NEEDS_WATCHER_WHAT = "Writing detection is off.";
   /** What the service reads, said before the system's «full control» warning; the steps on its screen. */
-  static final String WATCHER_STEPS = "Writing detection is an accessibility service: it reads only which apps and windows are open, "
+  static final String NEEDS_WATCHER_WHY = "Without it the floating button shows over every app. "
+      + "Writing detection is an accessibility service: it reads only which apps and windows are open, "
       + "never what they show. Open Accessibility Settings, tap " + TITLE + ", turn on Use " + TITLE + ", then tap Allow.";
   static final String OPEN_WATCHER_SETTINGS = "Open Accessibility Settings";
   static final String CYCLE_SECTION = "Languages in the Cycle";
@@ -54,20 +62,34 @@ final class Copy {
   static String noScreen(String setting) {
     return "This tablet did not open the " + setting + " screen, so " + setting + " cannot be turned on from here. Restart the tablet and try again.";
   }
-  static final String SWITCH_FAILED = "The last switch failed:";
+  /** The Error state's first line: what failed (ui-kit `ErrorView`, #258); the reason and what to try follow. */
+  static final String SWITCH_FAILED = "The language could not be switched.";
   static final String VERSION = "Version";
   static final String NOTIFICATION = "Handwriting Language floating button";
   static final String BUTTON_FAILED = "!";
   static final String BUTTON_DESCRIPTION = "Handwriting language %s. Tap to switch to the next language.";
   static final String BUTTON_FAILED_DESCRIPTION = "The language could not be switched. Open Handwriting Language from the sidebar.";
 
+  private static final String TRY_SWITCH_AGAIN = "Tap Switch to Next Language again; if it keeps failing, restart the tablet.";
+  private static final String TRY_INSTALL = "Install it in Settings › Display & Input › Language & Region › Handwriting Recognition Language, then try again.";
   static final String FAILURE_CANNOT_READ = "The language folder could not be read. Close this screen and open it again; if it still fails, restart the tablet.";
-  static final String FAILURE_CANNOT_CREATE = "The new language could not be set. Tap Switch to Next Language again; if it keeps failing, restart the tablet.";
-  static final String FAILURE_CANNOT_DELETE = "The switch did not finish, so two languages are set. Tap Switch to Next Language again; if it keeps failing, restart the tablet.";
-  static final String FAILURE_NOT_INSTALLED = "That language is not installed. Install it in Settings › Display & Input › Language & Region › Handwriting Recognition Language, then try again.";
+  static final String FAILURE_CANNOT_CREATE = "The new language could not be set. " + TRY_SWITCH_AGAIN;
+  static final String FAILURE_CANNOT_DELETE = "The switch did not finish, so two languages are set. " + TRY_SWITCH_AGAIN;
+  static final String FAILURE_NOT_INSTALLED = "That language is not installed. " + TRY_INSTALL;
   static final String FAILURE_NOTHING_TO_CYCLE = "None of the languages in the cycle is installed. Install one in Settings › Display & Input › Language & Region › Handwriting Recognition Language, or turn on an installed language below.";
   static final String FAILURE_TURNED_OFF = "Language switching is turned off in this version because a tablet update changed how the language is stored, so update Ink Tools to turn it on again.";
   static final String FAILURE_OTHER = "The language could not be switched. Try again, or restart the tablet if it keeps failing.";
+
+  /** The sentence cut at its first full stop: the reason in the Error state (#258). */
+  static String reason(String sentence) {
+    return sentence.substring(0, sentence.indexOf('.') + 1);
+  }
+
+  /** The rest of the sentence: what to try, or null when the sentence is only the reason. */
+  static String next(String sentence) {
+    String rest = sentence.substring(sentence.indexOf('.') + 1).trim();
+    return rest.isEmpty() ? null : rest;
+  }
 
   static String failure(FileFailure.Kind kind) {
     switch (kind) {

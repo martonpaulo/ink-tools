@@ -271,6 +271,7 @@ function test() {
       run(jdkTool('java'), ['-cp', classes, `com.supernotetools.lingo.${name}`]);
     }
     run(jdkTool('java'), ['-cp', classes, `com.supernotetools.lingo.${TOKENS_CLASS}Test`, tokens]);
+    run(jdkTool('java'), ['-cp', classes, 'com.supernotetools.lingo.ProblemStatesTest', root]);
     // The watcher command over a stand-in adb, and the docs that show it (#489).
     run(jdkTool('java'), ['-cp', classes, 'com.supernotetools.lingo.WatcherCommandTest', root]);
     require('./look-check.cjs').test(path.join(work, 'look'));
