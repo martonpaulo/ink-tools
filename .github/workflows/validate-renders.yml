@@ -1,0 +1,76 @@
+name: Validate Renders
+
+# Runs only when a plugin's screens, the shared packages/ui-kit/ or this file changes (gates.json, #301): the
+# `renders` gate, every plugin screen drawn as the Manta shows it and then turned, checked against
+# packages/ui-kit/renders/rules.ts. On a hosted runner, so a landing on the Mac leaves the gate here (#604);
+# the pictures are kept as the run's artifact.
+on:
+  push:
+    branches: [main]
+    paths: ['packages/ui-kit/**', 'plugins/*/App.tsx', 'plugins/*/src/**', '.github/workflows/validate-renders.yml']
+  pull_request:
+    paths: ['packages/ui-kit/**', 'plugins/*/App.tsx', 'plugins/*/src/**', '.github/workflows/validate-renders.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The Playwright pin: the version the owner's Mac keeps for the renders (jest.config.js), installed globally
+# with its Chromium, where the renders resolve it.
+env:
+  PLAYWRIGHT_VERSION: "1.65.1"
+
+jobs:
+  validate:
+    name: validate renders
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: plugins/account-sync
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: plugins/account-sync/package-lock.json
+
+      - name: Restore node_modules, keyed on the lockfile (#301)
+        id: modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            plugins/account-sync/node_modules
+          key: node-modules-${{ runner.os }}-node24-plugins/account-sync-${{ hashFiles('plugins/account-sync/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Install the pinned Playwright and its Chromium
+        run: |
+          npm install --global "playwright@$PLAYWRIGHT_VERSION"
+          playwright install --with-deps chromium
+
+      - name: Run the gate (the Manta, then turned)
+        run: |
+          mkdir -p "$RUNNER_TEMP/renders/manta" "$RUNNER_TEMP/renders/turned"
+          RENDER_EVIDENCE="$RUNNER_TEMP/renders/manta" npm run renders
+          RENDER_EVIDENCE="$RUNNER_TEMP/renders/turned" RENDER_WINDOW=turned npm run renders
+
+      - name: Upload the renders
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: plugin-renders
+          path: ${{ runner.temp }}/renders
+          if-no-files-found: warn
+          retention-days: 14

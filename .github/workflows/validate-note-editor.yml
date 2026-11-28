@@ -31,7 +31,7 @@ jobs:
   validate:
     name: validate note-editor
     runs-on: xcode-27
-    timeout-minutes: 30
+    timeout-minutes: 40
     defaults:
       run:
         working-directory: apps/note-editor
@@ -65,3 +65,17 @@ jobs:
 
       - name: Check the app (build, lint, tests, invariants)
         run: make check
+
+      # RenderTests run only with RENDER_EVIDENCE set: every window state, light and dark, at three sizes,
+      # off screen, on the build `make check` left (#604). The pictures are kept as the run's artifact.
+      - name: Render every window state
+        run: make renders RENDER_EVIDENCE="$RUNNER_TEMP/renders"
+
+      - name: Upload the renders
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: note-editor-renders
+          path: ${{ runner.temp }}/renders
+          if-no-files-found: warn
+          retention-days: 14

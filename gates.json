@@ -144,6 +144,7 @@
     {"path": "apps/note-editor/.swiftlint.yml", "gates": ["note-editor"]},
     {"path": "apps/note-editor/.swift-format", "gates": ["note-editor"]},
     {"path": ".github/workflows/validate-note-editor.yml", "gates": ["note-editor"]},
+    {"path": ".github/workflows/validate-renders.yml", "gates": ["renders"]},
     {"path": "plugins/account-sync/", "gates": ["account-sync"]},
     {"path": ".github/workflows/validate-account-sync.yml", "gates": ["account-sync"]},
     {"path": "plugins/image-editing/", "gates": ["image-editing", "account-sync"]},
