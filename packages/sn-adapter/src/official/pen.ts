@@ -301,6 +301,14 @@ async function elementRect(element: SdkElement): Promise<Result<SdkRect | null>>
 }
 
 /**
+ * Where one element of the page is, in page pixels, by its kind's own rect or its points; null for
+ * a kind with no known bounds (#345).
+ */
+export function elementBounds(element: object): Promise<Result<SdkRect | null>> {
+  return elementRect(element as SdkElement);
+}
+
+/**
  * What a page read found: the rects, how many of the page's elements they come from, and whether
  * every element was read. A partial read gives today's placement (#152): placed by what was read,
  * a box landed over the person's ink on a full page.

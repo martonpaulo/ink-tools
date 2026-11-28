@@ -7,18 +7,10 @@
  * tablet cannot widen a title past its strokes otherwise (device round 7).
  */
 import type {Rect, Size} from '@ink-tools/ink-core';
-import {TITLE_STYLE, type TitleStyle} from '@ink-tools/sn-adapter/official';
+import {headingStyle, type HeadingLevel, type TitleStyle} from '@ink-tools/sn-adapter/official';
 
-export const HEADING_LEVELS = [1, 2, 3, 4] as const;
-export type HeadingLevel = (typeof HEADING_LEVELS)[number];
-
-/** Level 1 the strongest style, level 4 the lightest. */
-const LEVEL_STYLE: Readonly<Record<HeadingLevel, TitleStyle>> = {
-  1: TITLE_STYLE.black,
-  2: TITLE_STYLE.shadow,
-  3: TITLE_STYLE.darkGrey,
-  4: TITLE_STYLE.lightGrey,
-};
+/** The level map is sn-adapter's, which Note Editor's Format › Heading shares (#345). */
+export {HEADING_LEVELS, type HeadingLevel} from '@ink-tools/sn-adapter/official';
 
 /** Settings › «Heading Size» (owner D90): `own`, the handwriting's own size, or `full`, the writing width. */
 export const HEADING_SIZES = ['own', 'full'] as const;
@@ -26,7 +18,7 @@ export type HeadingSize = (typeof HEADING_SIZES)[number];
 export const DEFAULT_HEADING_SIZE: HeadingSize = 'own';
 
 export function levelStyle(level: HeadingLevel): TitleStyle {
-  return LEVEL_STYLE[level];
+  return headingStyle(level);
 }
 
 /**
