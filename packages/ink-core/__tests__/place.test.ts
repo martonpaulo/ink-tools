@@ -8,6 +8,7 @@ import {
   type PlaceHost,
   type Rect,
 } from '../src';
+import {mmToPx, PAGE_MM} from '../../puzzle-core/src/page/look';
 
 const page = {width: 1920, height: 2560};
 /** The bottom of what a tool may place on: above the note's page bar (#577). */
@@ -289,5 +290,13 @@ describe('inkUnderRect, the one ink-under rule (#168, #234)', () => {
     expect(inkUnderRect(placedRect, {rects: [stroke, outside], complete: true}, word)).toBe(
       '1 other elements in the rect',
     );
+  });
+});
+
+// One measured page bar (#577): Puzzles' page look keeps it in millimetres, so the two never drift apart.
+
+describe('the page bar of the page look', () => {
+  test('is the page area\'s 116 px', () => {
+    expect(mmToPx(PAGE_MM.pageBar)).toBe(PAGE_BAR_PX);
   });
 });

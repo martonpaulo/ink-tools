@@ -57,11 +57,13 @@ export class PageFitError extends Error {
  * The page layouts a page was drawn by. A page in a note keeps the layout it was printed with, as
  * its background is that picture: «Check» reads the ink against the grid it was drawn in, and
  * «Show Solution» draws on the same page. 1 is the layout before the page bar margin (#553): an
- * 8 mm bottom margin, a 12 mm footer and no gap above it; 2 keeps the footer above the page bar.
+ * 8 mm bottom margin, a 12 mm footer and no gap above it; 2 keeps the footer above the page bar by
+ * half a millimetre; 3 keeps it 2.5 mm above the bar (#553), which the owner's photo of a layout 1 page
+ * showed crowding the bar.
  */
-export type PageLayoutVersion = 1 | 2;
+export type PageLayoutVersion = 1 | 2 | 3;
 /** The layout a new page is drawn by. A change that moves a grid on the page adds a version. */
-export const PAGE_LAYOUT: PageLayoutVersion = 2;
+export const PAGE_LAYOUT: PageLayoutVersion = 3;
 
 interface LayoutMeasures {
   bottomMm: number;
@@ -75,6 +77,7 @@ interface LayoutMeasures {
 const LAYOUTS: Record<PageLayoutVersion, LayoutMeasures> = {
   1: { bottomMm: PAGE_MM.margin, footerMm: 12, gapAboveFooter: false, baselines: { first: 0.42, second: 0.86 } },
   2: { bottomMm: PAGE_MM.bottom, footerMm: PAGE_MM.footer, gapAboveFooter: true, baselines: { first: 0.4, second: 0.88 } },
+  3: { bottomMm: PAGE_MM.pageBar + PAGE_MM.barClearance, footerMm: PAGE_MM.footer, gapAboveFooter: true, baselines: { first: 0.4, second: 0.88 } },
 };
 
 let activeLayout: PageLayoutVersion = PAGE_LAYOUT;

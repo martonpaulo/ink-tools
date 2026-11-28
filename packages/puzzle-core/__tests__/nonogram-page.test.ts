@@ -28,9 +28,9 @@ describe('a nonogram page from a fixed seed', () => {
   // Each pins the puzzle (digest), its solution count and the page's pixels. They change only when
   // generation or drawing changes on purpose; #384 changed them for the code's `V2` mark alone.
   const PINNED = [
-    ['10 x 10 easy', 'P1', { width: 10, height: 10 }, 'easy', '26400e6f', '8c5e434f71cf977e'],
-    ['15 x 10 medium', 'P1', { width: 15, height: 10 }, 'medium', '7aba7333', 'a652c980b58e8a72'],
-    ['15 x 15 hard', 'P1', { width: 15, height: 15 }, 'hard', '9cacab75', '9ab12f0c5d30a724'],
+    ['10 x 10 easy', 'P1', { width: 10, height: 10 }, 'easy', '26400e6f', 'b29d1686242cfb48'],
+    ['15 x 10 medium', 'P1', { width: 15, height: 10 }, 'medium', '7aba7333', '38499580a2b98b29'],
+    ['15 x 15 hard', 'P1', { width: 15, height: 15 }, 'hard', '9cacab75', 'e6b7dbfc3f7811ef'],
   ] as const;
 
   test.each(PINNED)('%s has one solution and the same puzzle and page', (_name, seed, size, band, puzzleDigest, pageDigest) => {

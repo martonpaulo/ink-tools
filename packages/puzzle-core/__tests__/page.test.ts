@@ -40,7 +40,7 @@ import {
   type Raster,
 } from '../src';
 import { cellPolygon } from '../src/page/grid';
-import { mmToPx, PAGE_MM, TONES } from '../src/page/look';
+import { CELL_PRESETS_MM, mmToPx, PAGE_MM, TONES } from '../src/page/look';
 import * as rasterModule from '../src/page/raster';
 import { kakuroFromCode } from '../src/kakuro';
 import { kakuroPageSpec } from '../src/kakuro-page';
@@ -315,6 +315,54 @@ describe('the note\'s page bar (#553)', () => {
     const inked = raster.pixels.subarray(barTop * raster.width).findIndex(pixel => pixel !== TONES.paper);
     expect([name, inked]).toEqual([name, -1]);
   });
+
+  // Layout 3 keeps 2.5 mm of paper above the bar's 116 px, in both orientations, as the owner asked.
+  test.each(SAMPLE_PAGES.map(([name, draw]) => [name, draw] as const))('%s keeps its ink 2.5 mm above the page bar in layout 3', (name, draw) => {
+    const raster = draw();
+    const clear = raster.height - mmToPx(PAGE_MM.pageBar) - mmToPx(PAGE_MM.barClearance) + 1;
+    const inked = raster.pixels.subarray(clear * raster.width).findIndex(pixel => pixel !== TONES.paper);
+    expect([name, PAGE_LAYOUT, inked]).toEqual([name, 3, -1]);
+  });
+
+  test('the bar is 116 px and the footer of every page size ends above it', () => {
+    expect(mmToPx(PAGE_MM.pageBar)).toBe(116);
+    for (const orientation of ['portrait', 'landscape'] as const) {
+      for (const cellMm of CELL_PRESETS_MM) {
+        const spec: PageSpec = { orientation, hand: 'right', cellMm, lattice: 'square', columns: 6, rows: 6 };
+        const { footer, height } = layoutPage(spec);
+        expect(footer.y + footer.height).toBeLessThanOrEqual(height - 116 - mmToPx(PAGE_MM.barClearance));
+      }
+    }
+  });
+});
+
+describe('a grid is centred in the page\'s safe area (#576)', () => {
+  test.each(['portrait', 'landscape'] as const)('%s: equal gaps left and right, and above and below, in every layout and cell size', orientation => {
+    for (const version of [1, 2, 3] as const) {
+      for (const cellMm of CELL_PRESETS_MM) {
+        for (const [columns, rows] of [[6, 6], [9, 9], [5, 8]]) {
+          const spec: PageSpec = { orientation, hand: 'right', cellMm, lattice: 'square', columns, rows };
+          let layout;
+          try {
+            layout = withPageLayout(version, () => layoutPage(spec));
+          } catch (e) {
+            if (e instanceof PageFitError) continue;
+            throw e;
+          }
+          const size = Math.ceil(layout.grid.cell * columns);
+          const high = Math.ceil(layout.grid.cell * rows);
+          const margin = mmToPx(PAGE_MM.margin);
+          const left = layout.grid.x - margin;
+          const right = layout.width - margin - (layout.grid.x + size);
+          const gap = mmToPx(PAGE_MM.gap);
+          const above = layout.grid.y - margin;
+          const below = layout.footer.y - (version === 1 ? 0 : gap) - (layout.grid.y + high);
+          expect(Math.abs(left - right)).toBeLessThanOrEqual(1);
+          expect(Math.abs(above - below)).toBeLessThanOrEqual(1);
+        }
+      }
+    }
+  });
 });
 
 describe('each preset and layout matches its golden page', () => {
@@ -331,12 +379,17 @@ describe('a page keeps the layout it was printed with (#553)', () => {
     expectGolden(`layout-1-${name}`, withPageLayout(1, sample(name)));
   });
 
+  // The golden of this page as main drew it in layout 2, before layout 3 raised the footer.
+  test('hitori-15mm-portrait-right, drawn by layout 2, is the page printed before layout 3', () => {
+    expectGolden('layout-2-hitori-15mm-portrait-right', withPageLayout(2, sample('hitori-15mm-portrait-right')));
+  });
+
   test('a 15 x 15 nonogram grid lay 23 px lower in layout 1, as the tablet measured, and the layout goes back after', () => {
     const spec: PageSpec = { orientation: 'portrait', hand: 'right', cellMm: 7, lattice: 'square', columns: 15, rows: 15, clues: { top: 6, left: 6 } };
     const old = withPageLayout(1, () => layoutPage(spec));
     const now = layoutPage(spec);
-    expect([old.version, now.version, PAGE_LAYOUT]).toEqual([1, 2, 2]);
-    expect(old.grid.y - now.grid.y).toBe(23);
+    expect([old.version, now.version, PAGE_LAYOUT]).toEqual([1, 3, 3]);
+    expect(old.grid.y - now.grid.y).toBe(35);
     expect(() => withPageLayout(1, () => { throw new Error('drawn'); })).toThrow('drawn');
     expect(layoutPage(spec)).toEqual(now);
   });
@@ -352,14 +405,16 @@ describe('a page keeps the layout it was printed with (#553)', () => {
   });
 
   test('a page\'s background name carries its layout; a name with none is a page of layout 1', () => {
-    expect(placedPageCode('SU-9-H-7K2Q9X')).toBe('SU-9-H-7K2Q9X-L2');
+    expect(placedPageCode('SU-9-H-7K2Q9X')).toBe('SU-9-H-7K2Q9X-L3');
+    expect(placedPageCode('SU-9-H-7K2Q9X', 2)).toBe('SU-9-H-7K2Q9X-L2');
     expect(pageCodeParts('SU-9-H-7K2Q9X-L2')).toEqual({ code: 'SU-9-H-7K2Q9X', version: 2 });
     expect(pageCodeParts('NO-15X15-H-7Z9GEKG7')).toEqual({ code: 'NO-15X15-H-7Z9GEKG7', version: 1 });
     // A seed never holds an L, so a seed that ends a code is never read as a mark.
     expect(pageCodeParts('SU-9-H-P2')).toEqual({ code: 'SU-9-H-P2', version: 1 });
     expect(pageCodeParts('gomoku-7K2Q9X-L2')).toEqual({ code: 'gomoku-7K2Q9X', version: 2 });
     expect(() => pageCodeParts('SU-9-H-7K2Q9X-L9')).toThrow('page layout 9');
-    expect(['SU-9-H-7K2Q9X', 'SU-9-H-7K2Q9X-L2', 'SU-9-H-7K2Q9X-L9'].map(knownPageLayout)).toEqual([true, true, false]);
+    expect(pageCodeParts('SU-9-H-7K2Q9X-L3')).toEqual({ code: 'SU-9-H-7K2Q9X', version: 3 });
+    expect(['SU-9-H-7K2Q9X', 'SU-9-H-7K2Q9X-L2', 'SU-9-H-7K2Q9X-L3', 'SU-9-H-7K2Q9X-L9'].map(knownPageLayout)).toEqual([true, true, true, false]);
   });
 });
 
@@ -377,7 +432,7 @@ describe('the layout', () => {
 
   test('a grid that does not fit throws, naming how much it is over', () => {
     expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(PageFitError);
-    expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(/2693 px too wide, 2240 px too tall/);
+    expect(() => layoutPage({ ...spec, columns: 25, rows: 25 })).toThrow(/2693 px too wide, 2264 px too tall/);
   });
 
   test('the largest preset that fits is chosen, and none is an error', () => {

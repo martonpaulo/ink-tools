@@ -143,7 +143,7 @@ describe('the Bridges page', () => {
       const ring = Math.round(x + layout.grid.cell * 0.32 - 1);
       expect(raster.pixels[Math.round(y) * raster.width + ring]).toBe(0x00);
     }
-    expect(digest(Array.from(raster.pixels.filter((_, i) => i % 97 === 0)))).toBe('3b4f3681');
+    expect(digest(Array.from(raster.pixels.filter((_, i) => i % 97 === 0)))).toBe('6a18e28b');
   });
 
   test('refuses a grid of another size', () => {

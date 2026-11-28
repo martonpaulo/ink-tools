@@ -47,7 +47,9 @@ the Nomad) or `getDeviceType()`, as `inkctl status` does ([#284](https://github.
   Manta, Puzzles 0.1.0 beta 1, 2026-11-27, [#553](https://github.com/martonpaulo/ink-tools/issues/553)].
   So a Puzzles page keeps its footer above the bar (`PAGE_MM.pageBar` and `PAGE_MM.bottom` in
   `packages/puzzle-core/src/page/look.ts`); the bar on a landscape page is not measured yet and
-  takes the same margin [inference].
+  takes the same margin [inference]. Layout 2 left only half a millimetre of paper over the bar, and
+  the owner's photo of a Kakuro page showed the rule line against it, so layout 3 keeps 2.5 mm
+  (`PAGE_MM.barClearance`) [measured, owner photo, 2026-11-28].
 - Stroke points from `getElements` are page pixels [measured, Probe, 2026-11-17,
   [#206](https://github.com/martonpaulo/ink-tools/issues/206)]. The pen digitizer (EMR) spans 21632 x
   16224 on the Manta page, its x running down the page and its y from the right edge to the left

@@ -81,6 +81,11 @@ export const PAGE_MM = {
    * descender sits about 0.5 mm higher still, so no footer text hides under the bar (#553).
    */
   bottom: 10.32,
+  /**
+   * Paper kept clear above the page bar in layout 3, beyond the bar itself: the footer's rule line
+   * sat 0.5 mm over the bar in layout 2, so the owner's photo showed it crowding the bar (#553).
+   */
+  barClearance: 2.5,
   /** The footer band: two lines of `TEXT_SIZE.footerMm` text, packed so the bottom margin costs a grid little height (#553). */
   footer: 10.5,
   /** The gap between the grid, its outside clues and a side panel. */

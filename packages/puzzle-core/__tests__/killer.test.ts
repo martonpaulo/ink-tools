@@ -157,7 +157,7 @@ describe('the killer page and its check', () => {
     // A page with every answer written as a given differs from the page drawn: no answer is drawn.
     const solved = drawKillerPage({ ...puzzle, givens: puzzle.solution }, { orientation: 'portrait', hand: 'right' });
     expect(Buffer.from(solved.raster.pixels).equals(Buffer.from(raster.pixels))).toBe(false);
-    expect(digest([...encodePng(raster)])).toBe('67ee7dc5');
+    expect(digest([...encodePng(raster)])).toBe('fd94cafe');
   });
 
   test('«Check» marks exactly the one wrong entry of a page solved in inkctl ink', async () => {

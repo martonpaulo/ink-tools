@@ -78,7 +78,7 @@ test('the page of a fixed seed is pinned', () => {
   const rect = generateMaze('7K2Q9X', RECT, 'medium');
   const circle = generateMaze('7K2Q9X', CIRCLE, 'medium');
   const pin = (m: Maze): string => pixelHash(drawMazePage(m, mazeLayout(m, 'portrait', 'right')).pixels);
-  expect([pin(rect), pin(circle)]).toEqual(['8d78a63a', '6a9bbe28']);
+  expect([pin(rect), pin(circle)]).toEqual(['766c4e3a', 'b7061228']);
 });
 
 describe('the maze in the Puzzles view (#386)', () => {
