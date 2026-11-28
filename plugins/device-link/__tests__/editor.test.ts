@@ -1,6 +1,6 @@
 /** The Note Editor's tablet helper (#312): each operation's calls in order, each refusal, the pen pause. */
-import {ActionRefused, fail, ok} from '@ink-tools/sn-adapter/official';
-import {EDITOR_FOLDER, editAction, LIMITS, NOTES_FOLDER, type EditHost} from '../src/editor/operations';
+import {ActionRefused, fail, HEADING_LEVELS, headingStyle, ok, TITLE_STYLE} from '@ink-tools/sn-adapter/official';
+import {EDITOR_FOLDER, editAction, LIMITS, NO_HEADING, NOTES_FOLDER, type EditHost} from '../src/editor/operations';
 import {PEN_PAUSE, PenGate} from '../src/editor/penGate';
 import {CUSTOM_TEMPLATE_FOLDER, templatesAction} from '../src/editor/templates';
 
@@ -41,6 +41,13 @@ function host(open: string | null = OTHER, overrides: Partial<EditHost> = {}) {
     removePage: record('removePage', true),
     insertKeyword: record('insertKeyword', true),
     deleteKeyword: record('deleteKeyword', true),
+    currentPage: async () => ok(1),
+    bounds: async element => {
+      calls.push(`bounds ${JSON.stringify(element)}`);
+      return ok(RECT);
+    },
+    lasso: record('lasso', true),
+    setTitle: record('setTitle', true),
     penIdle: async () => true,
     ...overrides,
   };
@@ -223,6 +230,59 @@ describe('operations on the open note use the open-note calls', () => {
     const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'insertPage', page: 1, template: 'style_white'}]}));
     expect(refused.detail).toMatchObject({refusal: 'save-failed', openNote: NOTE, step: 1, results: []});
     expect(calls).toEqual([]);
+  });
+});
+
+describe('a Heading is made from a lasso on the page on screen (#345)', () => {
+  it('saves, lassoes the union of the named elements, then sets the level\'s style', async () => {
+    const rects = [RECT, {left: 50, top: 250, right: 200, bottom: 450}];
+    const {fake, calls} = host(NOTE, {bounds: async () => ok(rects.shift() ?? RECT)});
+    const answer = await editAction(fake)({path: NOTE, ops: [{op: 'setHeading', page: 1, nums: [2, 3], level: 2}]});
+    const union = {left: 50, top: 200, right: 300, bottom: 450};
+    expect(calls).toEqual([
+      'save []',
+      `getElement ${JSON.stringify([NOTE, 1, 2])}`,
+      `getElement ${JSON.stringify([NOTE, 1, 3])}`,
+      `lasso ${JSON.stringify([union])}`,
+      `setTitle ${JSON.stringify([headingStyle(2)])}`,
+    ]);
+    expect(answer).toMatchObject({results: [{ok: true, op: 'setHeading', page: 1, nums: [2, 3], level: 2, rect: union}]});
+  });
+
+  it('maps each level as the tablet\'s Heading buttons do, and level 0 removes the Heading', async () => {
+    for (const level of HEADING_LEVELS) {
+      const {fake, calls} = host(NOTE);
+      await editAction(fake)({path: NOTE, ops: [{op: 'setHeading', page: 1, nums: [2], level}]});
+      expect(calls.at(-1)).toBe(`setTitle ${JSON.stringify([headingStyle(level)])}`);
+    }
+    const {fake, calls} = host(NOTE);
+    await editAction(fake)({path: NOTE, ops: [{op: 'setHeading', page: 1, nums: [2], level: NO_HEADING}]});
+    expect(calls.at(-1)).toBe(`setTitle ${JSON.stringify([TITLE_STYLE.none])}`);
+  });
+
+  it.each([
+    ['a closed note', OTHER, {}, 'not-open'],
+    ['a page not on screen', NOTE, {currentPage: async () => ok(0)}, 'page-not-shown'],
+    ['an element with no bounds', NOTE, {bounds: async () => ok(null)}, 'bad-request'],
+    ['a lasso the tablet refuses', NOTE, {lasso: async () => ok(false)}, 'tablet-refused'],
+    ['a title the tablet refuses', NOTE, {setTitle: async () => fail(905, 'no lasso')}, 'tablet-refused'],
+  ] as const)('%s is refused, named', async (_name, open, overrides, name) => {
+    const {fake, calls} = host(open, overrides as Partial<EditHost>);
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'setHeading', page: 1, nums: [2], level: 1}]}));
+    expect(refused.detail).toMatchObject({refusal: name, step: 1, results: []});
+    if (name === 'not-open' || name === 'page-not-shown') {
+      expect(calls.filter(call => call.startsWith('lasso') || call.startsWith('setTitle'))).toEqual([]);
+    }
+  });
+
+  it.each([
+    ['a level above 4', {level: 5}],
+    ['a level that is not a number', {level: 'h1'}],
+    ['no element', {nums: []}],
+  ])('%s is a bad request', async (_name, change) => {
+    const {fake} = host(NOTE);
+    const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'setHeading', page: 1, nums: [2], level: 1, ...change}]}));
+    expect(refused.detail).toMatchObject({refusal: 'bad-request'});
   });
 });
 

@@ -21,7 +21,12 @@ import {
   STROKE_TYPE,
   TEXT_TYPE,
   type EditRect,
+  HEADING_LEVELS,
+  headingStyle,
+  type HeadingLevel,
   type Matrix,
+  TITLE_STYLE,
+  type TitleStyle,
   type NewElement,
   type Result,
 } from '@ink-tools/sn-adapter/official';
@@ -49,6 +54,8 @@ export const REFUSAL = {
   penDown: 'pen-down',
   saveFailed: 'save-failed',
   tabletRefused: 'tablet-refused',
+  notOpen: 'not-open',
+  pageNotShown: 'page-not-shown',
 } as const;
 
 export type Operation =
@@ -60,7 +67,11 @@ export type Operation =
   | {op: 'removePage'; page: number}
   | {op: 'insertKeyword'; page: number; text: string}
   | {op: 'deleteKeyword'; page: number; index: number}
+  | {op: 'setHeading'; page: number; nums: number[]; level: HeadingLevel | typeof NO_HEADING}
   | {op: 'openNote'};
+
+/** The `level` of `setHeading` that removes the Heading: the native title's `none` (#345). */
+export const NO_HEADING = 0;
 
 /** A text box's new text and font size, for the Mac's edit of a text box made on the tablet (#264). */
 export type TextChange = {text: string; fontSize: number};
@@ -91,6 +102,14 @@ export interface EditHost {
   insertKeyword(path: string, page: number, text: string): Promise<Result<unknown>>;
   /** Removes a page's keyword by its index in the page (#346). */
   deleteKeyword(path: string, page: number, index: number): Promise<Result<unknown>>;
+  /** The page on screen, from 0 (#345). */
+  currentPage(): Promise<Result<number>>;
+  /** Where an element is on the page; null for a kind with no known bounds (#345). */
+  bounds(element: object): Promise<Result<EditRect | null>>;
+  /** Lassoes the elements inside a rect of the page on screen (#345). */
+  lasso(rect: EditRect): Promise<Result<boolean>>;
+  /** Makes the lassoed strokes a native title of a style, `none` removing it (#345). */
+  setTitle(style: TitleStyle): Promise<Result<boolean>>;
   /** True once the pen is up and quiet; false when it stayed down past the wait. */
   penIdle(): Promise<boolean>;
 }
@@ -279,6 +298,9 @@ function parseOperation(value: unknown): Operation {
       // shortcut: the index is taken from 0 in the tablet's order; the device round of #346 measures both.
       check(wholeIn(raw.index, 0, Number.MAX_SAFE_INTEGER), 'index must be a keyword index from 0');
       return {op: 'deleteKeyword', page: parsePage(raw.page), index: raw.index as number};
+    case 'setHeading':
+      check(raw.level === NO_HEADING || HEADING_LEVELS.includes(raw.level as HeadingLevel), `level must be a Heading level, ${HEADING_LEVELS.join(', ')}, or ${NO_HEADING} to remove it`);
+      return {op: 'setHeading', page: parsePage(raw.page), nums: parseNums(raw.nums), level: raw.level as HeadingLevel | typeof NO_HEADING};
     case 'openNote':
       return {op: 'openNote'};
     default:
@@ -385,7 +407,52 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
     case 'deleteKeyword':
       await must(`deleteKeyWord of keyword ${operation.index}`, host.deleteKeyword(path, operation.page, operation.index));
       return {page: operation.page, index: operation.index};
+    case 'setHeading':
+      return setHeading(operation, path, open, host);
   }
+}
+
+/**
+ * A Heading is made from a lasso, which the tablet takes only on the page on screen, so the note
+ * must be the open one at that page. The elements' union rect is lassoed, then titled with the
+ * level's style (sn-adapter's `headingStyle`, the map of the tablet's buttons, #252), or `none`.
+ * shortcut: the rect lasso also takes other ink inside the union rect; a lasso by element waits for
+ * the device round of #345, which shows whether the host has one.
+ */
+async function setHeading(
+  operation: Extract<Operation, {op: 'setHeading'}>,
+  path: string,
+  open: boolean,
+  host: EditHost,
+): Promise<Record<string, unknown>> {
+  const {page, nums, level} = operation;
+  if (!open) {
+    throw new Stopped(REFUSAL.notOpen, 'a Heading is made on the note open on screen: the tablet makes it from a lasso');
+  }
+  const shown = await must('getCurrentPageNum', host.currentPage());
+  if (shown !== page) {
+    throw new Stopped(REFUSAL.pageNotShown, `page ${page} is not on screen, page ${shown} is: the lasso reaches only the page shown`);
+  }
+  let rect: EditRect | null = null;
+  for (const num of nums) {
+    const element = await must(`element ${num}`, host.getElement(path, page, num), REFUSAL.noElement);
+    const bounds = await must(`bounds of element ${num}`, host.bounds(element));
+    if (!bounds) {
+      throw new Stopped(REFUSAL.badRequest, `element ${num} has no place on the page to lasso`);
+    }
+    rect = rect
+      ? {left: Math.min(rect.left, bounds.left), top: Math.min(rect.top, bounds.top), right: Math.max(rect.right, bounds.right), bottom: Math.max(rect.bottom, bounds.bottom)}
+      : bounds;
+  }
+  const union = rect as EditRect;
+  if (!(await must('lassoElements', host.lasso(union)))) {
+    throw new Stopped(REFUSAL.tabletRefused, 'lassoElements answered false: nothing was lassoed');
+  }
+  const style = level === NO_HEADING ? TITLE_STYLE.none : headingStyle(level);
+  if (!(await must('setLassoTitle', host.setTitle(style)))) {
+    throw new Stopped(REFUSAL.tabletRefused, 'setLassoTitle answered false: the Heading was not set');
+  }
+  return {page, nums, level, rect: union};
 }
 
 /**
@@ -418,9 +485,10 @@ async function openNotePath(host: EditHost): Promise<string | null> {
 
 /**
  * Operations whose read or write of the open note needs its newest ink in the file first. A keyword
- * call writes the file by path, as a page change does (#346).
+ * call writes the file by path, as a page change does (#346); a Heading reads its elements from
+ * the file (#345).
  */
-const SAVES_FIRST = new Set<Operation['op']>(['modifyElements', 'transformElements', 'insertPage', 'removePage', 'insertKeyword', 'deleteKeyword']);
+const SAVES_FIRST = new Set<Operation['op']>(['modifyElements', 'transformElements', 'insertPage', 'removePage', 'insertKeyword', 'deleteKeyword', 'setHeading']);
 
 /** The action `edit`: never a success for an operation that did not apply. */
 export function editAction(host: EditHost, now: () => number = Date.now) {

@@ -13,6 +13,25 @@ export const TITLE_STYLE = {none: 0, black: 1, lightGrey: 2, darkGrey: 3, shadow
 export type TitleStyle = (typeof TITLE_STYLE)[keyof typeof TITLE_STYLE];
 
 /**
+ * The Heading levels: Lasso Actions' «Heading 1» to «Heading 4» buttons (#252) and Note Editor's
+ * Format › Heading (#345) use this one map onto the four native styles, level 1 the strongest.
+ */
+export const HEADING_LEVELS = [1, 2, 3, 4] as const;
+export type HeadingLevel = (typeof HEADING_LEVELS)[number];
+
+const HEADING_STYLE: Readonly<Record<HeadingLevel, TitleStyle>> = {
+  1: TITLE_STYLE.black,
+  2: TITLE_STYLE.shadow,
+  3: TITLE_STYLE.darkGrey,
+  4: TITLE_STYLE.lightGrey,
+};
+
+/** The native title style of a Heading level. */
+export function headingStyle(level: HeadingLevel): TitleStyle {
+  return HEADING_STYLE[level];
+}
+
+/**
  * Makes the lassoed strokes a native title of `style`, or changes the lassoed title's style
  * (official types, «setLassoTitle»); `true` means it was set.
  */

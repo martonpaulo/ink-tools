@@ -191,6 +191,25 @@ describe('Headings calls (#252)', () => {
     expect(note.TITLE_STYLE).toEqual({none: 0, black: 1, lightGrey: 2, darkGrey: 3, shadow: 4});
   });
 
+  it('maps each Heading level to its own native style, level 1 the strongest (#252, #345)', () => {
+    expect(note.HEADING_LEVELS.map(note.headingStyle)).toEqual([
+      note.TITLE_STYLE.black,
+      note.TITLE_STYLE.shadow,
+      note.TITLE_STYLE.darkGrey,
+      note.TITLE_STYLE.lightGrey,
+    ]);
+  });
+
+  it('reads an element\'s place by its own rect, or by its points (#345)', async () => {
+    const rect = {left: 1, top: 2, right: 30, bottom: 40};
+    await expect(note.elementBounds({picture: {rect}})).resolves.toEqual({ok: true, value: rect});
+    await expect(note.elementBounds({textBox: {textRect: rect}})).resolves.toEqual({ok: true, value: rect});
+    await expect(note.elementBounds({geometry: {points: [{x: 10, y: 20}, {x: 50, y: 5}]}})).resolves.toEqual({
+      ok: true,
+      value: {left: 10, top: 5, right: 50, bottom: 20},
+    });
+  });
+
   it('passes the page rect to resizeLassoRect unchanged', async () => {
     const rect = {left: 0, top: 10, right: 1404, bottom: 90};
     mocked(PluginCommAPI.resizeLassoRect).mockResolvedValue(success(true));
