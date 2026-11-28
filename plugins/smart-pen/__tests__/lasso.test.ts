@@ -5,6 +5,7 @@ import {
   paragraphsOf,
 } from '../src/modules/text/lasso';
 import {
+  CHAR_WIDTH,
   MIN_FONT_SIZE,
   lastConversion,
   setLastConversion,
@@ -135,5 +136,18 @@ test('the box never reaches the note\'s page bar, for a word or a paragraph insi
       expect(box.rect.bottom).toBeLessThanOrEqual(floor);
       expect(box.rect.top).toBeGreaterThanOrEqual(0);
     }
+  }
+});
+
+test('the box is as wide as its widest paragraph typed, so no last letter wraps out of it (#590)', () => {
+  // Tight handwriting: a 4-letter word 70 px wide at 60 px high types about 120 px wide.
+  for (const text of ['hola', 'mesa', 'luna', 'one\nlonger line here']) {
+    const lines = text.split('\n');
+    const rect = {left: 100, top: 300, right: 170, bottom: 300 + 60 * lines.length};
+    const box = lassoBoxFor(text, rect, PAGE);
+    const widest = Math.max(...lines.map(line => [...line].length));
+    expect(box.rect.right - box.rect.left).toBeGreaterThanOrEqual(
+      Math.ceil(widest * box.fontSize * CHAR_WIDTH) + box.fontSize,
+    );
   }
 });
