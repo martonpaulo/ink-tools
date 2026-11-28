@@ -46,7 +46,6 @@ function board(puzzle: StarBattle, shape: PageShape): Puzzle {
   const stars = new Map<number, CellMark>(puzzle.solution.flatMap((star, cell) => (star ? [[cell, 'star'] as const] : [])));
   return {
     code,
-    size: playCopy.sizeLabel(puzzle.side),
     page,
     check: async ink => {
       const found = checkStarBattle(puzzle, layout.grid, ink);

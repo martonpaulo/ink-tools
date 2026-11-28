@@ -18,6 +18,8 @@ export const playCopy = {
   'here.caption': 'This page',
   'here.check': 'Check',
   'here.answer': 'Show Solution',
+  /** The wait while a press makes the page's puzzle again from its code, seconds for a large one on the tablet (#595). */
+  'here.preparing': 'Preparing the puzzle…',
   /** The titles of the two pictures the view shows. */
   'verdict.title': 'Checked Page',
   'answer.title': 'Solution',

@@ -86,8 +86,6 @@ export function drawn<P, G extends GamePage>(made: P, draw: (made: P) => G): G &
 
 /** One puzzle on its page: its check and its answer. */
 export type Puzzle = GamePage & {
-  /** The label of its size, `16 x 16`, for a game with a size choice; «This page» shows it (#545). */
-  size?: string;
   check: (ink: readonly InkStroke<object>[], read: Recognize<object>) => Promise<Verdict>;
   /** The page with the answer on it, which the view shows and the note never gets. */
   answer: () => Raster;
@@ -107,7 +105,9 @@ export type PuzzleGame = {
   create: (choices: Choices, seed: string, shape: PageShape) => GamePage;
   /**
    * The puzzle `code` names, the same as when it was made; throws on a code of another game. A
-   * board has none: its page holds nothing to check or solve.
+   * board has none: its page holds nothing to check or solve. Making a puzzle again from a code no
+   * bank holds can take seconds on the tablet, so the view calls it only once «Check» or «Show
+   * Solution» needs it (#595).
    */
   open?: (code: string, shape: PageShape) => Puzzle;
 };

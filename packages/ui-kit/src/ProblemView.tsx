@@ -57,9 +57,10 @@ export function ErrorView({
 
 /**
  * A full view that loads, as the native Plugins list loads (#287): the title bar with the view's
- * title, then the static loading mark and «Loading…» under it, centred on the paper below.
+ * title, then the static loading mark and «Loading…» under it, centred on the paper below. `text`
+ * names a wait that is longer than a load, such as Puzzles' «Preparing the puzzle…» (#595).
  */
-export function LoadingView({title, onClose}: {title?: string; onClose: () => void}): React.JSX.Element {
+export function LoadingView({title, text = WORKING_TEXT, onClose}: {title?: string; text?: string; onClose: () => void}): React.JSX.Element {
   useBackKey(onClose);
   return (
     <View style={shared.screen} testID="loading-view">
@@ -68,10 +69,10 @@ export function LoadingView({title, onClose}: {title?: string; onClose: () => vo
         style={styles.loading}
         accessible
         accessibilityRole="progressbar"
-        accessibilityLabel={WORKING_TEXT}
+        accessibilityLabel={text}
         accessibilityLiveRegion="polite">
         <LoadingMark />
-        <Text style={shared.title}>{WORKING_TEXT}</Text>
+        <Text style={shared.title}>{text}</Text>
       </View>
     </View>
   );

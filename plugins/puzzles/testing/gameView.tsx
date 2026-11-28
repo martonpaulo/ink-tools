@@ -103,13 +103,18 @@ export async function mount(game: PuzzleGame, pages: PagePorts, onBack = () => {
   return tree;
 }
 
-/** Presses the control, then lets the view's next frame and its ports' answers run. */
+/** The frames a press may wait on: one before a page is drawn, one before its puzzle is made (#595). */
+const PRESS_FRAMES = 3;
+
+/** Presses the control, then lets the view's next frames and its ports' answers run. */
 export async function press(tree: ReactTestRenderer, label: string) {
   const [control] = pressables(tree.root, label);
   expect(control).toBeDefined();
   await act(async () => {
     control.props.onPress();
-    await new Promise(resolve => setTimeout(resolve, 0));
+    for (let frame = 0; frame < PRESS_FRAMES; frame++) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
   });
 }
 

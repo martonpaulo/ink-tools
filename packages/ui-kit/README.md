@@ -198,6 +198,8 @@ Every tool reports what it needs after a check and what failed after a failure i
   It is an alert and stays until the owner closes it.
 - `LoadingView` is a full view that loads, as the native Plugins list loads: its title bar, then
   the static loading mark and «Loading…» centred under it ([#287](https://github.com/martonpaulo/ink-tools/issues/287)).
+  Its `text` names a longer wait in place of «Loading…», such as Puzzles' «Preparing the puzzle…»
+  ([#595](https://github.com/martonpaulo/ink-tools/issues/595)).
 - Close is the `TitleBar`'s × at the leading edge of the title bar, in every full view these
   states included ([#274](https://github.com/martonpaulo/ink-tools/issues/274)); Back does what it does.
 

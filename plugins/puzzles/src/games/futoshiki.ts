@@ -9,7 +9,7 @@ import {
   drawFutoshikiPage,
   FUTOSHIKI_SIZES,
   futoshikiFromCode,
-  generateFutoshiki,
+  newFutoshiki,
   puzzleCode,
   type Difficulty,
   type Futoshiki,
@@ -29,7 +29,6 @@ function board(puzzle: Futoshiki, shape: PageShape): Puzzle {
   const open = puzzle.givens.flatMap((given, cell) => (given === 0 ? [[cell, String(puzzle.solution[cell])] as const] : []));
   return {
     code: puzzleCode(puzzle.id),
-    size: playCopy.sizeLabel(puzzle.size),
     page,
     check: async (ink, read) => {
       const found = await checkFutoshiki(puzzle, layout.grid, ink, read);
@@ -59,6 +58,6 @@ export const FUTOSHIKI: PuzzleGame = {
       initial: 'easy',
     },
   ],
-  create: (choices, seed, shape) => drawn(generateFutoshiki(seed, Number(choices.size), choices.band as Difficulty), made => board(made, shape)),
+  create: (choices, seed, shape) => drawn(newFutoshiki(seed, Number(choices.size), choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(futoshikiFromCode(code), shape),
 };

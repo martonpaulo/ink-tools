@@ -30,7 +30,6 @@ function board(puzzle: Kakuro, shape: PageShape): Puzzle {
   const {raster: page, layout} = drawKakuroPage(puzzle, {orientation: shape.orientation, hand: shape.hand});
   return {
     code: puzzleCode(puzzle.id),
-    size: playCopy.sizeLabel(puzzle.size),
     page,
     check: async (ink, read) => {
       const found = await checkKakuro(layout.grid, puzzle, ink, read);

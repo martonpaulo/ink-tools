@@ -33,7 +33,6 @@ function board(puzzle: Nonogram, shape: PageShape): Puzzle {
   const shaded = new Map<number, CellMark>(puzzle.solution.flatMap((filled, cell) => (filled ? [[cell, 'shade'] as const] : [])));
   return {
     code: puzzleCode(puzzle.id),
-    size: playCopy.gridLabel(puzzle.width, puzzle.height),
     page,
     check: async ink => {
       const found = checkNonogram(puzzle, layout, ink);

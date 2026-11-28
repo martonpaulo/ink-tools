@@ -35,7 +35,6 @@ function board(puzzle: Binairo, shape: PageShape): Puzzle {
   );
   return {
     code: puzzleCode(puzzle.id),
-    size: playCopy.sizeLabel(puzzle.size),
     page,
     check: async ink => {
       const found = checkBinairo(puzzle, layout, ink);

@@ -8,7 +8,9 @@
 
 import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { searchExactCover, type ExactCoverProblem } from './exact-cover';
+import { FUTOSHIKI_BANK } from './futoshiki-bank';
 import { childSeed, createRandom } from './random';
+import { bankPair, findInBank, pickFromBank, type SeedBankEntry } from './seed-bank';
 
 /**
  * The sizes offered, with the bands each can reach: a band is offered only where the attempts
@@ -376,9 +378,9 @@ function offered(size: number, difficulty: Difficulty): number {
  * same puzzle. Attempt after attempt digs a Latin square until the band is exact. Throws on a
  * size not offered or a band the size cannot reach.
  *
- * shortcut: it digs on the tablet, about 1.1 s CPU on average and 3.2 s at worst for a 7 x 7 hard
- * over 20 seeds under `node --jitless` (2026-11-26); move it to a bank, as sudoku's, if the device
- * round finds it slow.
+ * A new page of a slow size and band comes from `futoshiki-bank.ts` instead (#595): a 7 x 7 hard
+ * took 1.4 s CPU at the median and 5 s at worst under `node --jitless` on the Mac (2026-11-28), and
+ * 15.2 s to open on the tablet.
  */
 export function generateFutoshiki(seed: string, size: number, difficulty: Difficulty): Futoshiki {
   const level = offered(size, difficulty);
@@ -391,9 +393,52 @@ export function generateFutoshiki(seed: string, size: number, difficulty: Diffic
   throw new Error(`no ${difficulty} ${size} x ${size} futoshiki from seed «${seed}» in ${FUTOSHIKI_ATTEMPTS} attempts`);
 }
 
-/** The futoshiki a puzzle code names (`FU-7-H-7K2Q9X`), the same one every time (#390). */
+/** A seed bank entry's mark for an empty cell, and for a sign the puzzle keeps or leaves out. */
+const OPEN_MARK = '.';
+const SIGN_KEPT = '1';
+const SIGN_LEFT = '0';
+
+/**
+ * A seed bank entry's text (#595): the givens row by row, `.` for an empty cell; the solution; and
+ * for each sign of the full square, in `futoshikiSignsOf`'s order, `1` when the puzzle keeps it,
+ * `0` when not; joined by «/». A sign's direction follows from the solution.
+ */
+export function encodeFutoshiki(puzzle: Pick<Futoshiki, 'size' | 'givens' | 'signs' | 'solution'>): string {
+  const kept = new Set(puzzle.signs.map(({ less, greater }) => `${less}:${greater}`));
+  const mask = futoshikiSignsOf(puzzle.size, puzzle.solution).map(({ less, greater }) => (kept.has(`${less}:${greater}`) ? SIGN_KEPT : SIGN_LEFT));
+  return [puzzle.givens.map(v => (v === 0 ? OPEN_MARK : String(v))).join(''), puzzle.solution.join(''), mask.join('')].join('/');
+}
+
+function futoshikiOfEntry(entry: SeedBankEntry, size: number, difficulty: Difficulty): Futoshiki {
+  const [givenText, solutionText, maskText] = entry.text.split('/');
+  const all = size * size;
+  if (givenText?.length !== all || solutionText?.length !== all || maskText?.length !== 2 * size * (size - 1)) {
+    throw new RangeError(`a ${size} x ${size} futoshiki entry has ${all} givens, ${all} cells and ${2 * size * (size - 1)} signs`);
+  }
+  const solution = [...solutionText].map(Number);
+  const givens = [...givenText].map(ch => (ch === OPEN_MARK ? 0 : Number(ch)));
+  const signs = futoshikiSignsOf(size, solution).filter((_, i) => maskText[i] === SIGN_KEPT);
+  const rating = { difficulty, givens: givens.filter(v => v > 0).length, signs: signs.length };
+  return { id: { game: 'futoshiki', size: String(size), difficulty, seed: entry.seed }, size, givens, signs, solution, rating };
+}
+
+/**
+ * The futoshiki a new page shows: at a size and band in the bank, the entry the seed picks, ready at
+ * once and named by its own seed (#595); elsewhere `generateFutoshiki`'s, made live.
+ */
+export function newFutoshiki(seed: string, size: number, difficulty: Difficulty): Futoshiki {
+  const entry = pickFromBank(FUTOSHIKI_BANK, bankPair(size, difficulty), seed);
+  return entry ? futoshikiOfEntry(entry, size, difficulty) : generateFutoshiki(seed, size, difficulty);
+}
+
+/**
+ * The futoshiki a puzzle code names (`FU-7-H-7K2Q9X`), the same one every time (#390), banked or
+ * not: a page made before its pair was banked is made again live.
+ */
 export function futoshikiFromCode(code: string): Futoshiki {
   const id = parsePuzzleCode(code);
   if (id.game !== 'futoshiki') throw new RangeError(`«${code}» is not a futoshiki code`);
-  return generateFutoshiki(id.seed, Number(id.size), id.difficulty);
+  const size = Number(id.size);
+  const entry = findInBank(FUTOSHIKI_BANK, bankPair(size, id.difficulty), id.seed);
+  return entry ? futoshikiOfEntry(entry, size, id.difficulty) : generateFutoshiki(id.seed, size, id.difficulty);
 }

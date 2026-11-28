@@ -32,7 +32,6 @@ function board(puzzle: Hitori, shape: PageShape): Puzzle {
   const shaded = new Map<number, CellMark>(puzzle.solution.flatMap((black, cell) => (black ? [[cell, 'shade'] as const] : [])));
   return {
     code: puzzleCode(puzzle.id),
-    size: playCopy.sizeLabel(puzzle.size),
     page,
     check: async ink => {
       const found = checkHitori(puzzle, layout.grid, ink);

@@ -4,6 +4,8 @@ import { BINAIRO_BANDS, BINAIRO_SIDES, binairoFromCode, encodeBinairo, generateB
 import { BRIDGES_BANK } from '../src/bridges-bank';
 import { BRIDGES_BANDS, BRIDGES_SIDES, bridgesFromCode, encodeBridges, generateBridges, newBridges } from '../src/bridges';
 import { parsePuzzleCode, puzzleCode, type Difficulty, type PuzzleId } from '../src/code';
+import { encodeFutoshiki, FUTOSHIKI_SIZES, futoshikiFromCode, generateFutoshiki, newFutoshiki } from '../src/futoshiki';
+import { FUTOSHIKI_BANK } from '../src/futoshiki-bank';
 import { KAKURO_BANK } from '../src/kakuro-bank';
 import { encodeHitori, generateHitori, HITORI_BANDS, HITORI_SIDES, hitoriFromCode, newHitori } from '../src/hitori';
 import { HITORI_BANK } from '../src/hitori-bank';
@@ -118,6 +120,15 @@ const GAMES: Record<string, BankedGame> = {
     encode: made => encodeLightUp(made as ReturnType<typeof generateLightUp>),
     proved: 6,
   },
+  futoshiki: {
+    bank: FUTOSHIKI_BANK,
+    offered: Object.entries(FUTOSHIKI_SIZES).flatMap(([size, bands]) => bands.map(band => `${size}:${band}`)),
+    live: (seed, pair) => generateFutoshiki(seed, sideOf(pair), bandOf(pair)),
+    fresh: (seed, pair) => newFutoshiki(seed, sideOf(pair), bandOf(pair)),
+    fromCode: futoshikiFromCode,
+    encode: made => encodeFutoshiki(made as ReturnType<typeof generateFutoshiki>),
+    proved: 6,
+  },
   // Making the whole star battle bank again takes about 25 s, so a sample of each pair.
   'star-battle': {
     bank: STAR_BATTLE_BANK,
@@ -141,6 +152,7 @@ describe('the seed banks (#552)', () => {
     expect(Object.keys(BINAIRO_BANK)).toContain('12:hard');
     expect(Object.keys(STAR_BATTLE_BANK)).toContain('10S2:hard');
     expect(Object.keys(LIGHT_UP_BANK)).toContain('12x12:hard');
+    expect(Object.keys(FUTOSHIKI_BANK)).toContain('7:hard');
     for (const [game, pair] of banked) expect(GAMES[game].offered).toContain(pair);
   });
 
@@ -182,7 +194,7 @@ describe('the seed banks (#552)', () => {
     expect(spec.fromCode(puzzleCode(old.id))).toEqual(old);
   });
 
-  test('a banked page costs no generation: every banked size and band within a CPU budget', () => {
+  test('a banked page costs no generation: every banked size and band within a CPU budget, made and opened', () => {
     // CPU time, not wall time, so a loaded machine adds little: reading an entry takes well under
     // 1 ms, and the live generator of the slowest pairs (12 x 12 hard kakuro, 10 x 10 hard
     // slitherlink, 13 x 13 hard Bridges, 10 x 10 hard star battle) takes 20 ms and more with the JIT,
@@ -190,7 +202,9 @@ describe('the seed banks (#552)', () => {
     const BUDGET_MS = 10;
     for (const [game, pair] of banked) {
       const start = process.cpuUsage();
-      GAMES[game].fresh('B', pair);
+      const made = GAMES[game].fresh('B', pair);
+      // Opening its page makes it again from its code, as «Check» does (#595): from the bank too.
+      GAMES[game].fromCode(puzzleCode(made.id));
       const used = process.cpuUsage(start);
       // timing-independent: a CPU budget well above an entry's read and below the slowest live pairs, as said above.
       expect([game, pair, (used.user + used.system) / 1000 < BUDGET_MS]).toEqual([game, pair, true]);

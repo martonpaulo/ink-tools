@@ -41,6 +41,12 @@ const GAMES = {
     pairs: ['12:easy', '12:hard'],
     make: (core, seed, size, band) => core.encodeHitori(core.generateHitori(seed, Number(size), band)),
   },
+  // Measured for #595 on 2026-11-28 the same way: 5 x 5 easy and smaller stay live.
+  futoshiki: {
+    constant: 'FUTOSHIKI_BANK',
+    pairs: ['5:medium', '6:easy', '6:medium', '7:easy', '7:medium', '7:hard'],
+    make: (core, seed, size, band) => core.encodeFutoshiki(core.generateFutoshiki(seed, Number(size), band)),
+  },
   'light-up': {
     constant: 'LIGHT_UP_BANK',
     pairs: ['5x5:hard', '7x7:medium', '7x7:hard', '10x10:medium', '10x10:hard', '12x12:easy', '12x12:medium', '12x12:hard'],

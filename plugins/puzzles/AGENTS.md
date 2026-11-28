@@ -50,6 +50,11 @@ The view outlives a close and the page can turn before the next press, so «Add 
 «Show Solution» each read the page on screen again, never the read the view opened with; a page
 that holds another puzzle of the game is checked or solved as that one, and a page with none shows
 instead ([#542](https://github.com/martonpaulo/ink-tools/issues/542)).
+The view reads only the page's code when it opens, so «Check» and «Show Solution» show at once;
+the first of them makes the puzzle from its code under «Preparing the puzzle…» and the view keeps
+it. A code no seed bank holds is made again live, 15 s for a 7 x 7 hard Futoshiki on the tablet,
+and the view held on «Loading…» by that work showed no control to press
+([#595](https://github.com/martonpaulo/ink-tools/issues/595)).
 
 ## Adding a game
 

@@ -1,10 +1,13 @@
 /** Futoshiki in the Puzzles view (#390): a size, a band that size offers, «Check» and «Show Solution». */
+import {act} from 'react-test-renderer';
+import {BACK_LABEL} from '@ink-tools/ui-kit/controlsCopy';
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {
   drawFutoshikiPage,
   encodePng,
   futoshikiFromCode,
   generateFutoshiki,
+  parsePuzzleCode,
   placedPageCode,
   puzzleCode,
   type Futoshiki,
@@ -12,6 +15,7 @@ import {
 import {GAMES} from '../src/games';
 import {FUTOSHIKI, futoshikiCopy} from '../src/games/futoshiki';
 import {playCopy} from '../src/play/copy';
+import type {PuzzleGame} from '../src/play/puzzle';
 import {expectSolved, fakePages, HERE, mount, press, readDigits, SEED, writtenCells} from '../testing/gameView';
 
 const PUZZLE: Futoshiki = generateFutoshiki(SEED, 4, 'easy');
@@ -64,12 +68,65 @@ describe('the futoshiki game (#390)', () => {
     await expectSolved(FUTOSHIKI, CODE, written());
   });
 
-  test('the log tells how long the puzzle took to open and that Check was pressed (tablet row 146, #595)', async () => {
+  test('the log tells that Check was pressed and how long the puzzle then took to make (tablet row 146, #595)', async () => {
     const {pages, lines} = fakePages({code: CODE});
     const tree = await mount(FUTOSHIKI, pages);
-    expect(lines).toContainEqual(expect.stringMatching(new RegExp(`^futoshiki: opened ${CODE}(-L\\d+)? in \\d+ ms$`)));
     await press(tree, playCopy['here.check']);
-    expect(lines).toContainEqual(expect.stringMatching(new RegExp(`^futoshiki: check pressed on ${CODE}`)));
+    const pressed = lines.findIndex(line => line.startsWith(`futoshiki: check pressed on ${CODE}`));
+    const opened = lines.findIndex(line => new RegExp(`^futoshiki: opened ${CODE}(-L\\d+)? in \\d+ ms$`).test(line));
+    expect([pressed >= 0, opened > pressed]).toEqual([true, true]);
+  });
+
+  test('«Check» shows before the puzzle is made, and its press makes it under «Preparing the puzzle…» (#595)', async () => {
+    // A code no bank holds is made again from its seed when opened: 15 s for a 7 x 7 hard on the
+    // tablet, which held the view on «Loading…» with no Check to press (tablet row 148).
+    let made = 0;
+    const counted: PuzzleGame = {
+      ...FUTOSHIKI,
+      open: (code, shape) => {
+        made++;
+        return FUTOSHIKI.open!(code, shape);
+      },
+    };
+    const {pages} = fakePages({code: CODE, ink: written(), read: readDigits});
+    const tree = await mount(counted, pages);
+    expect(made).toBe(0);
+    const [control] = pressables(tree.root, playCopy['here.check']);
+    expect(control).toBeDefined();
+    const settle = async () => {
+      for (let i = 0; i < 20; i++) {
+        await Promise.resolve();
+      }
+    };
+    jest.useFakeTimers();
+    try {
+      await act(async () => {
+        control.props.onPress();
+        await settle();
+      });
+      expect(shownTexts(tree.root)).toContain(playCopy['here.preparing']);
+      expect(made).toBe(0);
+      await act(async () => {
+        jest.runAllTimers();
+        await settle();
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+    expect(made).toBe(1);
+    expect(shownTexts(tree.root)).toContain(playCopy['verdict.solved']);
+    // Back and a second press use the puzzle made once.
+    await press(tree, BACK_LABEL);
+    await press(tree, playCopy['here.answer']);
+    expect(made).toBe(1);
+    expect(shownTexts(tree.root)).toContain(playCopy['answer.note']);
+  });
+
+  test('a new 7 x 7 hard page comes from the seed bank, so its code makes it again at once (#595)', () => {
+    const made = FUTOSHIKI.create({size: '7', band: 'hard'}, SEED, SHAPE);
+    // A bank entry's seed is B and a counter, never the 8 characters of a fresh seed (seed-bank.cjs).
+    expect(parsePuzzleCode(made.code).seed).toMatch(/^B[0-9A-Z]{1,2}$/);
+    expect(Buffer.from(encodePng(FUTOSHIKI.open!(made.code, SHAPE).page)).equals(Buffer.from(encodePng(made.page)))).toBe(true);
   });
 
   test('«Show Solution» writes nothing to the note', async () => {

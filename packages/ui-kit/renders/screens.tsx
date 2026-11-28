@@ -446,7 +446,10 @@ const puzzlesGame = async (game: PuzzleGame, ink: () => InkStroke<object>[], cod
   for (const label of steps) {
     await act(async () => {
       tree.root.find(node => (node.props.accessibilityLabel === label || node.props.children === label) && typeof node.props.onPress === 'function').props.onPress();
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // A frame before a page is drawn and one before its puzzle is made from its code (#595).
+      for (let frame = 0; frame < 3; frame++) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
     });
   }
   return tree;
@@ -547,6 +550,8 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-futoshiki-page', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE)},
   {name: 'puzzles-futoshiki-check', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Check'])},
   {name: 'puzzles-futoshiki-solution', render: () => puzzlesFutoshiki(FUTOSHIKI_CODE, ['Show Solution'])},
+  // What a first press shows while the page's puzzle is made again from its code (#595).
+  {name: 'puzzles-futoshiki-preparing', render: () => mount(<LoadingView title={FUTOSHIKI.title} text={playCopy['here.preparing']} onClose={noop} />)},
   {name: 'puzzles-kakuro', render: () => puzzlesKakuro(null)},
   {name: 'puzzles-kakuro-page', render: () => puzzlesKakuro(KAKURO_CODE)},
   {name: 'puzzles-kakuro-check', render: () => puzzlesKakuro(KAKURO_CODE, ['Check'])},

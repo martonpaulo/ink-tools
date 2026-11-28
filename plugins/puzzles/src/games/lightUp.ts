@@ -31,7 +31,6 @@ function board(puzzle: LightUp, shape: PageShape): Puzzle {
   const bulbs = new Map<number, CellMark>(puzzle.solution.flatMap((bulb, cell) => (bulb ? [[cell, 'bulb'] as const] : [])));
   return {
     code: puzzleCode(puzzle.id),
-    size: playCopy.sizeLabel(puzzle.width),
     page,
     check: async ink => {
       // A bulb not drawn yet is left to do, not wrong.

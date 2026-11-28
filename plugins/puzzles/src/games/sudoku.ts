@@ -34,7 +34,6 @@ function board(puzzle: Sudoku, shape: PageShape): Puzzle {
   const {raster: page, layout} = drawSudokuPage(puzzle, {orientation: shape.orientation, hand: shape.hand, text});
   return {
     code: puzzleCode(puzzle.id),
-    size: playCopy.sizeLabel(puzzle.shape.size),
     page,
     check: async (ink, read) => {
       const found = await checkSudoku(puzzle, layout, ink, read);

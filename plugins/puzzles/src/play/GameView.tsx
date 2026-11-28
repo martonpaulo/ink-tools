@@ -6,7 +6,10 @@
  * Every control comes from ui-kit (#273); a failure stays on screen as its Error with Retry (#245).
  * Each of those presses reads the page on screen again, never the read the view kept: the view
  * outlives a close, and the page can turn before the next press (device round, #542).
- * The view opens on the game's last choices, kept by each «Add Page» (#569).
+ * The view opens on the game's last choices, kept by each «Add Page» (#569). It makes a page's
+ * puzzle again from its code only when «Check» or «Show Solution» needs it, under «Preparing the
+ * puzzle…», and keeps it: a code no seed bank holds takes seconds on the tablet, and a view held by
+ * that work showed no control to press (#595).
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
@@ -45,12 +48,18 @@ export type GameViewDeps = {
   kept?: KeptChoices;
 };
 
+/**
+ * The puzzle a page holds, by its background's name: `made` once a press made it from its code,
+ * which `make` does once and keeps (#595).
+ */
+type PageBoard = {code: string; made: () => Puzzle | null; make: () => Puzzle};
+
 type Screen =
   | {kind: 'reading'}
-  | {kind: 'ready'; board: Puzzle | null; newer?: boolean}
-  | {kind: 'working'}
-  | {kind: 'verdict'; board: Puzzle; verdict: Verdict}
-  | {kind: 'answer'; board: Puzzle; picture: Raster}
+  | {kind: 'ready'; board: PageBoard | null; newer?: boolean}
+  | {kind: 'working'; text?: string}
+  | {kind: 'verdict'; board: PageBoard; verdict: Verdict}
+  | {kind: 'answer'; board: PageBoard; picture: Raster}
   | {kind: 'error'; problem: Problem; retry: () => void};
 
 const shapeOf = (here: Here): PageShape => ({orientation: here.orientation, hand: HAND});
@@ -62,6 +71,30 @@ const shapeOf = (here: Here): PageShape => ({orientation: here.orientation, hand
 export function openPage(open: NonNullable<PuzzleGame['open']>, name: string, here: Here): Puzzle {
   const {code, version} = pageCodeParts(name);
   return {...withPageLayout(version, () => open(code, shapeOf(here))), code: name};
+}
+
+/** The puzzle the page named `name` holds, made on the first `make` and kept (#595). */
+function pageBoard(open: NonNullable<PuzzleGame['open']>, name: string, here: Here): PageBoard {
+  let made: Puzzle | null = null;
+  return {
+    code: name,
+    made: () => made,
+    make: () => {
+      if (made === null) {made = openPage(open, name, here);}
+      return made;
+    },
+  };
+}
+
+/**
+ * The size «This page» names (#545), read from the page's code so the row needs no puzzle made:
+ * `7 x 7` for a square, `10 x 15` for columns by rows; none for a game with no size choice.
+ */
+function sizeOf(game: PuzzleGame, name: string): string | undefined {
+  if (!game.options.some(option => option.id === 'size')) {return undefined;}
+  const [, width, height] = /^(\d+)(?:X(\d+))?/.exec(parsePuzzleCode(pageCodeParts(name).code).size) ?? [];
+  if (width === undefined) {return undefined;}
+  return height === undefined || height === width ? playCopy.sizeLabel(Number(width)) : playCopy.gridLabel(Number(width), Number(height));
 }
 
 /** Lets the Loading view draw before a long synchronous step, such as drawing a page. */
@@ -90,6 +123,21 @@ export function GameView({
     [game.id, pages],
   );
 
+  /** The page named `name` as this game's, or null with a log line when another game or none made it. */
+  const boardOf = useCallback(
+    (name: string, here: Here): PageBoard | null => {
+      if (!game.open) {return null;}
+      try {
+        if (parsePuzzleCode(pageCodeParts(name).code).game === game.id) {return pageBoard(game.open, name, here);}
+      } catch {
+        // A background no game made: its name is no puzzle code.
+      }
+      pages.log(`${game.id}: ${name} is not a ${game.id} page`);
+      return null;
+    },
+    [game, pages],
+  );
+
   /** Reads the current page, and the puzzle on it when this game made it. */
   const read = useCallback(async () => {
     setScreen({kind: 'reading'});
@@ -102,24 +150,12 @@ export function GameView({
     pages.log(`${game.id}: on page ${here.value.page}`);
     const code = await pages.codeOf(here.value);
     if (!code.ok) {return failed(playCopy['error.here'], retry, code.message);}
-    let board: Puzzle | null = null;
     // A page drawn by a layout this Puzzles does not know says so, not that it holds no puzzle.
     const newer = code.value !== null && !knownPageLayout(code.value);
-    if (code.value !== null && game.open && !newer) {
-      // Opening a puzzle from its code makes it again, which takes tens of seconds for a large hard
-      // one and holds this JavaScript the whole time; the time is logged so a press that seems lost
-      // right after the view opens can be told from a slow open (tablet row 146, #595).
-      const started = Date.now();
-      try {
-        board = openPage(game.open, code.value, here.value);
-        pages.log(`${game.id}: opened ${code.value} in ${Date.now() - started} ms`);
-      } catch (error) {
-        // Another game's page, or a background no game made: this game has nothing to check there.
-        pages.log(`${game.id}: ${code.value} is not a ${game.id} page: ${String(error)}`);
-      }
-    }
+    // The puzzle itself is made only when a press needs it, so «Check» shows at once (#595).
+    const board = code.value !== null && !newer ? boardOf(code.value, here.value) : null;
     setScreen({kind: 'ready', board, newer});
-  }, [failed, game, pages]);
+  }, [boardOf, failed, game, pages]);
 
   useEffect(() => {
     // The page files an earlier Add Page left, as its insert ended this JavaScript before it could.
@@ -142,7 +178,7 @@ export function GameView({
    * to another page (#542).
    */
   const onScreen = useCallback(
-    async (board: Puzzle, retry: () => void): Promise<{here: Here; board: Puzzle} | null> => {
+    async (board: PageBoard, retry: () => void): Promise<{here: Here; board: PageBoard} | null> => {
       const here = await pages.here();
       if (!here.ok) {
         failed(playCopy['error.here'], retry, here.message);
@@ -155,17 +191,37 @@ export function GameView({
       }
       if (code.value === board.code) {return {here: here.value, board};}
       pages.log(`${game.id}: page ${here.value.page} holds ${code.value ?? 'no puzzle'}, not ${board.code}`);
-      if (code.value !== null && game.open) {
-        try {
-          return {here: here.value, board: openPage(game.open, code.value, here.value)};
-        } catch (error) {
-          pages.log(`${game.id}: ${code.value} is not a ${game.id} page: ${String(error)}`);
-        }
-      }
+      const now = code.value !== null && knownPageLayout(code.value) ? boardOf(code.value, here.value) : null;
+      if (now) {return {here: here.value, board: now};}
       read();
       return null;
     },
-    [failed, game, pages, read],
+    [boardOf, failed, game.id, pages, read],
+  );
+
+  /**
+   * The board's puzzle: kept, or made now from its code under «Preparing the puzzle…», which a code
+   * no bank holds keeps on screen for seconds on the tablet; the time goes to the log (#595). A code
+   * that makes no puzzle of this game shows the page as holding none, as before.
+   */
+  const prepared = useCallback(
+    async (board: PageBoard): Promise<Puzzle | null> => {
+      const kept = board.made();
+      if (kept) {return kept;}
+      setScreen({kind: 'working', text: playCopy['here.preparing']});
+      await nextFrame();
+      const started = Date.now();
+      try {
+        const puzzle = board.make();
+        pages.log(`${game.id}: opened ${board.code} in ${Date.now() - started} ms`);
+        return puzzle;
+      } catch (error) {
+        pages.log(`${game.id}: ${board.code} is not a ${game.id} page: ${String(error)}`);
+        setScreen({kind: 'ready', board: null});
+        return null;
+      }
+    },
+    [game.id, pages],
   );
 
   const add = useCallback(
@@ -213,7 +269,7 @@ export function GameView({
   );
 
   const check = useCallback(
-    async (shown: Puzzle) => {
+    async (shown: PageBoard) => {
       const retry = () => {
         check(shown);
       };
@@ -222,22 +278,24 @@ export function GameView({
       const now = await onScreen(shown, retry);
       if (!now) {return;}
       const {here, board} = now;
+      const puzzle = await prepared(board);
+      if (!puzzle) {return;}
       const ink = await pages.ink(here);
       if (!ink.ok) {return failed(playCopy['error.check'], retry, ink.message);}
       let verdict: Verdict;
       try {
-        verdict = await board.check(ink.value, elements => pages.read(here, elements));
+        verdict = await puzzle.check(ink.value, elements => pages.read(here, elements));
       } catch (error) {
         return failed(playCopy['error.check'], retry, String(error));
       }
       pages.log(`${game.id}: checked ${board.code}: ${verdict.wrong} wrong, solved ${verdict.solved}`);
       setScreen({kind: 'verdict', board, verdict});
     },
-    [failed, game.id, onScreen, pages],
+    [failed, game.id, onScreen, pages, prepared],
   );
 
   const answer = useCallback(
-    async (shown: Puzzle) => {
+    async (shown: PageBoard) => {
       const retry = () => {
         answer(shown);
       };
@@ -245,15 +303,18 @@ export function GameView({
       await nextFrame();
       const now = await onScreen(shown, retry);
       if (!now) {return;}
-      setScreen({kind: 'answer', board: now.board, picture: now.board.answer()});
+      const puzzle = await prepared(now.board);
+      if (!puzzle) {return;}
+      setScreen({kind: 'answer', board: now.board, picture: puzzle.answer()});
     },
-    [onScreen],
+    [onScreen, prepared],
   );
 
   switch (screen.kind) {
     case 'reading':
-    case 'working':
       return <LoadingView title={game.title} onClose={onClose} />;
+    case 'working':
+      return <LoadingView title={game.title} text={screen.text} onClose={onClose} />;
     case 'error':
       return <ErrorView title={game.title} problem={screen.problem} onRetry={screen.retry} onBack={onBack} onClose={onClose} />;
     case 'verdict': {
@@ -312,12 +373,12 @@ function Ready({
   onClose,
 }: GameViewProps & {
   game: PuzzleGame;
-  screen: {board: Puzzle | null; newer?: boolean};
+  screen: {board: PageBoard | null; newer?: boolean};
   choices: Choices;
   onChoose: (id: string, value: string) => void;
   onAdd: () => void;
-  onCheck: (board: Puzzle) => void;
-  onAnswer: (board: Puzzle) => void;
+  onCheck: (board: PageBoard) => void;
+  onAnswer: (board: PageBoard) => void;
 }): React.JSX.Element {
   useBackKey(onBack);
   const {board} = screen;
@@ -325,7 +386,7 @@ function Ready({
   const thisPage = !game.open ? null : board ? (
     <RowGroup caption={playCopy['here.caption']}>
       <ActionRow
-        title={playCopy['here.title'](game.title, playCopy.bands[parsePuzzleCode(pageCodeParts(board.code).code).difficulty], board.size)}
+        title={playCopy['here.title'](game.title, playCopy.bands[parsePuzzleCode(pageCodeParts(board.code).code).difficulty], sizeOf(game, board.code))}
         subtitle={pageCodeParts(board.code).code}
         action={{label: playCopy['here.check'], onPress: () => onCheck(board)}}
         secondAction={{label: playCopy['here.answer'], onPress: () => onAnswer(board)}}
