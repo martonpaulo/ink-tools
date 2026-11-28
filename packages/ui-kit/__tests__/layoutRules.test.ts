@@ -70,7 +70,7 @@ describe('layoutBreaks', () => {
         }),
         LIMITS,
       ),
-    ).toEqual(["«Add Page» lies over row «Medium»: keep fixed controls under the list (#578)"]);
+    ).toEqual(['«Add Page» lies over row «Medium»: keep fixed controls under the list (#578)']);
   });
 
   it('fails an image off-centre in its frame and one sized by aspectRatio (#576)', () => {

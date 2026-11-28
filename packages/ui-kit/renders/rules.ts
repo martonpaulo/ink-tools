@@ -317,7 +317,7 @@ export function firstCaptionBreaks({bars, captions, rows, texts}: Measured): str
 }
 
 /** The WCAG contrast of two colours, `#rrggbb` or `rgb(r, g, b)`, rounded to two places (#575). */
-export function contrastRatio(a: string, b: string): number {
+export function contrastRatio(first: string, second: string): number {
   const channels = (colour: string) =>
     colour.startsWith('#')
       ? [1, 3, 5].map(i => parseInt(colour.slice(i, i + 2), 16))
@@ -329,7 +329,7 @@ export function contrastRatio(a: string, b: string): number {
     });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
-  const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  const [high, low] = [luminance(first), luminance(second)].sort((x, y) => y - x);
   return Math.round(((high + 0.05) / (low + 0.05)) * 100) / 100;
 }
 
