@@ -38,7 +38,7 @@ export const SPILL_DEPTH = 0.15;
  */
 const ZIGZAG_REVERSALS = 3;
 const ZIGZAG_TURN = (80 * Math.PI) / 180;
-const ZIGZAG_LEG = 0.12;
+const ZIGZAG_LEG = 1 / 8;
 const ZIGZAG_LENGTH = 0.9;
 /** [inference] the shortest leg of a two-turn zigzag, as a share of the cell, and how far its first and last legs may differ in direction. */
 const ZIGZAG_SHORT_LEG = 0.2;
