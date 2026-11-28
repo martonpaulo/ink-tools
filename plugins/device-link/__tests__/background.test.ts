@@ -31,6 +31,7 @@ function note(overrides: Partial<NoteHost> = {}): NoteHost {
     ...pageInsertHost(),
     lasso: jest.fn(async () => ok(true)),
     insertImage: jest.fn(async () => ok(true)),
+    insertImageAt: jest.fn(async () => fail(-1, 'no element insert in this test')),
     imageSize: jest.fn(async () => ok({width: 100, height: 100})),
     wait: jest.fn(async () => {}),
     createNote: jest.fn(async () => ok(true)),

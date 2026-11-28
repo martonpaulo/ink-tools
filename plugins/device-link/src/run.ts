@@ -3,7 +3,9 @@
  * pick (#307) to the toast line, and the note side of «Receive» (#49).
  */
 import {
+  CallFailure,
   closePluginView,
+  createElement,
   createNote,
   createTextBox,
   EMPTY_LASSO_CODE,
@@ -26,12 +28,13 @@ import {
   occupiedRects,
   ok,
   pageImage,
+  PICTURE_TYPE,
   recognizeElements,
   Result,
   THROWN_CODE,
   timerWait,
 } from '@ink-tools/sn-adapter/official';
-import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
+import {insertPictureAt, OccupiedRead, PlaceHost, readLassoQuery, Rect} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
 import {ensurePermissions, holdsDelete, refusedProblem} from './permissions';
 
@@ -261,6 +264,25 @@ async function currentOccupied(): Promise<Result<OccupiedRead>> {
   return page.ok ? occupiedRects(note.value, page.value, log) : page;
 }
 
+/** The SDK calls ink-core inserts a Picture element with (#540), as Word Lookup's placement does. */
+const pictureHost: PlaceHost<CallFailure> = {
+  pictureType: PICTURE_TYPE,
+  createElement,
+  insertPageElements,
+  failure: message => fail(THROWN_CODE, message),
+  log,
+};
+
+/** Inserts the picture as an element at `rect` on the open page (#540). */
+async function insertImageAt(path: string, rect: Rect): Promise<Result<boolean>> {
+  const page = await getCurrentPageNum();
+  if (!page.ok) {
+    return page;
+  }
+  const placed = await insertPictureAt(pictureHost, path, rect, page.value);
+  return placed.ok ? ok(true) : placed;
+}
+
 /** A picture file's size from React Native's own decoder, with no pixels read (#196). */
 function pictureSize(path: string): Promise<Result<Size>> {
   return new Promise(resolve =>
@@ -294,6 +316,7 @@ export const noteHost: NoteHost = boundedPage({
   },
   lasso: lassoElements,
   insertImage,
+  insertImageAt,
   imageSize: pictureSize,
   // The native tick: the receive goes on with the view closed, where a JS timer never fires (#289).
   wait: ms => timerWait(nativeTimers(TICKS_MODULE), ms),

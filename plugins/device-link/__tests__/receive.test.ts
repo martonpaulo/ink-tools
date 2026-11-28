@@ -1,5 +1,5 @@
 /** One receive (#49): from the offer to the note, with a scripted module and note. */
-import {inkUnderRect, PAGE_BAR_PX} from '@ink-tools/ink-core';
+import {inkUnderRect, isFree, PAGE_BAR_PX} from '@ink-tools/ink-core';
 import {fail, MODULE_CODE, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {refusedProblem} from '../src/permissions';
@@ -40,6 +40,8 @@ function note(overrides: Partial<NoteHost> = {}) {
     ...pageInsertHost(),
     lasso: jest.fn(async () => ok(true)),
     insertImage: jest.fn(async () => ok(true)),
+    // The element insert fails by default, so a test reaches the host's own placement unless it opts in (#540).
+    insertImageAt: jest.fn(async () => fail(-1, 'no element insert in this test')),
     imageSize: jest.fn(async () => ok({width: 923, height: 1200})),
     wait: jest.fn(async () => {}),
     createNote: jest.fn(async () => ok(true)),
@@ -103,6 +105,54 @@ test('an image is answered with a session, inserted when it arrives, and kept un
   const next = fakeRelay({}, imageArrives('/tmp/received-next.png'));
   await receiveOne(next.api, note(), 'Supernote');
   expect(next.calls.removed).toEqual(['/tmp/received-sess.png']);
+});
+
+describe('a received item never covers the writing, and is lassoed alone (#540)', () => {
+  test('a picture goes to a free place when the page centre holds writing, and is lassoed there', async () => {
+    const writing = {left: 600, top: 900, right: 800, bottom: 960};
+    const host = note({
+      occupied: jest.fn(async () => ok({rects: [writing], complete: true})),
+      imageSize: jest.fn(async () => ok({width: 400, height: 300})),
+      insertImageAt: jest.fn(async () => ok(true)),
+    });
+    await expect(receiveOne(fakeRelay({}, imageArrives('/tmp/e.png')).api, host, 'Supernote')).resolves.toBe(copy.receivedImage);
+    expect(host.insertImage).not.toHaveBeenCalled();
+    const [[path, rect]] = (host.insertImageAt as jest.Mock).mock.calls;
+    expect(path).toBe('/tmp/e.png');
+    expect(isFree(rect, [writing])).toBe(true);
+    expect([rect.right - rect.left, rect.bottom - rect.top]).toEqual([400, 300]);
+    expect(host.lasso).toHaveBeenCalledWith(rect);
+  });
+
+  test('a picture placed to miss the writing stays above the page bar (#577)', async () => {
+    // Writing over all but a bottom strip, where a 300 px tall picture fits only by reaching under the bar.
+    const writing = {left: 0, top: 0, right: PAGE.width, bottom: PAGE.height - 360};
+    const host = note({
+      occupied: jest.fn(async () => ok({rects: [writing], complete: true})),
+      imageSize: jest.fn(async () => ok({width: 400, height: 300})),
+      insertImageAt: jest.fn(async () => ok(true)),
+    });
+    await receiveOne(fakeRelay({}, imageArrives('/tmp/g.png')).api, host, 'Supernote');
+    const [[, rect]] = (host.insertImageAt as jest.Mock).mock.calls;
+    expect(rect.bottom).toBeLessThanOrEqual(PAGE.height - PAGE_BAR_PX);
+  });
+
+  test('an element insert the host refuses falls back to its own placement', async () => {
+    const host = note({occupied: pageReads([], PLACED)});
+    await receiveOne(fakeRelay({}, imageArrives('/tmp/f.png')).api, host, 'Supernote');
+    expect(host.insertImage).toHaveBeenCalledWith('/tmp/f.png');
+    expect(host.log).toHaveBeenCalledWith('receive: the picture element was not inserted: insertImage places it');
+    expect(host.lasso).toHaveBeenCalledWith(PLACED);
+  });
+
+  test('a received text is lassoed by its text box\'s own frame, as the host stored it', async () => {
+    const asked = textBox(PAGE, 'Buy milk');
+    const frame = {left: asked.left, top: asked.top, right: asked.left + 180, bottom: asked.top + 44};
+    const host = note({occupied: pageReads([], frame)});
+    await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: 'Buy milk'}})]).api, host, 'Supernote');
+    expect(host.insertText).toHaveBeenCalledWith({text: 'Buy milk', rect: asked, fontSize: 32});
+    expect(host.lasso).toHaveBeenCalledWith(frame);
+  });
 });
 
 describe('the received picture is lassoed for another plugin\'s rows (#196)', () => {

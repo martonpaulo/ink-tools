@@ -126,6 +126,7 @@ test('a PDF that arrives over LocalSend goes to a note, not into the open one', 
     ...pageInsertHost(),
     lasso: async () => ok(true),
     insertImage: jest.fn(async () => ok(true)),
+    insertImageAt: jest.fn(async () => ok(true)),
     imageSize: async () => ok({width: 1, height: 1}),
     wait: async () => {},
   };

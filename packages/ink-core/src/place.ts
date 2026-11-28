@@ -226,6 +226,35 @@ export function placeRect(
   }
 }
 
+/**
+ * Where a picture of `picture`'s size goes on a page with no lasso to place it by (#540): its size
+ * scaled down to fit the page, at the place that crosses the fewest of `occupied`, the centre
+ * first, then the nearest to it. Each candidate sits PLACE_GAP clear of an occupied rect's side or
+ * of the page's edge, so a free place is found whenever one of that size exists beside the ink.
+ */
+export function freePlaceRect(picture: Picture, page: Size, occupied: readonly Rect[]): Rect {
+  const scale = Math.min(1, page.width / picture.width, page.height / picture.height);
+  const width = Math.floor(picture.width * scale);
+  const height = Math.floor(picture.height * scale);
+  const centre = {left: Math.floor((page.width - width) / 2), top: Math.floor((page.height - height) / 2)};
+  const lefts = [centre.left, PLACE_GAP, page.width - width - PLACE_GAP, ...occupied.flatMap(o => [o.right + PLACE_GAP, o.left - PLACE_GAP - width])];
+  const tops = [centre.top, PLACE_GAP, page.height - height - PLACE_GAP, ...occupied.flatMap(o => [o.bottom + PLACE_GAP, o.top - PLACE_GAP - height])];
+  const fits = (value: number, room: number) => value >= 0 && value <= room;
+  let best: {rect: Rect; hits: number; distance: number} | null = null;
+  for (const left of lefts.filter(value => fits(value, page.width - width))) {
+    for (const top of tops.filter(value => fits(value, page.height - height))) {
+      const rect = {left, top, right: left + width, bottom: top + height};
+      const hits = occupied.filter(other => crosses(rect, other)).length;
+      const distance = Math.hypot(left - centre.left, top - centre.top);
+      if (!best || hits < best.hits || (hits === best.hits && distance < best.distance)) {
+        best = {rect, hits, distance};
+      }
+    }
+  }
+  // The centre always fits, so a candidate is always found.
+  return best!.rect;
+}
+
 /** The plugin's SDK calls and failure shape that placeAtLasso needs. */
 export type PlaceHost<F extends {ok: false; message: string}> = {
   /** The SDK's picture element type. */
@@ -250,7 +279,6 @@ export async function placeAtLasso<F extends {ok: false; message: string}>(
   place: LassoPlace,
   placement: Placement = 'below',
 ): Promise<Outcome<Rect, F>> {
-  const logged = loggerOf(host);
   const occupied = place.occupied ?? [];
   const rect = placeRect(place.words ?? place.rect, picture, place.pageSize, placement, occupied);
   if (!rect) {
@@ -259,6 +287,17 @@ export async function placeAtLasso<F extends {ok: false; message: string}>(
   if (!isFree(rect, occupied)) {
     host.log?.(`place: no free place of ${rect.right - rect.left} x ${rect.bottom - rect.top} px, today's place over the ink`);
   }
+  return insertPictureAt(host, path, rect, place.page);
+}
+
+/** Inserts the picture as a Picture element at `rect` on `page`; its value is that rect (#109, #540). */
+export async function insertPictureAt<F extends {ok: false; message: string}>(
+  host: PlaceHost<F>,
+  path: string,
+  rect: Rect,
+  page: number,
+): Promise<Outcome<Rect, F>> {
+  const logged = loggerOf(host);
   const created = await logged('createElement(picture)', () =>
     host.createElement(host.pictureType),
   );
@@ -268,13 +307,13 @@ export async function placeAtLasso<F extends {ok: false; message: string}>(
   const element = {
     ...created.value,
     type: host.pictureType,
-    pageNum: place.page,
+    pageNum: page,
     layerNum: 0,
     picture: {picturePath: path, rect},
   };
   const inserted = await logged(
     `insertPageElements(picture at ${JSON.stringify(rect)})`,
-    () => host.insertPageElements([element], place.page, 0),
+    () => host.insertPageElements([element], page, 0),
   );
   if (!inserted.ok) {
     return inserted;
