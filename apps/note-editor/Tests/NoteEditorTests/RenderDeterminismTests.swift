@@ -81,6 +81,28 @@ import Testing
         if case .ready = pages.page(0) { Issue.record("page 0 stayed drawn after it left the last shows") }
     }
 
+    /// The memory the last shows hold beyond the current window is counted, as the app tells it
+    /// (#564): the pages of the earlier shows, one gray byte per pixel, and nothing once they leave.
+    @Test func theRetainedPagesAreCountedInBytes() async throws {
+        let note = try Fixtures.note("content.note")
+        #expect(note.pages.count >= 4)
+        let pages = PageImages(note: note)
+        func bytes(_ index: Int) -> Int {
+            guard case .ready(let image) = pages.page(index) else { return 0 }
+            return image.width * image.height
+        }
+        await pages.show([0])
+        #expect(pages.retainedExtraBytes == 0)
+        await pages.show([3])
+        // The first show's window, pages 0 and 1, is held; the current window is pages 2 and 3.
+        #expect(bytes(0) > 0)
+        #expect(pages.retainedExtraBytes == bytes(0) + bytes(1))
+        #expect(pages.rasterBytes == (0...3).map(bytes).reduce(0, +))
+        for _ in 0..<PageImages.retainedShows { await pages.show([3]) }
+        #expect(pages.retainedExtraBytes == 0)
+        #expect(pages.rasterBytes == bytes(2) + bytes(3))
+    }
+
     /// A page one render window drew stays drawn for the next window of the same note, so a fresh
     /// window waits for no draw.
     @Test func aRenderKeepsTheDrawnPagesTheAppWouldDrop() async throws {

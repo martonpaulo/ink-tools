@@ -127,6 +127,23 @@ final class PageImages {
     /// The pages of the last `retainedShows` calls of `show`, newest last.
     @ObservationIgnored private var recentlyShown: [Set<Int>] = []
 
+    /// The memory of the full-page rasters held, in bytes: one gray byte per pixel.
+    var rasterBytes: Int { Self.bytes(pages.values) }
+
+    /// The memory held only because of the last shows (#564): the rasters outside the pages the latest
+    /// `show` draws, which the app would drop without the retained shows.
+    var retainedExtraBytes: Int {
+        guard let visible = recentlyShown.last, let first = visible.min(), let last = visible.max() else { return 0 }
+        let window = max(first - 1, 0)...min(last + 1, note.pages.count - 1)
+        return Self.bytes(pages.filter { !window.contains($0.key) }.values)
+    }
+
+    private static func bytes(_ states: some Sequence<State>) -> Int {
+        states.reduce(0) { total, state in
+            if case .ready(let image) = state { total + image.bytesPerRow * image.height } else { total }
+        }
+    }
+
     /// Draws the pages in `visible` and one page on each side, and drops every other page's full
     /// raster, but the pages of the last few calls (#564). A page on screen is never dropped,
     /// however many show at the smallest zoom (#319).

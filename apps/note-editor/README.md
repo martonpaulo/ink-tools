@@ -87,6 +87,21 @@ by the write path of [`AGENTS.md`](AGENTS.md#the-write-path).
   our own pasteboard type, places it at the pointer or in place, and a paste is one `insertElements`,
   strokes as strokes with a `PenTone`. The Edit menu commands are still to come.
 
+## Memory
+
+Every drawn page is a grey raster of one byte per pixel: 2.6 MB on a 1404 x 1872 note, 4.9 MB on a
+1920 x 2560 one. The window keeps the pages in view and one on each side, and the pages of the last
+three moves of the view (a zoom or a scroll), so a zoom never ends on a grey placeholder
+([#564](https://github.com/martonpaulo/ink-tools/issues/564)). Measured by `PageImages.retainedExtraBytes`:
+- the extra memory is the pages of the last three moves outside the current window: about two pages
+  (5 to 10 MB) for a note read page by page or zoomed to the page's width;
+- at the smallest zoom of a large note, where a window holds a dozen pages, up to about two dozen extra
+  pages (60 to 120 MB), freed as the view settles on a few pages;
+- nothing else of a note stays in memory but thumbnails, which are small.
+
+Where the app tells every feature's disk and memory is [#485](https://github.com/martonpaulo/ink-tools/issues/485);
+until its screen exists, this section is where the number is stated.
+
 ## The reader
 
 `NoteFormat/` is a Swift package that reads a `.note` file and draws each page in grey
