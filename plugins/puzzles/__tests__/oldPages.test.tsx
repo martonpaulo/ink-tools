@@ -1,4 +1,6 @@
 /** Every game opens a page in the layout it was printed with (#573), and says when a newer Puzzles drew it. */
+import {readFileSync} from 'fs';
+import {join} from 'path';
 import {kakuroAnswers, kakuroFromCode, placedPageCode, withPageLayout} from '@ink-tools/puzzle-core';
 import {KAKURO} from '../src/games/kakuro';
 import {PUZZLE_GAMES} from '../src/games';
@@ -63,4 +65,40 @@ describe.each([1, 2, 3] as const)('«Check» on a Kakuro page of layout %i (#584
     await press(tree, playCopy['here.check']);
     expect(shownTexts(tree.root)).toContain(playCopy['verdict.wrong'](1));
   });
+});
+
+/**
+ * The same page with the very strokes the Manta saved on it (#584): the 99 strokes of page 39 of
+ * the tablet's test note, as `Puzzles shift5 2026-11-27.note` held them at 03:56 on 2026-11-28, in
+ * page pixels, each `[x, y, x, y, ...]`. Its 89 white cells are written at the printed grid, r2c3 a
+ * 6 where the answer is 5. Each cell's strokes are tagged with that cell's digit by the frozen
+ * printed grid, so the test proves the layout code puts every real stroke, with its real reach
+ * into the next cell, in the cell it was written in. The «13 wrong» seen on the tablet later came
+ * from the page's ink, not from Check: by 04:40 the note held 25 other strokes on that page, larger
+ * digits on a 177 px pitch that sit across the 118 px cells.
+ */
+test('«Check» reads the strokes the tablet saved on an old Kakuro page in their printed cells (#584)', async () => {
+  const saved: number[][] = JSON.parse(readFileSync(join(__dirname, 'fixtures/kakuro-12-layout-1-ink.json'), 'utf8'));
+  const answers = kakuroAnswers(kakuroFromCode(KAKURO_12));
+  const written = new Map([...answers].map(([cell, digit]) => [cell, digit]));
+  const WRITTEN_WRONG = 1 * 12 + 2;
+  expect(answers.get(WRITTEN_WRONG)).toBe('5');
+  written.set(WRITTEN_WRONG, '6');
+  const tagged = new Set<number>();
+  const ink = saved.map(flat => {
+    const points = Array.from({length: flat.length / 2}, (_, i) => ({x: flat[2 * i], y: flat[2 * i + 1]}));
+    const xs = points.map(p => p.x);
+    const ys = points.map(p => p.y);
+    const column = Math.floor(((Math.min(...xs) + Math.max(...xs)) / 2 - PRINTED_GRID_LEFT) / PRINTED_CELL);
+    const row = Math.floor(((Math.min(...ys) + Math.max(...ys)) / 2 - PRINTED_GRID_TOP[1]) / PRINTED_CELL);
+    const cell = row * 12 + column;
+    // One digit per cell: a digit of two strokes reads as its first stroke's tag.
+    const digit = tagged.has(cell) ? '' : (written.get(cell) ?? 'x');
+    tagged.add(cell);
+    return {points, element: {digit}};
+  });
+  expect(tagged).toEqual(new Set(answers.keys()));
+  const tree = await mount(KAKURO, fakePages({code: KAKURO_12, layout: 1, ink, read: readDigits}).pages);
+  await press(tree, playCopy['here.check']);
+  expect(shownTexts(tree.root)).toContain(playCopy['verdict.wrong'](1));
 });
