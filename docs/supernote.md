@@ -131,6 +131,13 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
 - Study sheets: content only in the top half; the bottom half is for handwriting.
 - Plugin screens: touch target at least 10 mm, text at least 3 mm; the tokens live in
   `packages/ui-kit` and a test refuses smaller sizes ([#93](https://github.com/martonpaulo/ink-tools/issues/93)).
+- A press on a row's label in the tablet's own Settings [measured, Manta, 2026-11-28, tablet queue
+  rows 78 and 112]: a choice list (Display & Input › Font Size) chooses a row by a press anywhere on
+  it, label included; a switch row (Display & Input › Auto Refresh) turns only by its switch, never
+  by its label or the empty middle of its row. `ChoiceList` follows the native choice rows
+  ([#554](https://github.com/martonpaulo/ink-tools/issues/554)); ui-kit's `SwitchRow` turns by a
+  press anywhere on its row, which differs from the native switch row (checked on Smart Pen's
+  Settings: a press on the title turns the setting).
 
 ## Plugins
 
