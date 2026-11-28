@@ -18,15 +18,20 @@ test('no file gives the defaults: every module on', () => {
     settings: DEFAULT_PEN_SETTINGS,
     problems: [],
   });
-  expect(DEFAULT_PEN_SETTINGS.modules).toEqual({text: true, shapes: true});
+  expect(DEFAULT_PEN_SETTINGS.modules).toEqual({
+    text: true,
+    shapes: true,
+    gestures: true,
+  });
 });
 
 test('a written file reads back the same', () => {
   const settings = {
     ...DEFAULT_PEN_SETTINGS,
-    modules: {text: false, shapes: true},
+    modules: {text: false, shapes: true, gestures: false},
     text: {startOn: true, spacing: 'wide' as const, wait: 'long' as const},
     shapes: {...DEFAULT_PEN_SETTINGS.shapes, minSizeMm: 24},
+    gestures: {...DEFAULT_PEN_SETTINGS.gestures, twoFingerTap: 'lasso' as const},
   };
   expect(parsePenSettings(serializePenSettings(settings))).toEqual({
     settings,
@@ -35,14 +40,15 @@ test('a written file reads back the same', () => {
 });
 
 test("a newer build's module is kept and written back, and ignored here", () => {
-  const text = JSON.stringify({modules: {text: false, gestures: true}});
+  const text = JSON.stringify({modules: {text: false, margins: true}});
   const {settings, problems} = parsePenSettings(text);
   expect(problems).toEqual([]);
-  expect(settings.modules).toEqual({text: false, shapes: true});
+  expect(settings.modules).toEqual({text: false, shapes: true, gestures: true});
   expect(JSON.parse(serializePenSettings(settings)).modules).toEqual({
-    gestures: true,
+    margins: true,
     text: false,
     shapes: true,
+    gestures: true,
   });
 });
 
@@ -53,7 +59,7 @@ test('a wrong value is a problem and keeps its default, never the whole file', (
     shapes: {minSizeMm: 7, shapes: {arrow: false}},
   });
   const {settings, problems} = parsePenSettings(text);
-  expect(settings.modules).toEqual({text: true, shapes: false});
+  expect(settings.modules).toEqual({text: true, shapes: false, gestures: true});
   expect(settings.text.spacing).toBe('normal');
   expect(settings.shapes.minSizeMm).toBe(DEFAULT_PEN_SETTINGS.shapes.minSizeMm);
   expect(settings.shapes.shapes.arrow).toBe(false);
@@ -81,11 +87,15 @@ test('a module switch survives a restart', async () => {
   };
   const before = createSettingsStore(PEN_SETTINGS, place);
   const first = await before.getSettings();
-  await before.saveSettings({...first, modules: {text: true, shapes: false}});
+  await before.saveSettings({
+    ...first,
+    modules: {text: true, shapes: false, gestures: false},
+    gestures: {...first.gestures, threeFingerTap: 'undo'},
+  });
   // A new runtime: a new store over the same files.
   const after = createSettingsStore(PEN_SETTINGS, place);
-  expect((await after.getSettings()).modules).toEqual({
-    text: true,
-    shapes: false,
-  });
+  const read = await after.getSettings();
+  expect(read.modules).toEqual({text: true, shapes: false, gestures: false});
+  // The gesture map survives a restart too (#270).
+  expect(read.gestures.threeFingerTap).toBe('undo');
 });

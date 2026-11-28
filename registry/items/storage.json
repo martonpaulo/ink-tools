@@ -101,7 +101,8 @@
       "impact": "user",
       "owner": "sn-adapter",
       "readers": [
-        "sn-adapter"
+        "sn-adapter",
+        "picture-search"
       ],
       "reason": "the SDK has no store shared between plugins; the hidden .data/plugin/ is the folder the plugin file guard lets each plugin with the file permissions write, and Supernote Cloud does not sync it",
       "evidence": {
@@ -117,6 +118,7 @@
       },
       "active": "sn-adapter src/official/storage.ts",
       "issues": [
+        270,
         499
       ],
       "values": {

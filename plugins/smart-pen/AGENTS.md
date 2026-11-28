@@ -15,8 +15,7 @@ would draw shapes. Log lines start `SmartPen:`.
 ## Modules
 
 `src/modules.ts` is the table: one row per module, with its switch in Settings (`App.tsx`). A module
-that is off is never registered: no button, no pen listener. The Gestures of
-[#270](https://github.com/martonpaulo/ink-tools/issues/270) add a row when they are built.
+that is off is never registered: no button, no pen listener.
 
 - **Real-Time Text** (`src/modules/text/`, [#184](https://github.com/martonpaulo/ink-tools/issues/184) to [#188](https://github.com/martonpaulo/ink-tools/issues/188)): the sidebar buttons «Real-Time Text»
   (the mode, `buttons.ts`) and «Undo Conversion», and until [#306](https://github.com/martonpaulo/ink-tools/issues/306) moves it the lasso button
@@ -34,6 +33,17 @@ that is off is never registered: no button, no pen listener. The Gestures of
   number too when the page's last element is still that stroke after the lasso delete, as for a
   replayed stroke, [#477](https://github.com/martonpaulo/ink-tools/issues/477)), insert
   the shape with `insertGeometry`; a failed insert writes the stroke back.
+- **Gestures** (`src/modules/gestures/`, [#270](https://github.com/martonpaulo/ink-tools/issues/270)): a finger double, triple,
+  two-finger or three-finger tap picks a tool; Settings maps each to pen 1 to 3, eraser 1 or 2,
+  lasso, undo, redo or nothing (defaults: double tap pen 1, triple tap eraser 1). `detect.ts` reads
+  the motion listener and ignores a finger touch within the palm guard after the pen's last motion;
+  its timings are [inference] until a device round measures them. A gesture writes
+  `tool-request.json` in the Ink Tools shared folder, naming the toolbar button's content
+  description, and Handwriting Language's `WritingWatcher` presses it. `requirement.ts` declares
+  what Gestures need in data (the shared folder's file permissions and that service, known by its
+  `handwriting-language-ready.json` in the same folder); with one missing they never listen, and
+  Settings shows them as unavailable with the step that fixes it
+  ([#245](https://github.com/martonpaulo/ink-tools/issues/245)).
 
 ## How the modules share the pen
 

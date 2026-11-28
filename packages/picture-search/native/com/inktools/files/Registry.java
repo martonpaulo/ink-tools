@@ -38,7 +38,8 @@ public final class Registry {
   public static final List<Item> ITEMS = Collections.unmodifiableList(Arrays.asList(
       new Item("pluginhost.file-sandbox", 5, "user", "picture-search", null, "#293 adds a write and delete of a test file in each allowed folder", "picture-search native SafePaths.java", null),
       new Item("storage.cloud-conflict-folder", 5, "user", "picture-search", null, "a conflict appears only after two devices sync", "picture-search src/storage/settings.ts", null),
-      new Item("storage.sign-in-drop-folder", 2, "user", "account-sync", null, "#293 adds a read of the folder", "account-sync src/secretStore.ts", null)));
+      new Item("storage.sign-in-drop-folder", 2, "user", "account-sync", null, "#293 adds a read of the folder", "account-sync src/secretStore.ts", null),
+      new Item("storage.shared-folder", 2, "user", "sn-adapter", "sn-adapter probeSharedFolder", null, "sn-adapter src/official/storage.ts", null)));
 
   /** PluginHost's file rules: a plugin writes only in its private folder and the shared MyStyle folder; picture-search's module allows only the plugin's own folders; the built-in Sticker plugin keeps its library in its own private folder, and its Import lists sticker collections, ZIP files with the stickerCollectionExtension that hold .sticker files, from stickerCollectionFolder; a sticker path in one of the stickerImportFolders is moved to the plugin's own folder (pluginhost.file-sandbox). */
   public static final class PluginhostFileSandbox {
@@ -67,6 +68,14 @@ public final class Registry {
     public static final String FOLDER = "/storage/emulated/0/.data/plugin/inktools-account-sync";
 
     private StorageSignInDropFolder() {}
+  }
+
+  /** The Ink Tools shared folder in .data/plugin/, where every Ink Tools plugin reads and writes the values the tools share (storage.shared-folder). */
+  public static final class StorageSharedFolder {
+    public static final String FOLDER = "/storage/emulated/0/.data/plugin/inktools-shared";
+    public static final List<String> PERMISSIONS = Collections.unmodifiableList(Arrays.asList("plugin.permission.FILE:READ", "plugin.permission.FILE:WRITE"));
+
+    private StorageSharedFolder() {}
   }
 
   private Registry() {}

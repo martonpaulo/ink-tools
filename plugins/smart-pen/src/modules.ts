@@ -1,11 +1,11 @@
 /**
  * Smart Pen's modules (#305), one row each: its id, its title in Settings, and how it starts and
  * stops against the plugin's host. A module that is off is never registered: it has no button and
- * listens to no pen event. The Gestures of #270 add a row here when they are built.
+ * listens to no pen event.
  */
 import {copy} from './copy';
 
-export const MODULE_IDS = ['text', 'shapes'] as const;
+export const MODULE_IDS = ['text', 'shapes', 'gestures'] as const;
 export type ModuleId = (typeof MODULE_IDS)[number];
 
 /** What a module starts and stops through: the plugin's host (index.js), a fake in the tests. */
@@ -14,6 +14,8 @@ export type ModuleHost = {
   stopText(): Promise<void>;
   startShapes(): void;
   stopShapes(): void;
+  startGestures(): Promise<void>;
+  stopGestures(): void;
 };
 
 export type ModuleRow = {
@@ -38,6 +40,13 @@ export const MODULES: readonly ModuleRow[] = [
     note: copy['module.shapesNote'],
     register: async host => host.startShapes(),
     unregister: async host => host.stopShapes(),
+  },
+  {
+    id: 'gestures',
+    title: copy['module.gestures'],
+    note: copy['module.gesturesNote'],
+    register: host => host.startGestures(),
+    unregister: async host => host.stopGestures(),
   },
 ];
 

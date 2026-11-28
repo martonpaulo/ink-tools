@@ -6,6 +6,7 @@
 import {applyModules, type ModuleHost} from './modules';
 import {setSettings as setTextSettings} from './modules/text/settings';
 import {setSettings as setShapesSettings} from './modules/shapes/settings';
+import {setSettings as setGestureSettings} from './modules/gestures/settings';
 import type {PenSettings} from './settings';
 
 let host: ModuleHost | null = null;
@@ -19,6 +20,7 @@ export function setModuleHost(next: ModuleHost): void {
 export async function applySettings(next: PenSettings): Promise<void> {
   setTextSettings(next.text);
   setShapesSettings(next.shapes);
+  setGestureSettings(next.gestures);
   const previous = applied;
   applied = next;
   if (host) {

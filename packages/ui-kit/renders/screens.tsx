@@ -567,7 +567,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-word-search-check', render: () => puzzlesWordSearch(WORD_SEARCH_CODE, ['Check'])},
   {name: 'puzzles-word-search-solution', render: () => puzzlesWordSearch(WORD_SEARCH_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
-  {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
+  {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} checkGestures={async () => ({kind: 'met'})} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},
   {name: 'lasso-actions-settings', render: () => mount(<LassoActionsSettings close={() => {}} />)},
   {name: 'lasso-actions-collection', render: () => mount(<LassoCollection close={noop} host={COLLECTION_HOST} />)},

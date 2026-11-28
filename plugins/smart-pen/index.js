@@ -30,6 +30,8 @@ import {HoldTracker} from './src/modules/shapes/hold';
 import {createRunner} from './src/modules/shapes/run';
 import {STILL_RADIUS_PX} from './src/modules/shapes/settings';
 import {createPenRouter} from './src/pen';
+import {DEVICE as GESTURES_DEVICE} from './src/modules/gestures/device';
+import {createGestures} from './src/modules/gestures/run';
 import {getSettings} from './src/profile';
 import {applySettings, setModuleHost} from './src/runtime';
 import {penActions, readActionFile, TICKS_MODULE} from './src/actions';
@@ -79,6 +81,8 @@ const runner = createRunner(
   },
 );
 let stopMotion = null;
+// Finger taps that pick a tool through Handwriting Language (#270).
+const gestures = createGestures(GESTURES_DEVICE);
 
 setModuleHost({
   startText: () => buttons.registerAll(),
@@ -102,6 +106,10 @@ setModuleHost({
     }
     router.setShapes(null);
   },
+  startGestures: async () => {
+    await gestures.start();
+  },
+  stopGestures: () => gestures.stop(),
 });
 
 // At start-up, before any view exists (Ink2Pic gotcha 11): every button runs with no view.

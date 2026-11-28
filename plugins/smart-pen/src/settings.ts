@@ -1,7 +1,7 @@
 /**
  * Smart Pen's settings file (#305): each module's switch and each module's own settings, kept in the
  * private folder's `settings.json` by picture-search's settings store (#22), so a switch survives a
- * restart. Real-Time Conversion and Smart Shapes kept their settings in memory only, so there is no
+ * restart, and which action each finger gesture runs (#270). Real-Time Conversion and Smart Shapes kept their settings in memory only, so there is no
  * older file to migrate: a first start reads the defaults.
  *
  * A file from a newer build may name a module this build does not know: its switch is kept as it
@@ -24,21 +24,32 @@ import {
   type Settings as ShapesSettings,
 } from './modules/shapes/settings';
 import type {ShapeKind} from './modules/shapes/recognize';
+import {
+  DEFAULT_SETTINGS as GESTURE_DEFAULTS,
+  GESTURES,
+  type Settings as GestureSettings,
+  TOOL_ACTIONS,
+} from './modules/gestures/settings';
 
 export type PenSettings = {
   /** One switch per module; a module off registers no button and listens to no pen event. */
   modules: Record<ModuleId, boolean>;
   text: TextSettings;
   shapes: ShapesSettings;
+  gestures: GestureSettings;
   /** The switches of modules a newer build added, kept so this build never drops them. */
   otherModules: Record<string, unknown>;
 };
 
-/** Every module starts on: the two plugins it replaces each worked once installed. */
+/**
+ * Every module starts on: the two plugins it replaces each worked once installed, and Gestures
+ * listen only once what they need is there (#270).
+ */
 export const DEFAULT_PEN_SETTINGS: PenSettings = {
-  modules: {text: true, shapes: true},
+  modules: {text: true, shapes: true, gestures: true},
   text: TEXT_DEFAULTS,
   shapes: SHAPES_DEFAULTS,
+  gestures: GESTURE_DEFAULTS,
   otherModules: {},
 };
 
@@ -131,6 +142,25 @@ function parseShapes(raw: unknown, problems: string[]): ShapesSettings {
   };
 }
 
+function parseGestures(raw: unknown, problems: string[]): GestureSettings {
+  if (!isObject(raw)) {
+    return GESTURE_DEFAULTS;
+  }
+  return Object.fromEntries(
+    GESTURES.map(gesture => [
+      gesture,
+      pick(
+        raw,
+        gesture,
+        oneOf(TOOL_ACTIONS),
+        GESTURE_DEFAULTS[gesture],
+        'gestures',
+        problems,
+      ),
+    ]),
+  ) as GestureSettings;
+}
+
 /** The settings in a file's text; the defaults for no file or one that is not a JSON object. */
 export function parsePenSettings(text: string | null): {
   settings: PenSettings;
@@ -175,6 +205,7 @@ export function parsePenSettings(text: string | null): {
       ) as Record<ModuleId, boolean>,
       text: parseText(raw.text, problems),
       shapes: parseShapes(raw.shapes, problems),
+      gestures: parseGestures(raw.gestures, problems),
       otherModules,
     },
     problems,
@@ -187,6 +218,7 @@ export function serializePenSettings(settings: PenSettings): string {
       modules: {...settings.otherModules, ...settings.modules},
       text: settings.text,
       shapes: settings.shapes,
+      gestures: settings.gestures,
     },
     null,
     2,

@@ -24,6 +24,18 @@ import {MIN_SIZE_CHOICES_MM} from './src/modules/shapes/settings';
 import {getSettings, saveSettings} from './src/profile';
 import {applySettings} from './src/runtime';
 import {DEFAULT_PEN_SETTINGS, type PenSettings} from './src/settings';
+import {copy as gestureCopy} from './src/modules/gestures/copy';
+import {
+  GESTURES,
+  TOOL_ACTIONS,
+  type ToolAction,
+} from './src/modules/gestures/settings';
+import {
+  checkGestures,
+  describeCheck,
+  type GestureCheck,
+} from './src/modules/gestures/requirement';
+import {DEVICE as GESTURES_DEVICE} from './src/modules/gestures/device';
 import {working as deviceWorking} from './src/working';
 
 const SPACINGS: Choice<Spacing>[] = [
@@ -42,6 +54,14 @@ const SIZES = MIN_SIZE_CHOICES_MM.map(mm => ({
   value: mm,
   label: shapesCopy['value.mm'].replace('{mm}', String(mm)),
 }));
+
+const TOOL_CHOICES: Choice<ToolAction>[] = TOOL_ACTIONS.map(action => ({
+  value: action,
+  label: gestureCopy[`action.${action}`],
+}));
+
+const checkOnDevice = () =>
+  checkGestures(GESTURES_DEVICE.requirements, GESTURES_DEVICE);
 
 /** A button's failure holds the view on ui-kit's Error state until Close (#257); else Settings. */
 /** sn-adapter's Back key module, as `SmartPenFilesPackage.java` registers it (#300). */
@@ -64,6 +84,8 @@ type SettingsProps = {
   load?: () => Promise<PenSettings>;
   save?: (next: PenSettings) => Promise<void>;
   apply?: (next: PenSettings) => Promise<void>;
+  /** What Gestures need, checked as the view opens; tests pass a fake. */
+  checkGestures?: () => Promise<GestureCheck>;
 };
 
 /**
@@ -80,10 +102,31 @@ function Settings({
   load = getSettings,
   save = saveSettings,
   apply = applySettings,
+  checkGestures: check = checkOnDevice,
 }: SettingsProps) {
   useBackKey(close);
   const [settings, setLocal] = useState<PenSettings | null>(null);
   const [problem, setProblem] = useState<string | undefined>(undefined);
+  const [gestureCheck, setGestureCheck] = useState<GestureCheck | null>(null);
+  useEffect(() => {
+    let live = true;
+    check().then(
+      answer => {
+        if (live) {
+          setGestureCheck(answer);
+        }
+      },
+      error => {
+        if (live) {
+          setGestureCheck({kind: 'failed', reason: String(error)});
+        }
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [check]);
+  const gestureNeeds = describeCheck(gestureCheck);
   useEffect(() => {
     let live = true;
     load().then(
@@ -202,6 +245,31 @@ function Settings({
                   />
                 ))}
               </RowGroup>
+            </>
+          )}
+          {settings.modules.gestures && (
+            <>
+              {/*
+                What Gestures need, before first use and as the reason they are off (#245, #270).
+              */}
+              <RowGroup
+                caption={gestureCopy['settings.gestures']}
+                note={[gestureNeeds.what, ...gestureNeeds.steps]}
+              />
+              {GESTURES.map(gesture => (
+                <ChoiceList
+                  key={gesture}
+                  title={gestureCopy[`gesture.${gesture}`]}
+                  choices={TOOL_CHOICES}
+                  value={settings.gestures[gesture]}
+                  onChange={action =>
+                    change({
+                      ...settings,
+                      gestures: {...settings.gestures, [gesture]: action},
+                    })
+                  }
+                />
+              ))}
             </>
           )}
         </ScrollView>

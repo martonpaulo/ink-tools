@@ -30,8 +30,10 @@ public class SmartPenFilesPackage extends Ink2PicFilesPackage {
 
   public SmartPenFilesPackage() {
     // Its private folder, EXPORT, MyStyle/SmartPen (the profile's folder, src/profile.ts, #302) and
-    // its folder in the hidden .data/plugin/, which inkctl writes and Supernote Cloud does not sync.
-    super("SmartPenFiles", "SmartPenImage", SafePaths.Roots.plugin(PLUGIN_ID, "SmartPen", ACTION_HOME));
+    // its folder in the hidden .data/plugin/, which inkctl writes and Supernote Cloud does not sync,
+    // and the Ink Tools shared folder, where Gestures write the tool request (#270, #499).
+    super("SmartPenFiles", "SmartPenImage", SafePaths.Roots.plugin(PLUGIN_ID, "SmartPen", ACTION_HOME,
+        Registry.StorageSharedFolder.FOLDER));
   }
 
   @Override

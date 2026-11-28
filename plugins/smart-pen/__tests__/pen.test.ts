@@ -55,8 +55,10 @@ test('at start-up Smart Shapes listens with the Real-Time Text mode off (#449)',
     stopShapes: () => {
       router.setShapes(null);
     },
+    startGestures: async () => {},
+    stopGestures: () => {},
   };
-  await applyModules(host, null, {text: true, shapes: true});
+  await applyModules(host, null, {text: true, shapes: true, gestures: false});
   expect(device.onPenUp).toHaveBeenCalledTimes(1);
   expect(router.listening).toBe(true);
   await fire([{uuid: 'a'}]);

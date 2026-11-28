@@ -9,6 +9,8 @@ import App from '../App';
 import {copy} from '../src/copy';
 import {copy as textCopy} from '../src/modules/text/copy';
 import {DEFAULT_PEN_SETTINGS, type PenSettings} from '../src/settings';
+import {copy as gestureCopy} from '../src/modules/gestures/copy';
+import type {GestureCheck} from '../src/modules/gestures/requirement';
 
 const mount = async (
   settings: PenSettings = DEFAULT_PEN_SETTINGS,
@@ -16,16 +18,24 @@ const mount = async (
   {
     load = async () => settings,
     save = jest.fn(async (_next: PenSettings) => {}),
+    checkGestures = async (): Promise<GestureCheck> => ({kind: 'met'}),
   }: {
     load?: () => Promise<PenSettings>;
     save?: (next: PenSettings) => Promise<void>;
+    checkGestures?: () => Promise<GestureCheck>;
   } = {},
 ) => {
   const apply = jest.fn(async (_next: PenSettings) => {});
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = renderer.create(
-      <App close={close} load={load} save={save} apply={apply} />,
+      <App
+        close={close}
+        load={load}
+        save={save}
+        apply={apply}
+        checkGestures={checkGestures}
+      />,
     );
   });
   return {tree, save: save as jest.Mock, apply};
@@ -56,7 +66,7 @@ test('the Settings view keeps the size rules and has a header', async () => {
 test('each module has a switch, and a tap applies and saves it', async () => {
   const {tree, save, apply} = await mount();
   act(() => control(tree, 'Smart Shapes').props.onPress());
-  const next = {...DEFAULT_PEN_SETTINGS, modules: {text: true, shapes: false}};
+  const next = {...DEFAULT_PEN_SETTINGS, modules: {text: true, shapes: false, gestures: true}};
   expect(apply).toHaveBeenLastCalledWith(next);
   expect(save).toHaveBeenLastCalledWith(next);
   expect(control(tree, 'Smart Shapes').props.accessibilityState.checked).toBe(
@@ -67,13 +77,13 @@ test('each module has a switch, and a tap applies and saves it', async () => {
 test("an off module's settings leave the view", async () => {
   const {tree} = await mount({
     ...DEFAULT_PEN_SETTINGS,
-    modules: {text: false, shapes: true},
+    modules: {text: false, shapes: true, gestures: true},
   });
   expect(labels(tree)).not.toContain('Start with Real-Time Text on');
   expect(labels(tree)).toContain('Arrow');
   const both = await mount({
     ...DEFAULT_PEN_SETTINGS,
-    modules: {text: false, shapes: false},
+    modules: {text: false, shapes: false, gestures: false},
   });
   expect(labels(both.tree)).not.toContain('Arrow');
   expect(labels(both.tree)).toContain('Real-Time Text');
@@ -189,4 +199,28 @@ test('the view arms its own Back key module once, so Back never reaches the note
   await act(async () => {});
   expect(module.listen).toHaveBeenCalledTimes(1);
   module.restore();
+});
+
+test('a gesture maps to a tool and is saved (#270)', async () => {
+  const {tree, save} = await mount();
+  expect(control(tree, 'Double tap: Pen 1').props.accessibilityState.checked).toBe(true);
+  expect(control(tree, 'Triple tap: Eraser 1').props.accessibilityState.checked).toBe(true);
+  act(() => control(tree, 'Two-finger tap: Lasso').props.onPress());
+  expect(save.mock.calls[0][0].gestures.twoFingerTap).toBe('lasso');
+  expect(shownTexts(tree.root)).toContain(gestureCopy['settings.needs']);
+});
+
+test('Gestures show as unavailable with the missing piece and its step (#245, #270)', async () => {
+  const {tree} = await mount(DEFAULT_PEN_SETTINGS, () => {}, {
+    checkGestures: async () => ({
+      kind: 'unmet',
+      missing: [{kind: 'service', app: 'Handwriting Language', readyFile: '/shared/ready'}],
+    }),
+  });
+  const shown = shownTexts(tree.root);
+  expect(shown).toContain(
+    'Gestures are unavailable: the Handwriting Language accessibility service is not on.',
+  );
+  expect(shown).toContain(gestureCopy['step.service']);
+  expect(screenBreaks(tree.root)).toEqual([]);
 });
