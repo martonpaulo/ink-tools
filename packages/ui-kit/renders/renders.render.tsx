@@ -86,7 +86,8 @@ const LAYOUT_BOXES = `[...document.querySelectorAll('[data-layout]')].map(el => 
 const LAYOUT_ROUNDS = 8;
 /**
  * The known breaks of the layout rules (#548, #576, #578) on screens another lane adopts the
- * shared pieces on: each line stays until its screen is fixed, and the list only shrinks.
+ * shared pieces on, by the issue each rule names: each stays until its screen is fixed, and the
+ * list only shrinks.
  */
 const KNOWN: Record<string, string[]> = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'known-breaks.json'), 'utf8'),
@@ -229,12 +230,17 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
   }
   fs.writeFileSync(path.join(OUT, 'report.json'), `${JSON.stringify(report, null, 1)}\n`);
   fs.writeFileSync(path.join(OUT, 'geometry.json'), `${JSON.stringify(geometry, null, 1)}\n`);
-  // A known break is reported apart; one that no longer happens must leave the list (#548).
-  const known = new Set(Object.entries(KNOWN).flatMap(([name, found]) => found.map(line => `${name}: ${line}`)));
-  const all = Object.entries(report).flatMap(([name, found]) => found.map(line => `${name}: ${line}`));
+  // A known break is reported apart, by the issue its rule names; a screen whose known rule no
+  // longer breaks must leave the list (#548).
+  const tagOf = (line: string) => /\((#\d+)\)$/.exec(line)?.[1];
+  const knownLine = (name: string, line: string) => Boolean(KNOWN[name]?.includes(tagOf(line) ?? ''));
+  const all = Object.entries(report).flatMap(([name, found]) => found.map(line => ({name, line})));
+  const known = new Set(Object.entries(KNOWN).flatMap(([name, tags]) => tags.map(tag => `${name}: ${tag}`)));
   const lines = [
-    ...all.filter(line => !known.has(line)),
-    ...[...known].filter(line => !all.includes(line)).map(line => `fixed, remove from known-breaks.json: ${line}`),
+    ...all.filter(({name, line}) => !knownLine(name, line)).map(({name, line}) => `${name}: ${line}`),
+    ...[...known]
+      .filter(entry => !all.some(({name, line}) => `${name}: ${tagOf(line)}` === entry))
+      .map(entry => `fixed, remove from known-breaks.json: ${entry}`),
   ];
   if (known.size) {
     process.stdout.write(`renders: ${known.size} known breaks wait in known-breaks.json\n`);

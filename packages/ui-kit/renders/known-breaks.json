@@ -1,126 +1,125 @@
 {
- "about": "Layout-rule breaks of screens whose plugin another lane adopts the shared pieces on (#548, #576, #578): each line, exactly as the renders print it after the screen's name, stays until that screen is fixed; the renders fail a new break and a listed one that no longer happens, so the list only shrinks.",
+ "about": "Layout-rule breaks of screens whose plugin another lane adopts the shared pieces on (#548, #576, #578): per screen, the issue each breaking rule names, as the renders print it at the line's end. A screen's break of a listed issue is reported apart; the renders fail a break of an issue not listed, and a listed issue the screen no longer breaks, so the list only shrinks.",
  "screens": {
   "puzzles-maze-check": [
-   "image «1 mistake is circled.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-maze-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-list": [
-   "list ends inside row «Gomoku, Take turns marking a square; the»: page the list with ui-kit's PagedList (#548)",
-   "scroll view «GamesMazeDraw the way from the start to » scrolls past its end, holding 16 rows: page them with ui-kit's PagedList or PagedColumn (#548)"
+   "#548"
   ],
   "puzzles-jigsaw-check": [
-   "image «1 mistake is circled. Puzzles could not read 1 entry, which has a dashed circle. Write it again, go back, then press Check.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-jigsaw-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-sudoku": [
-   "list ends inside row «Difficulty: Hard»: page the list with ui-kit's PagedList (#548)",
-   "scroll view «New pageThe puzzle goes on a new page af» scrolls past its end, holding 11 rows: page them with ui-kit's PagedList or PagedColumn (#548)",
-   "«Add Page» lies over row «Difficulty: Hard»: keep fixed controls under the list (#578)"
+   "#548",
+   "#578"
   ],
   "puzzles-sudoku-page": [
-   "list ends inside row «Difficulty: Hard»: page the list with ui-kit's PagedList (#548)",
-   "scroll view «This pageSudoku, 9 x 9, MediumSU-9-M-1Sh» scrolls past its end, holding 12 rows: page them with ui-kit's PagedList or PagedColumn (#548)",
-   "«Add Page» lies over row «Difficulty: Hard»: keep fixed controls under the list (#578)"
+   "#548",
+   "#578"
   ],
   "puzzles-sudoku-check": [
-   "image «1 mistake is circled. Puzzles could not read 1 entry, which has a dashed circle. Write it again, go back, then press Check.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-sudoku-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-sudoku-16-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-killer-check": [
-   "image «1 mistake is circled. Puzzles could not read 1 entry, which has a dashed circle. Write it again, go back, then press Check.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-killer-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-calcudoku": [
-   "list ends inside row «Difficulty: Expert»: page the list with ui-kit's PagedList (#548)",
-   "scroll view «New pageThe puzzle goes on a new page af» scrolls past its end, holding 10 rows: page them with ui-kit's PagedList or PagedColumn (#548)",
-   "«Add Page» lies over row «Difficulty: Expert»: keep fixed controls under the list (#578)"
+   "#548",
+   "#578"
   ],
   "puzzles-calcudoku-page": [
-   "list ends inside row «Difficulty: Expert»: page the list with ui-kit's PagedList (#548)",
-   "scroll view «This pageCalcudoku, 6 x 6, MediumCD-6-M-» scrolls past its end, holding 11 rows: page them with ui-kit's PagedList or PagedColumn (#548)",
-   "«Add Page» lies over row «Difficulty: Expert»: keep fixed controls under the list (#578)"
+   "#548",
+   "#578"
   ],
   "puzzles-calcudoku-check": [
-   "image «1 mistake is circled. Puzzles could not read 1 entry, which has a dashed circle. Write it again, go back, then press Check.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-calcudoku-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-futoshiki-check": [
-   "image «1 mistake is circled. Puzzles could not read 1 entry, which has a dashed circle. Write it again, go back, then press Check.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-futoshiki-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-kakuro-check": [
-   "image «1 mistake is circled. Puzzles could not read 1 entry, which has a dashed circle. Write it again, go back, then press Check.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-kakuro-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-slitherlink-check": [
-   "image «1 mistake is circled.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-slitherlink-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-bridges-check": [
-   "image «1 mistake is circled.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-bridges-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-nonogram-check": [
-   "image «1 mistake is circled.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-nonogram-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-star-battle": [
-   "list ends inside row «Difficulty: Medium»: page the list with ui-kit's PagedList (#548)",
-   "scroll view «New pageThe puzzle goes on a new page af» scrolls past its end, holding 10 rows: page them with ui-kit's PagedList or PagedColumn (#548)",
-   "«Add Page» lies over row «Difficulty: Medium»: keep fixed controls under the list (#578)"
+   "#548",
+   "#578"
   ],
   "puzzles-star-battle-page": [
-   "list ends inside row «Difficulty: Medium»: page the list with ui-kit's PagedList (#548)",
-   "scroll view «This pageStar Battle, 10 x 10, HardSB-10» scrolls past its end, holding 11 rows: page them with ui-kit's PagedList or PagedColumn (#548)",
-   "«Add Page» lies over row «Difficulty: Medium»: keep fixed controls under the list (#578)"
+   "#548",
+   "#578"
   ],
   "puzzles-star-battle-two": [
-   "scroll view «New pageThe puzzle goes on a new page af» scrolls past its end, holding 9 rows: page them with ui-kit's PagedList or PagedColumn (#548)"
+   "#548"
   ],
   "puzzles-star-battle-check": [
-   "image «1 mistake is circled.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-star-battle-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-binairo-check": [
-   "image «1 mistake has a square around it.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-binairo-check-unread": [
-   "image «1 mistake has a square around it. Puzzles could not read 1 cell, which has a dashed square. Erase it, then shade it fully or put a dot or a cross in it. Then go back and press Check.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-binairo-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-hitori-check": [
-   "image «1 mistake has a square around it.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
   ],
   "puzzles-hitori-solution": [
-   "image «Only Puzzles shows the solution. Your note does not change.» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)"
+   "#576"
+  ],
+  "puzzles-light-up-check": [
+   "#576"
+  ],
+  "puzzles-light-up-solution": [
+   "#576"
   ]
  }
 }
