@@ -41,6 +41,7 @@ type NativeFiles = {
   ) => Promise<number>;
   deleteFile: (path: string) => Promise<boolean>;
   writeText: (path: string, text: string) => Promise<null>;
+  writeStickerCollection: (stickerPath: string, collectionPath: string) => Promise<number>;
   appendText: (path: string, text: string) => Promise<null>;
   readText: (path: string) => Promise<string | null>;
   listDir: (path: string) => Promise<string[] | null>;
@@ -113,6 +114,14 @@ export function deleteFile(path: string): Promise<Result<boolean>> {
 
 export function writeText(path: string, text: string): Promise<Result<null>> {
   return call((files) => files.writeText(path, text));
+}
+
+/**
+ * Writes the `.sticker` file as a `.snstk` collection, a ZIP whose one entry is the sticker (#35);
+ * resolves the collection's byte count.
+ */
+export function writeStickerCollection(stickerPath: string, collectionPath: string): Promise<Result<number>> {
+  return call((files) => files.writeStickerCollection(stickerPath, collectionPath));
 }
 
 /**

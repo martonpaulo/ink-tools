@@ -33,6 +33,14 @@ export const STICKER_IMPORT_FOLDERS: readonly string[] =
   REGISTRY.pluginhostFileSandbox.stickerImportFolders;
 
 /**
+ * Where a sticker collection goes, and its extension (the registry's `pluginhost.file-sandbox`,
+ * #35): the Sticker plugin's «Import» lists `.snstk` collections in this folder, not a lone
+ * `.sticker` (docs/supernote.md › Files and sync).
+ */
+export const STICKER_COLLECTION_FOLDER = `${SHARED_ROOT}/${REGISTRY.pluginhostFileSandbox.stickerCollectionFolder}`;
+export const STICKER_COLLECTION_EXTENSION: string = REGISTRY.pluginhostFileSandbox.stickerCollectionExtension;
+
+/**
  * Makes the folder at `path` when it is missing (official `FileUtils.exists` and `makeDir`);
  * `true` when it exists afterwards.
  */

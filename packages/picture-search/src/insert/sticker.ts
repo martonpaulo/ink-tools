@@ -13,7 +13,7 @@
  * (device round 6), so the caller inserts the picture and says why (`PICTURE_SVG_MESSAGE`).
  */
 import {log, logged} from '../log/memory';
-import {deleteFile, downloadToFile, readText} from '../storage/files';
+import {deleteFile, downloadToFile, readText, writeStickerCollection} from '../storage/files';
 import {readInkMask} from '../storage/image';
 import {insertDownloadPath, stickersDir} from '../storage/paths';
 import {pluginFolder} from '../storage/session';
@@ -37,6 +37,8 @@ import {
   ok,
   rebuildStroke,
   Result,
+  STICKER_COLLECTION_EXTENSION,
+  STICKER_COLLECTION_FOLDER,
   THROWN_CODE,
 } from '@ink-tools/sn-adapter/official';
 
@@ -47,6 +49,27 @@ import {
 export function stickerPath(picturePath: string, dir: string): string {
   const name = picturePath.slice(picturePath.lastIndexOf('/') + 1).replace(/\.[^.]+$/, '');
   return `${dir}/${name}.sticker`;
+}
+
+/**
+ * The sticker collection of a `.sticker` file, named by its file name in the folder the Sticker
+ * plugin's Import lists: `.../apple.sticker` gives `<EXPORT>/apple.snstk` (#35).
+ */
+export function collectionPath(stickerFile: string): string {
+  const name = stickerFile.slice(stickerFile.lastIndexOf('/') + 1).replace(/\.sticker$/, '');
+  return `${STICKER_COLLECTION_FOLDER}/${name}.${STICKER_COLLECTION_EXTENSION}`;
+}
+
+/**
+ * Writes the `.sticker` file as its collection, so the Sticker plugin's Import lists it for reuse
+ * (#35); the collection's path, or the failure.
+ */
+export async function keepCollection(stickerFile: string): Promise<Result<string>> {
+  const target = collectionPath(stickerFile);
+  const written = await logged(`writeStickerCollection(${stickerFile} -> ${target})`, () =>
+    writeStickerCollection(stickerFile, target),
+  );
+  return written.ok ? ok(target) : written;
 }
 
 /** Why a drawing gives no sticker: its SVG original is raster pictures in a frame (#35). */
@@ -162,6 +185,10 @@ export async function insertStrokeSticker(
   if (converted.value !== true) {
     return fail(THROWN_CODE, 'convertElement2Sticker answered false');
   }
+  // The collection is for reuse; a failed one is logged and the sticker is still pasted, since
+  // the person asked for the sticker on the page first (#35).
+  const kept = await keepCollection(path);
+  log(kept.ok ? `sticker: collection ${kept.value}` : `sticker: no collection: ${kept.message}`);
   const inserted = await logged(`insertSticker(${path})`, () => insertSticker(path));
   if (!inserted.ok) {
     return inserted;

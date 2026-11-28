@@ -27,11 +27,12 @@ exports.jvmTests = {
   prefix: 'picture-search',
   files: [
     'Registry', 'SafePaths', 'EinkPixels', 'ThumbGate', 'ThumbMeasures', 'Contour', 'Decolor', 'PerceptualHash',
-    'PngTail', 'Workers', 'FileWrites',
+    'PngTail', 'Workers', 'FileWrites', 'StickerCollection',
   ].map(name => path.join(exports.nativeSources, `com/inktools/files/${name}.java`)),
   mains: [
     'SafePathsTest', 'EinkPixelsTest', 'ThumbGateTest', 'ThumbMeasuresTest', 'ContourTest',
     'DecolorTest', 'PerceptualHashTest', 'PngTailTest', 'WorkersTest', 'TwinsTest', 'FileWritesTest',
+    'StickerCollectionTest',
   ].map(name => `com.inktools.files.${name}`),
 };
 

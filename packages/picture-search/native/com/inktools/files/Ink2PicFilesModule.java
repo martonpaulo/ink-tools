@@ -128,6 +128,15 @@ public final class Ink2PicFilesModule extends ReactContextBaseJavaModule {
   }
 
   /**
+   * Writes the `.sticker` file at `stickerPath` as a sticker collection at `collectionPath`, a ZIP
+   * the built-in Sticker plugin's Import lists in `EXPORT` (#35); resolves its byte count.
+   */
+  @ReactMethod
+  public void writeStickerCollection(String stickerPath, String collectionPath, Promise promise) {
+    submit(promise, () -> (double) StickerCollection.write(roots.check(stickerPath), roots.check(collectionPath)));
+  }
+
+  /**
    * Adds the text at the end of the file, creating it when missing: the session log appends its
    * new lines instead of rewriting the whole file after every call (#102). In place, like every
    * shared write, so PluginHost needs FILE:WRITE only (#62).

@@ -1014,7 +1014,9 @@ test build, 2026-11-25, [#287](https://github.com/martonpaulo/ink-tools/issues/2
   [device data, 2026-11-26, [#35](https://github.com/martonpaulo/ink-tools/issues/35); the registry's `pluginhost.file-sandbox`]. Whether
   the Import lists a `.snstk` Ink Tools writes, and what else a collection needs, is
   [unverified, [#35](https://github.com/martonpaulo/ink-tools/issues/35)]. «Insert Sticker» keeps its stickers in
-  `MyStyle/Lookup/stickers`, which syncs to Supernote Cloud.
+  `MyStyle/Lookup/stickers`, which syncs to Supernote Cloud, and writes each one again as a
+  collection, `EXPORT/<name>.snstk`, a ZIP whose one entry is the `<name>.sticker` file
+  (`StickerCollection.java` of picture-search).
 - `MyStyle/` syncs with Supernote Cloud file by file, about 0.14 s per file per sync, so many
   small files cost minutes; a hidden folder outside the synced folders is skipped [measured,
   [#23](https://github.com/martonpaulo/ink-tools/issues/23)]. A plugin cannot read that hidden folder (see Plugins), so it is no home for
