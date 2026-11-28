@@ -2982,7 +2982,13 @@ def command_note_templates(device: Device, args: argparse.Namespace):
 def command_note_current(device: Device, args: argparse.Namespace):
     """The note open on the tablet and the page on screen, counted from 1 as the device shows it,
     from Device Link's action `current` (#320), for Note Editor's Follow Tablet. With no note open
-    both are null. An answer with a note but no page index from 0 is a failure, never a page."""
+    both are null. An answer with a note but no page index from 0 is a failure, never a page.
+    With no note on screen Device Link reads no action file: the Files list on screen left the call
+    waiting its whole 60 s for no answer (tablet row 155, 2026-11-28), so the screen's activity
+    answers that case at once."""
+    shown = device.activity()
+    if shown != NOTE_ACTIVITY:
+        return {"note": None, "page": None}, f"no note is open: the screen shows {shown or 'no activity'}"
     answer = run_action(device, "device-link", "current", {}, args.timeout)
     note, page = answer.get("openNote"), answer.get("page")
     if note is None and page is None:
