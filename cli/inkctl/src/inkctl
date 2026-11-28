@@ -4708,7 +4708,6 @@ class GoogleSandbox:
 ICLOUD_SIGN_IN_ACCOUNT = "ACCOUNT_SYNC_ICLOUD_SIGN_IN"
 DAV = "DAV:"
 CALDAV = "urn:ietf:params:xml:ns:caldav"
-HTTP_UNAUTHORIZED = 401
 
 
 def propfind(props: str) -> str:
@@ -4731,8 +4730,8 @@ def dav_call(method: str, url: str, sign_in: str, body: str = "", depth: str | N
     except urllib.error.HTTPError as refused:
         raise Failure(
             EXIT_FAILED, "api_refused", f"iCloud refused {method} {path} (HTTP {refused.code})",
-            cause="the stored sign-in is wrong or expired" if refused.code == HTTP_UNAUTHORIZED else "",
-            next_step=f"store `<Apple ID>:<app-specific password>` in the Keychain item {KEYCHAIN_SERVICE} / {ICLOUD_SIGN_IN_ACCOUNT}" if refused.code == HTTP_UNAUTHORIZED else "",
+            cause="the stored sign-in is wrong or expired" if refused.code == http.HTTPStatus.UNAUTHORIZED else "",
+            next_step=f"store `<Apple ID>:<app-specific password>` in the Keychain item {KEYCHAIN_SERVICE} / {ICLOUD_SIGN_IN_ACCOUNT}" if refused.code == http.HTTPStatus.UNAUTHORIZED else "",
             extra={"status": refused.code},
         ) from None
     except (urllib.error.URLError, OSError) as lost:
