@@ -13,7 +13,14 @@ import {
   serializePenSettings,
 } from '../src/settings';
 
-test('no file gives the defaults: every module on', () => {
+/**
+ * Every module starts on, whatever the old plugins were (#305): the plugin API reads no other
+ * plugin's enabled state (sn-plugin-lib 0.2.3's PluginManager has no such call) and the old plugins
+ * kept no settings file, so a migration cannot carry a disabled Smart Shapes or Real-Time Conversion
+ * into a module switch. Smart Pen updates Real-Time Conversion in place, so the host keeps that
+ * plugin's own enabled state for Smart Pen as a whole.
+ */
+test('no file gives the defaults: every module on, whatever the old plugins were (#305)', () => {
   expect(parsePenSettings(null)).toEqual({
     settings: DEFAULT_PEN_SETTINGS,
     problems: [],
