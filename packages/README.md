@@ -59,7 +59,7 @@ React. Its tests and lint run in the Account Sync gate, and the other plugin gat
 Manta shows them and checked against the e-ink rules, run with
 `npm -C plugins/account-sync run renders` from Account Sync's `node_modules`
 ([#80](https://github.com/martonpaulo/ink-tools/issues/80), [#288](https://github.com/martonpaulo/ink-tools/issues/288)); `RENDER_EVIDENCE=<dir>` also writes the evidence
-an interface change lands with, and `renders:windows` adds the Nomad's window and the Manta turned.
+an interface change lands with, and `renders:windows` adds the Nomad's window and the Manta turned; the `renders` gate runs the Manta and then the turned window ([#597](https://github.com/martonpaulo/ink-tools/issues/597)).
 
 `puzzle-core`'s word lists (about 270 kB each) are not exported from `index.ts` either: a plugin
 bundles them only when it imports `src/words-data.ts` or one `words/<lang>.json`. Rebuild them with

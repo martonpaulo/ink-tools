@@ -105,7 +105,10 @@ const WORKING: Working = {
   dismiss: () => {},
 } as unknown as Working;
 
-/** The controls #287 redrew after the vendor library, each in its states, on one screen. */
+/**
+ * The controls #287 redrew after the vendor library, each in its states, on two screens so each
+ * fits the turned window, the shortest (#597): the buttons and fields, then the rows.
+ */
 function ControlsSheet(): React.JSX.Element {
   return (
     <View style={shared.screen}>
@@ -117,6 +120,17 @@ function ControlsSheet(): React.JSX.Element {
         <Button label="Disabled" disabled onPress={() => {}} />
       </View>
       <Button label="Destructive" kind="destructive" onPress={() => {}} />
+      <SearchField value="" placeholder="Search" onChangeText={() => {}} />
+      <Pager page={1} total={12} onPage={() => {}} />
+      <Pager page={5} total={12} onPage={() => {}} />
+    </View>
+  );
+}
+
+function ControlRowsSheet(): React.JSX.Element {
+  return (
+    <View style={shared.screen}>
+      <TitleBar title="Control rows" onClose={() => {}} onBack={() => {}} />
       <RowGroup caption="Row actions">
         <ActionRow title="Sample account" subtitle="Connected as tester@example.com" action={{label: 'Sign out', onPress: () => {}}} />
         <ActionRow title="Sample confirm" subtitle="Remove the sample?" secondAction={{label: 'Cancel', onPress: () => {}}} action={{label: 'Remove', onPress: () => {}}} />
@@ -125,9 +139,6 @@ function ControlsSheet(): React.JSX.Element {
         <SwitchRow title="Sample on" value onChange={() => {}} />
         <SwitchRow title="Sample off" value={false} onChange={() => {}} />
       </RowGroup>
-      <SearchField value="" placeholder="Search" onChangeText={() => {}} />
-      <Pager page={1} total={12} onPage={() => {}} />
-      <Pager page={5} total={12} onPage={() => {}} />
     </View>
   );
 }
@@ -590,6 +601,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'ui-kit-loading', render: () => mount(<LoadingView title="Account Sync" onClose={() => {}} />)},
   {name: 'ui-kit-working', render: () => mount(<WorkingStrip working={WORKING} />), notFullView: 'the «Loading…» box sits over the note, as the native loading box does'},
   {name: 'ui-kit-controls', render: () => mount(<ControlsSheet />)},
+  {name: 'ui-kit-control-rows', render: () => mount(<ControlRowsSheet />)},
   {name: 'image-editing-editor', render: () => imageEditor()},
   {name: 'image-editing-erase', render: () => imageEditor({draw: 'erase'})},
   {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},
