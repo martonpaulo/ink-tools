@@ -106,8 +106,13 @@ export function GameView({
     // A page drawn by a layout this Puzzles does not know says so, not that it holds no puzzle.
     const newer = code.value !== null && !knownPageLayout(code.value);
     if (code.value !== null && game.open && !newer) {
+      // Opening a puzzle from its code makes it again, which takes tens of seconds for a large hard
+      // one and holds this JavaScript the whole time; the time is logged so a press that seems lost
+      // right after the view opens can be told from a slow open (tablet row 146, #595).
+      const started = Date.now();
       try {
         board = openPage(game.open, code.value, here.value);
+        pages.log(`${game.id}: opened ${code.value} in ${Date.now() - started} ms`);
       } catch (error) {
         // Another game's page, or a background no game made: this game has nothing to check there.
         pages.log(`${game.id}: ${code.value} is not a ${game.id} page: ${String(error)}`);
@@ -208,6 +213,7 @@ export function GameView({
         check(shown);
       };
       setScreen({kind: 'working'});
+      pages.log(`${game.id}: check pressed on ${shown.code}`);
       const now = await onScreen(shown, retry);
       if (!now) {return;}
       const {here, board} = now;

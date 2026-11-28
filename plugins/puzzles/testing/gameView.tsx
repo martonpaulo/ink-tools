@@ -34,6 +34,8 @@ type FakeOptions = {
  */
 export function fakePages({code = null, layout = PAGE_LAYOUT, ink = [], read = () => ({ok: true, text: null}), failHere = false}: FakeOptions = {}) {
   const calls: string[] = [];
+  /** What the view wrote to the plugin's log. */
+  const lines: string[] = [];
   const inserted: {code: string; png: Uint8Array; after: number}[] = [];
   /** A page's background name: a page of layout 1 has the bare code. */
   const named = (puzzle: string | null) => (puzzle === null || layout === 1 ? puzzle : placedPageCode(puzzle, layout));
@@ -69,13 +71,15 @@ export function fakePages({code = null, layout = PAGE_LAYOUT, ink = [], read = (
     },
     hide: async () => calls.push('hide'),
     show: async () => calls.push('show'),
-    log: () => {},
+    log: line => {
+      lines.push(line);
+    },
   };
   /** Makes the next page reads fail, or answer again. */
   const failReads = (fail: boolean) => {
     on.failHere = fail;
   };
-  return {pages, calls, inserted, turn, failReads};
+  return {pages, calls, lines, inserted, turn, failReads};
 }
 
 /** Kept choices in memory (#569): `file` is what the device keeps, shared by every view given it. */

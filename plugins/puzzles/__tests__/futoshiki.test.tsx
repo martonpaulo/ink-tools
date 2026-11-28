@@ -64,6 +64,14 @@ describe('the futoshiki game (#390)', () => {
     await expectSolved(FUTOSHIKI, CODE, written());
   });
 
+  test('the log tells how long the puzzle took to open and that Check was pressed (tablet row 146, #595)', async () => {
+    const {pages, lines} = fakePages({code: CODE});
+    const tree = await mount(FUTOSHIKI, pages);
+    expect(lines).toContainEqual(expect.stringMatching(new RegExp(`^futoshiki: opened ${CODE}(-L\\d+)? in \\d+ ms$`)));
+    await press(tree, playCopy['here.check']);
+    expect(lines).toContainEqual(expect.stringMatching(new RegExp(`^futoshiki: check pressed on ${CODE}`)));
+  });
+
   test('«Show Solution» writes nothing to the note', async () => {
     const {pages, calls} = fakePages({code: CODE});
     const tree = await mount(FUTOSHIKI, pages);
