@@ -48,6 +48,7 @@ import {copy as deviceLinkCopy} from '../../../plugins/device-link/src/copy';
 import {permissionProblem as lassoActionsPermission, FILE_WRITE as LASSO_FILE_WRITE} from '../../../plugins/lasso-actions/src/buttons';
 import {copy as imageEditingCopy} from '../../../plugins/image-editing/src/copy';
 import {copy as smartPenTextCopy} from '../../../plugins/smart-pen/src/modules/text/copy';
+import {starBattleCopy} from '../../../plugins/puzzles/src/games/starBattle';
 import {playCopy} from '../../../plugins/puzzles/src/play/copy';
 import {PuzzlesView} from '../../../plugins/puzzles/src/PuzzlesView';
 import type {Game as PuzzlesGame} from '../../../plugins/puzzles/src/games';
@@ -553,7 +554,7 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-nonogram-solution', render: () => puzzlesNonogram(NONOGRAM_CODE, ['Show Solution'])},
   {name: 'puzzles-star-battle', render: () => puzzlesStarBattle(null)},
   {name: 'puzzles-star-battle-page', render: () => puzzlesStarBattle(STAR_BATTLE_CODE)},
-  {name: 'puzzles-star-battle-two', render: () => puzzlesStarBattle(null, [`${playCopy.size}: 10 x 10`, 'Stars in each row, column and region: 2 stars'])},
+  {name: 'puzzles-star-battle-two', render: () => puzzlesStarBattle(null, [`${playCopy.size}: 10 x 10`, `${starBattleCopy.stars}: 2 stars`])},
   {name: 'puzzles-star-battle-check', render: () => puzzlesStarBattle(STAR_BATTLE_CODE, ['Check'])},
   {name: 'puzzles-star-battle-solution', render: () => puzzlesStarBattle(STAR_BATTLE_CODE, ['Show Solution'])},
   {name: 'puzzles-binairo', render: () => puzzlesBinairo(null)},

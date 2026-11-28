@@ -27,7 +27,7 @@ import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
 export const starBattleCopy = {
   title: 'Star Battle',
   subtitle: 'Draw 1 or 2 stars in each row, column and region; no two stars touch',
-  stars: 'Stars in each row, column and region',
+  stars: 'New page stars in each row, column and region',
   starsLabel: (stars: number) => (stars === 1 ? '1 star' : `${stars} stars`),
   /** Under the stars when the size allows one star only. */
   starsNote: (side: number) => `2 stars from ${side} x ${side}.`,

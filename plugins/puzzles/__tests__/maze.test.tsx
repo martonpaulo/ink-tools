@@ -14,7 +14,7 @@ import {
   type InkStroke,
   type Maze,
 } from '@ink-tools/puzzle-core';
-import {MAZE} from '../src/games/maze';
+import {MAZE, mazeCopy} from '../src/games/maze';
 import {playCopy} from '../src/play/copy';
 import {codeOfTemplate, type PagePorts} from '../src/play/pages';
 import {GAMES} from '../src/games';
@@ -45,8 +45,8 @@ describe('the maze game (#386)', () => {
     const {pages, inserted, calls} = fakePages();
     const back = jest.fn();
     const tree = await mount(pages, back);
-    expect(shownTexts(tree.root)).toEqual(expect.arrayContaining(['Shape', 'Rectangle', 'Circle', playCopy.difficulty, 'Easy', 'Medium', 'Hard']));
-    await press(tree, 'Shape: Circle');
+    expect(shownTexts(tree.root)).toEqual(expect.arrayContaining([mazeCopy.shape, 'Rectangle', 'Circle', playCopy.difficulty, 'Easy', 'Medium', 'Hard']));
+    await press(tree, `${mazeCopy.shape}: Circle`);
     await press(tree, `${playCopy.difficulty}: Hard`);
     await press(tree, playCopy['new.add']);
     const expected = generateMaze(SEED, mazePageSize('circle', 'hard', 'portrait'), 'hard');

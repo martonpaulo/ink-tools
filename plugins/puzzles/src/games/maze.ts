@@ -23,7 +23,7 @@ import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
 export const mazeCopy = {
   title: 'Maze',
   subtitle: 'Draw the way from the start to the end',
-  shape: 'Shape',
+  shape: 'New page shape',
   shapes: {rectangle: 'Rectangle', circle: 'Circle'} as Record<MazeShape, string>,
 } as const;
 
