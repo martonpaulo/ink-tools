@@ -1,0 +1,366 @@
+{
+ "fingerprint": "4eb1fa0df682984dd935ed1d8db426e4ed9044ac45d57b3765d54c279db0a6ca",
+ "firmware": "Supernote/Supernote/Supernote:11/RQ2A.210505.003/eng.supern.20261019.184438:user/release-keys",
+ "apps": {
+  "com.ratta.drawpath": 2026082501,
+  "com.ratta.search": 100296,
+  "com.ratta.settings": 1001385,
+  "com.ratta.supernote.background": 1000021,
+  "com.ratta.supernote.browser": 100004,
+  "com.ratta.supernote.calendar": 100532,
+  "com.ratta.supernote.email": 100302,
+  "com.ratta.supernote.inbox": 100241,
+  "com.ratta.supernote.inkhub": 96,
+  "com.ratta.supernote.knowledge": 100153,
+  "com.ratta.supernote.launcher": 1010086,
+  "com.ratta.supernote.note": 100261015,
+  "com.ratta.supernote.pluginhost": 1002610150,
+  "com.ratta.supernote.screencast": 165,
+  "com.ratta.supernote.setupwizard": 100139,
+  "com.ratta.supernote.supernotefactorytest": 1,
+  "com.ratta.supernote.task": 100466,
+  "com.ratta.supernote.unlock": 1000105
+ },
+ "registry": "2026.11.25",
+ "items": [
+  {
+   "id": "calendar.provider",
+   "level": 2,
+   "owner": "sn-adapter",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "calendar.reading-rules",
+   "level": 5,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "a row's visibility shows only on the screen; the effect test is the device round (#293 adds a read round-trip on a known row)"
+  },
+  {
+   "id": "calendar.sync-broadcast",
+   "level": 3,
+   "owner": "inkctl",
+   "status": "unprobed",
+   "detail": "the receiver com.ratta.supernote.calendar.notify.sync registers only while its app runs; open the app and check again"
+  },
+  {
+   "id": "diagnostics.provider-probes",
+   "level": 2,
+   "owner": "ink-tools-probe",
+   "status": "unprobed",
+   "detail": "probed by ink-tools-probe Run Probe"
+  },
+  {
+   "id": "digest.provider",
+   "level": 2,
+   "owner": "sn-adapter",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "handwriting.language-file",
+   "level": 2,
+   "owner": "handwriting-language",
+   "status": "unprobed",
+   "detail": "#293 adds a read of the folder's one file"
+  },
+  {
+   "id": "handwriting.changed-broadcast",
+   "level": 3,
+   "owner": "handwriting-language",
+   "status": "unprobed",
+   "detail": "sending it is the change itself"
+  },
+  {
+   "id": "handwriting.writing-screens",
+   "level": 3,
+   "owner": "handwriting-language",
+   "status": "unprobed",
+   "detail": "#293 adds a resolve of each activity name"
+  },
+  {
+   "id": "note.activity",
+   "level": 3,
+   "owner": "inkctl",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "note.screen-ids",
+   "level": 4,
+   "owner": "inkctl",
+   "status": "unprobed",
+   "detail": "finding the controls is the test itself"
+  },
+  {
+   "id": "note.fonts-folder",
+   "level": 5,
+   "owner": "inkctl",
+   "status": "unprobed",
+   "detail": "the font menu shows only on the screen"
+  },
+  {
+   "id": "notefile.format-versions",
+   "level": 2,
+   "owner": "note-editor",
+   "status": "unprobed",
+   "detail": "#293 adds a parse of a fixture note per firmware"
+  },
+  {
+   "id": "notefile.writer-byte-edit",
+   "level": 5,
+   "owner": "note-editor",
+   "status": "unprobed",
+   "detail": "a written note is checked by opening it on the tablet"
+  },
+  {
+   "id": "pen.digitizer-units",
+   "level": 5,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "needs a pen stroke; the effect test is the Smart Pen device round"
+  },
+  {
+   "id": "pen.pen-types",
+   "level": 5,
+   "owner": "smart-pen",
+   "status": "unprobed",
+   "detail": "needs a pen stroke and a lasso; the effect test is the Smart Pen device round"
+  },
+  {
+   "id": "pen.replay-route",
+   "level": 1,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "needs one real-pen recording; the effect test is Smart Pen's replay in the device round (#298)"
+  },
+  {
+   "id": "plugin-api.element-reads",
+   "level": 5,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "a probe would have to hang the host to see the limit"
+  },
+  {
+   "id": "plugin-api.unregister-unknown-button",
+   "level": 5,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "a probe would hang the plugin"
+  },
+  {
+   "id": "plugin-api.pen-up-uuid",
+   "level": 5,
+   "owner": "smart-pen",
+   "status": "unprobed",
+   "detail": "needs a pen stroke; the effect test is the Smart Pen device round"
+  },
+  {
+   "id": "plugin-api.crop-erase-elements",
+   "level": 5,
+   "owner": "image-editing",
+   "status": "unprobed",
+   "detail": "needs a picture on a note page; the effect test is the Image Editing device round"
+  },
+  {
+   "id": "plugin-api.inserted-picture-copy",
+   "level": 5,
+   "owner": "image-editing",
+   "status": "unprobed",
+   "detail": "needs a picture insert on a note page"
+  },
+  {
+   "id": "plugin-api.floating-insert",
+   "level": 5,
+   "owner": "device-link",
+   "status": "unprobed",
+   "detail": "needs a picture insert on a note page"
+  },
+  {
+   "id": "plugin-api.batch-no-redraw",
+   "level": 5,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "needs a conversion on a note page; the effect test is the Smart Pen device round (#296)"
+  },
+  {
+   "id": "pluginhost.no-back-press",
+   "level": 5,
+   "owner": "ui-kit",
+   "status": "unprobed",
+   "detail": "needs a key press on the tablet"
+  },
+  {
+   "id": "pluginhost.overlay-back-key",
+   "level": 5,
+   "owner": "image-editing",
+   "status": "unprobed",
+   "detail": "needs a key press on the tablet"
+  },
+  {
+   "id": "pluginhost.file-sandbox",
+   "level": 5,
+   "owner": "picture-search",
+   "status": "unprobed",
+   "detail": "#293 adds a write and delete of a test file in each allowed folder"
+  },
+  {
+   "id": "pluginhost.plugin-list",
+   "level": 2,
+   "owner": "inkctl",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "pluginhost.setting-service",
+   "level": 3,
+   "owner": "ink-tools-helper",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "pluginhost.call-numbers",
+   "level": 5,
+   "owner": "ink-tools-helper",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "pluginhost.parcel-classes",
+   "level": 3,
+   "owner": "ink-tools-helper",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "pluginhost.permission-status",
+   "level": 5,
+   "owner": "ink-tools-helper",
+   "status": "unprobed",
+   "detail": "a probe would change a plugin's permission"
+  },
+  {
+   "id": "pluginhost.host-dialogs",
+   "level": 5,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "a dialog waits for a press on the tablet; the effect test is the #296 device round"
+  },
+  {
+   "id": "settings.language-page",
+   "level": 3,
+   "owner": "handwriting-language",
+   "status": "unprobed",
+   "detail": "#293 adds a resolve of the activity without starting it"
+  },
+  {
+   "id": "settings.plugin-install-screens",
+   "level": 4,
+   "owner": "inkctl",
+   "status": "unprobed",
+   "detail": "walking the screens is the test itself"
+  },
+  {
+   "id": "settings.plugin-detail-labels",
+   "level": 4,
+   "owner": "inkctl",
+   "status": "unprobed",
+   "detail": "walking the screens is the test itself"
+  },
+  {
+   "id": "storage.cloud-conflict-folder",
+   "level": 5,
+   "owner": "picture-search",
+   "status": "unprobed",
+   "detail": "a conflict appears only after two devices sync"
+  },
+  {
+   "id": "storage.sign-in-drop-folder",
+   "level": 2,
+   "owner": "account-sync",
+   "status": "unprobed",
+   "detail": "#293 adds a read of the folder"
+  },
+  {
+   "id": "storage.helper-channel",
+   "level": 2,
+   "owner": "ink-tools-probe",
+   "status": "unprobed",
+   "detail": "probed by inkctl helper"
+  },
+  {
+   "id": "storage.shared-folder",
+   "level": 2,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "probed by sn-adapter probeSharedFolder"
+  },
+  {
+   "id": "system.device-identity",
+   "level": 2,
+   "owner": "inkctl",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "system.firmware-page",
+   "level": 2,
+   "owner": "inkctl",
+   "status": "unprobed",
+   "detail": "probed by inkctl firmware"
+  },
+  {
+   "id": "system.plugin-log-tag",
+   "level": 5,
+   "owner": "inkctl",
+   "status": "unprobed",
+   "detail": "probed by inkctl logs"
+  },
+  {
+   "id": "todo.provider",
+   "level": 2,
+   "owner": "sn-adapter",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "todo.row-rules",
+   "level": 5,
+   "owner": "sn-adapter",
+   "status": "unprobed",
+   "detail": "a row's visibility shows only in the app; #293 adds a read round-trip on a known row"
+  },
+  {
+   "id": "todo.twin-repair",
+   "level": 5,
+   "owner": "account-sync",
+   "status": "unprobed",
+   "detail": "a twin appears only after a cloud sync; the accepted risk is a real task soft-deleted, so the repair logs each removal"
+  },
+  {
+   "id": "todo.sync-trigger",
+   "level": 5,
+   "owner": "inkctl",
+   "status": "ok",
+   "detail": ""
+  },
+  {
+   "id": "ui.measured-tokens",
+   "level": 5,
+   "owner": "ui-kit",
+   "status": "unprobed",
+   "detail": "a look is checked by a side-by-side screenshot in a device round (#299)"
+  }
+ ],
+ "counts": {
+  "ok": 10,
+  "broken": 0,
+  "unprobed": 37
+ },
+ "card": {
+  "id": "firmware-check",
+  "title": "Firmware check: nothing broken in 47 internals",
+  "lines": []
+ }
+}
