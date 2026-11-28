@@ -55,3 +55,8 @@ From the Mac, tap «Receive» and drop the text or the picture on «Supernote» 
 
 React Native + `sn-plugin-lib`, like `../lasso-actions`, with a native Java module for the network, as
 `../ink-tools-probe` has.
+
+The scaffold is copied from `../lasso-actions`, which took it from the removed Lingo plugin (same
+runtime, build and release shape); `scripts/native-build.cjs` and its toolchain come from
+`../ink-tools-probe`. No Notipal code is reused: the client and the receiver follow the LocalSend v2
+protocol text.

@@ -100,9 +100,8 @@ note, which inkctl asks before it opens another note ([#426](https://github.com/
 editor's Insert Page, the system ones by name and the PNGs straight in `MyStyle/` by full path,
 which `insertPage` also takes ([#451](https://github.com/martonpaulo/ink-tools/issues/451)). `insertElements` and `modifyElements` take an optional target `layer`, 0 to 3: the open-note calls' `layer` argument, and by path each element's `layerNum`, whether the file API follows it waiting for the device round ([#334](https://github.com/martonpaulo/ink-tools/issues/334)). To test on the device: each operation with the screen
 untouched, whether a picture element takes a path in that folder, and a stroke's `setRange` move.
-A text element and a text modify take an optional style, `bold`, `italic`, `align` and `font` (a
-.ttf or .otf in `EDITOR_FOLDER`), passed to sn-adapter's `TextBox` fields; which of them the
-tablet shows waits for the device probe of [#404](https://github.com/martonpaulo/ink-tools/issues/404).
+A text element and a text modify take an optional style, `bold`, `italic`, `align` and `font` (a .ttf or .otf in `EDITOR_FOLDER`),
+passed to sn-adapter's `TextBox` fields; which of them the tablet shows waits for the device probe of [#404](https://github.com/martonpaulo/ink-tools/issues/404).
 
 **Note Editor over Device Link built, not yet on the device** ([#493](https://github.com/martonpaulo/ink-tools/issues/493)): the receiver also takes
 one offer of `EDITOR_FILE_TYPE` whose `preview` is Note Editor's request (`src/receive/remote.ts`), and
@@ -148,9 +147,3 @@ PDF into a new note with its pages as backgrounds. Layers: `../../docs/architect
 - Keep React Native 0.79.2, React 19.0.0 and `sn-plugin-lib` 0.2.3 exact: PluginHost fixes them.
   Never change `pluginID`.
 - Before an `sn-plugin-lib` call, read the recorded gotchas in `../../docs/research/plugin-brief/brief.md`.
-
-## Reuse
-
-Scaffold copied from `../lasso-actions`, which took it from the removed Lingo plugin (same runtime, build and release
-shape); `scripts/native-build.cjs` and its toolchain from `../ink-tools-probe`. No Notipal code is reused:
-the client and the receiver follow the LocalSend v2 protocol text.
