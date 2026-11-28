@@ -183,6 +183,15 @@ test('the text box starts at the word, sized to its letters, inside the page', (
   expect(box.rect.bottom - box.rect.top).toBe(84);
 });
 
+test('a pen-up word of wide letters gets its Roboto width and a font size each side (#590)', () => {
+  const word = {strokes: [], rect: {left: 100, top: 100, right: 160, bottom: 140}, letterHeight: 40};
+  // «mesa» and «WWW» in Roboto, the Note app's text-box font, in font sizes (advance widths).
+  for (const [text, ems] of [['mesa', 2.41], ['WWW', 2.66]] as const) {
+    const box = textBoxFor(text, word, {width: 1404, height: 1872});
+    expect(box.rect.right - box.rect.left).toBeGreaterThanOrEqual(Math.ceil((ems + 2) * box.fontSize));
+  }
+});
+
 test('the converted text box never reaches the note\'s page bar (#577)', () => {
   const page = {width: 1404, height: 1872};
   for (const top of [100, 1700, 1740, 1800]) {

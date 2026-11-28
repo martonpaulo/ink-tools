@@ -208,6 +208,13 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   register itself.
 - A lasso button registered while the plugin already runs shows in that list at once, and
   `insertText` puts a text box on the page [measured, 2026-11-15, [#115](https://github.com/martonpaulo/ink-tools/issues/115)].
+- A text box wraps a word its frame cannot hold on one line, and the wrapped line is drawn below
+  the frame: Smart Pen's lasso box, four average letters (0.55 of the font size each) and one font
+  size wide, drew «mes» and «a» on two lines, while «hola» and «luna», narrower letters, stayed on
+  one. The typed letters have Roboto's shapes and spacing, «mesa» about 2.4 font sizes wide at
+  about 103 px [measured, Manta, tablet row 140, 2026-11-28,
+  [#590](https://github.com/martonpaulo/ink-tools/issues/590)]. So ink-core's `typedWidth` counts
+  each letter at its Roboto width; the box's inner padding is [unverified].
 - The lasso calls (`getLassoElements`, `getLassoRect`) need `plugin.permission.FILE:READ` declared
   and granted: without it they fail with code 1503, «File read permission has not been requested»,
   and the log shows `PluginSec DENY reason=sdcard_no_read` for the note's path [measured, 2026-11-16,

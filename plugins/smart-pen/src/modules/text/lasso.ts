@@ -15,9 +15,9 @@ import type {
   TextBoxInput,
 } from '@ink-tools/sn-adapter/official';
 import {
-  CHAR_WIDTH,
   LINE_SHARE,
   MIN_FONT_SIZE,
+  typedWidth,
   type HostElement,
   setLastConversion,
 } from '@ink-tools/ink-core/conversion';
@@ -62,8 +62,10 @@ export function paragraphsOf(text: string): string {
 
 /**
  * The text box for `text` over the lasso's `rect`: from its top-left, at least as wide as the
- * lasso and than its widest paragraph typed (#590), each paragraph one line of a font sized from
- * the lasso's height per line, inside the page and above the note's page bar (#577), as the word box is.
+ * lasso and a font size each side wider than its widest paragraph typed (#590), each paragraph one
+ * line of a font sized from the lasso's height per line, inside the page and above the note's page
+ * bar (#577), as the word box is. A paragraph wider than the page wraps, and its lines count in the
+ * box's height, so the clamp above the bar holds them too.
  */
 export function lassoBoxFor(
   text: string,
@@ -71,23 +73,22 @@ export function lassoBoxFor(
   pageSize: Size,
 ): TextBoxInput {
   const page = writableSize(pageSize);
-  const lines = Math.max(1, text.split('\n').length);
-  const inkLine = (rect.bottom - rect.top) / lines;
+  const paragraphs = text.split('\n');
+  const inkLine = (rect.bottom - rect.top) / paragraphs.length;
   const fontSize = Math.max(
     MIN_FONT_SIZE,
     Math.round(inkLine / (INK_LINE_PER_TEXT_LINE * LINE_SHARE)),
   );
-  // Whole pixels, as the word box (#206); one font size more, so the host never wraps a line. The
-  // typed text can be wider than the handwriting: a narrower box wrapped the last letter onto a
-  // second line the one-line box did not hold, and the letter was lost (#590) [inference].
-  const typed = Math.ceil(
-    Math.max(...text.split('\n').map(line => [...line].length)) *
-      fontSize *
-      CHAR_WIDTH,
-  );
+  // Whole pixels, as the word box (#206). The typed text can be wider than the handwriting: a
+  // narrower box wrapped the last letter onto a second line the one-line box did not hold (#590).
+  const typed = paragraphs.map(line => typedWidth(line, fontSize));
   const width = Math.min(
     page.width,
-    Math.max(Math.ceil(rect.right - rect.left), typed) + fontSize,
+    Math.max(Math.ceil(rect.right - rect.left), ...typed) + 2 * fontSize,
+  );
+  const lines = typed.reduce(
+    (sum, line) => sum + Math.max(1, Math.ceil(line / Math.max(1, width - 2 * fontSize))),
+    0,
   );
   const left = Math.max(0, Math.min(Math.round(rect.left), page.width - width));
   const height = Math.ceil(

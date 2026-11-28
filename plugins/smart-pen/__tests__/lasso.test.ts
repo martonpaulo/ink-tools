@@ -5,8 +5,8 @@ import {
   paragraphsOf,
 } from '../src/modules/text/lasso';
 import {
-  CHAR_WIDTH,
   MIN_FONT_SIZE,
+  typedWidth,
   lastConversion,
   setLastConversion,
   undoLast,
@@ -139,15 +139,32 @@ test('the box never reaches the note\'s page bar, for a word or a paragraph insi
   }
 });
 
-test('the box is as wide as its widest paragraph typed, so no last letter wraps out of it (#590)', () => {
-  // Tight handwriting: a 4-letter word 70 px wide at 60 px high types about 120 px wide.
-  for (const text of ['hola', 'mesa', 'luna', 'one\nlonger line here']) {
-    const lines = text.split('\n');
-    const rect = {left: 100, top: 300, right: 170, bottom: 300 + 60 * lines.length};
-    const box = lassoBoxFor(text, rect, PAGE);
-    const widest = Math.max(...lines.map(line => [...line].length));
-    expect(box.rect.right - box.rect.left).toBeGreaterThanOrEqual(
-      Math.ceil(widest * box.fontSize * CHAR_WIDTH) + box.fontSize,
-    );
-  }
+describe('the box holds its widest paragraph as the Note app types it, so no last letter wraps (#590)', () => {
+  // A 4-letter word 70 px wide under a lasso 60 px high, tight handwriting.
+  const rect = {left: 100, top: 300, right: 170, bottom: 360};
+  /** The word's width in Roboto, the Note app's text-box font, in font sizes (advance widths). */
+  const roboto: Record<string, number> = {mesa: 2.41, 'mamá': 2.78, WWW: 2.66, hola: 1.87};
+
+  test.each(Object.entries(roboto))('«%s» gets its typed width and a font size each side', (word, ems) => {
+    const box = lassoBoxFor(word, rect, PAGE);
+    expect(box.rect.right - box.rect.left).toBeGreaterThanOrEqual(Math.ceil((ems + 2) * box.fontSize));
+    // One line: no wrapped line is counted.
+    expect(box.rect.bottom - box.rect.top).toBe(Math.max(60, Math.ceil(box.fontSize * 1.5)));
+  });
+
+  test('«mesa» is wider than the box that wrapped its «a» on the tablet (row 140)', () => {
+    const box = lassoBoxFor('mesa', rect, PAGE);
+    // c02cc022: four average letters (0.55 of the font size each) and one font size more.
+    expect(box.rect.right - box.rect.left).toBeGreaterThan(Math.ceil(4 * 0.55 * box.fontSize) + box.fontSize);
+  });
+
+  test('a paragraph wider than the page counts its wrapped lines, and they stay above the bar (#577)', () => {
+    const manta = {width: 1920, height: 2560};
+    const long = 'm'.repeat(80);
+    const box = lassoBoxFor(long, {left: 100, top: 2472, right: 900, bottom: 2512}, manta);
+    const lines = Math.ceil(typedWidth(long, box.fontSize) / (box.rect.right - box.rect.left - 2 * box.fontSize));
+    expect(lines).toBeGreaterThan(1);
+    expect(box.rect.bottom - box.rect.top).toBeGreaterThanOrEqual(lines * box.fontSize * 1.5);
+    expect(box.rect.bottom).toBeLessThanOrEqual(manta.height - PAGE_BAR_PX);
+  });
 });

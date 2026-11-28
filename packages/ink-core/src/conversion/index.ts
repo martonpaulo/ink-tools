@@ -7,5 +7,6 @@
  */
 export * from './convert';
 export * from './shapes';
+export * from './typed';
 export * from './undo';
 export * from './words';
