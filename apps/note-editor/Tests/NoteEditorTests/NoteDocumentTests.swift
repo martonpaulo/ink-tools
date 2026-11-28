@@ -110,7 +110,8 @@ enum Fixtures {
         await pages.show([0])
         #expect(Set(pages.pages.keys) == [0, 1])
         let last = note.pages.count - 1
-        await pages.show([last])
+        // The pages of the last few shows stay, so a zoom never ends on a placeholder (#564).
+        for _ in 0...PageImages.retainedShows { await pages.show([last]) }
         #expect(Set(pages.pages.keys) == [last - 1, last])
         #expect(pages.pages.values.allSatisfy { if case .ready = $0 { true } else { false } })
         // Every page on screen draws and stays, however many show at the smallest zoom (#319).
