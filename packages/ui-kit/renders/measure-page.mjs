@@ -177,6 +177,13 @@ export function measurePage() {
           words.push(...range.getClientRects());
         }
       }
+      // The lines the text wraps to: the words' distinct tops, a fraction of a unit apart being one line (#543).
+      const tops = [];
+      for (const rect of words) {
+        if (!tops.some(top => Math.abs(top - rect.top) < rect.height / 2)) {
+          tops.push(rect.top);
+        }
+      }
       const glyphs = words.reduce((all, rect) => ({
         left: Math.min(all.left, rect.left),
         top: Math.min(all.top, rect.top),
@@ -206,6 +213,9 @@ export function measurePage() {
         code: Boolean(el.closest(CODE)),
         // The code block's box, so a line that runs past its side is caught: lines wrap (#405).
         codeBox: el.closest(CODE) ? boxOf(el.closest(CODE).getBoundingClientRect()) : undefined,
+        lines: tops.length,
+        // The button the text is the label of, by its ui-kit kind (a button's level), if any (#543).
+        button: el.closest('[data-kind^="button-"]') ? nameOf(el.closest('[data-kind^="button-"]')) : undefined,
         monospace: /monospace/i.test(getComputedStyle(el).fontFamily),
         within,
         scroll: scrollOf(el),

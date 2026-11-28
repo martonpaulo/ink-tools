@@ -107,4 +107,19 @@ describe('layoutBreaks', () => {
       ),
     ).toEqual(['text «Faded option» is 4.48:1, under the floor 7:1 (#575)']);
   });
+
+  it('fails a button label that wraps to a second line, and passes one line and a wrapping caption (#543)', () => {
+    expect(
+      layoutBreaks(
+        page({
+          texts: [
+            {name: 'a', text: 'Show Solution', fontSize: 21, glyphs: box(27, 110, 150, 170), within: [], contrast: 21, lines: 2, button: 'Show Solution'},
+            {name: 'b', text: 'Check', fontSize: 21, glyphs: box(27, 200, 120, 230), within: [], contrast: 21, lines: 1, button: 'Check'},
+            {name: 'c', text: 'A long caption that wraps', fontSize: 19, glyphs: box(27, 300, 400, 360), within: [], contrast: 21, lines: 2},
+          ],
+        }),
+        LIMITS,
+      ),
+    ).toEqual(['button «Show Solution» wraps its label to 2 lines: widen the button or shorten the label (#543)']);
+  });
 });

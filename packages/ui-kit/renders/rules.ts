@@ -51,6 +51,10 @@ export type Measured = {
     codeBox?: Box;
     /** True when drawn in a monospaced face. */
     monospace?: boolean;
+    /** How many lines the text wraps to (#543). */
+    lines?: number;
+    /** The name of the ui-kit button whose label the text is, if any (#543). */
+    button?: string;
   }[];
   /** Every visible scroll view, by its visible box. */
   scrolls: {name: string; box: Box}[];
@@ -337,7 +341,8 @@ export function contrastRatio(first: string, second: string): number {
  * The screen-layout rules (owner, 2026-11-28): a list of rows pages and never ends inside a row
  * (#548), a control fixed under a list never lies over a row (#578), an image sits centred in its
  * ui-kit MediaFrame and none is sized by aspectRatio (#576), a choice row's radio ends at its list's end
- * as the native one does (owner D112, #546), and no text falls under the contrast floor (#575).
+ * as the native one does (owner D112, #546), no text falls under the contrast floor (#575), and no
+ * button's label wraps to a second line (#543).
  * Measured before any scroll: a scroll view's rows are judged as the person first sees them.
  */
 export function layoutBreaks(measured: Measured, {textContrast}: LayoutLimits): string[] {
@@ -380,6 +385,11 @@ export function layoutBreaks(measured: Measured, {textContrast}: LayoutLimits): 
   for (const text of measured.texts) {
     if (text.contrast !== undefined && text.contrast + 0.005 < textContrast) {
       found.push(`text «${text.text.slice(0, 60)}» is ${text.contrast}:1, under the floor ${textContrast}:1 (#575)`);
+    }
+  }
+  for (const text of measured.texts) {
+    if (text.button && (text.lines ?? 1) > 1) {
+      found.push(`button «${text.button.slice(0, 40)}» wraps its label to ${text.lines} lines: widen the button or shorten the label (#543)`);
     }
   }
   return found;
