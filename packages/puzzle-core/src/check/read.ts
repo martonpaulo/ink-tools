@@ -37,8 +37,10 @@ export interface CheckResult {
 /**
  * [inference] the misreads the recogniser makes between digits and letters, folded towards what
  * the cell holds. Round 8 (#378) read G and Q as 9, I as «.» and L as I; capitals came back lower case.
+ * Read cell by cell on a Kakuro (tablet row 160, #584), an 8 of two stacked loops came back «◦» and
+ * a 1 with a flag «/». No game of digits expects a 0, so «◦» folds to the 8 its strokes showed.
  */
-const AS_DIGIT: Readonly<Record<string, string>> = { O: '0', I: '1', L: '1', '|': '1', Z: '2', S: '5', B: '8', G: '9', Q: '9' };
+const AS_DIGIT: Readonly<Record<string, string>> = { O: '0', I: '1', L: '1', '|': '1', '/': '1', Z: '2', S: '5', B: '8', '◦': '8', G: '9', Q: '9' };
 const AS_LETTER: Readonly<Record<string, string>> = { '0': 'O', '1': 'I', '2': 'Z', '5': 'S', '8': 'B', '9': 'G' };
 const VALID: Readonly<Record<Alphabet, RegExp>> = { digit: /^[0-9]$/, number: /^[0-9]+$/, letter: /^\p{L}$/u };
 const SINGLE: Readonly<Record<Alphabet, boolean>> = { digit: true, number: false, letter: true };

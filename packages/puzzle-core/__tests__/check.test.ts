@@ -126,8 +126,8 @@ describe('the ink check on a sudoku page in inkctl ink', () => {
     const strokes = [...write(grid, 0, 0, '1'), ...write(grid, 1, 0, '2'), ...write(grid, 2, 0, '9')];
     const spaced = async (): Promise<ReadText> => ({ ok: true, text: 'l2 g' });
     expect((await readCells(grid, strokes, [0, 1, 2], spaced, 'digit')).map(read => read.status === 'read' && read.text)).toEqual(['1', '2', '9']);
-    const stray = async (): Promise<ReadText> => ({ ok: true, text: '1 / 9' });
-    expect((await readCells(grid, strokes, [0, 1, 2], stray, 'digit'))[1]).toEqual({ index: 1, status: 'unread', reason: 'read «/», not a digit' });
+    const stray = async (): Promise<ReadText> => ({ ok: true, text: '1 # 9' });
+    expect((await readCells(grid, strokes, [0, 1, 2], stray, 'digit'))[1]).toEqual({ index: 1, status: 'unread', reason: 'read «#», not a digit' });
   });
 });
 
@@ -169,6 +169,9 @@ describe('normalizeRead', () => {
     ['o', 'digit', '0'],
     ['l', 'digit', '1'],
     [' 7 ', 'digit', '7'],
+    // The tablet's own answers for two unread Kakuro cells (row 160, #584): an 8 of two loops, a flagged 1.
+    ['◦', 'digit', '8'],
+    ['/', 'digit', '1'],
     ['12', 'digit', null],
     ['1 2', 'number', '12'],
     ['0', 'letter', 'O'],

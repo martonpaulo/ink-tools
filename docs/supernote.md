@@ -349,6 +349,11 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   «S T U VW X Y Z». A cell alone took 252 to 560 ms, about 250 ms when it gave no text; a row of
   8 to 9 cells took 797 to 1171 ms. So read a row in one call, and a single cell only to place a
   row's characters; a cell that gives no text is unread, never wrong.
+- Read alone, a cell of a 12 x 12 Kakuro page (118 px cells, synthetic ink) gave «◦» for an 8 of
+  two stacked loops and «/» for a 1 with a flag, both well inside their cells, while the same
+  shapes read as 8 and 1 in other cells of the page [measured, Puzzles from `main` `25ff3afd`,
+  Manta, tablet row 160, 2026-11-28, [#584](https://github.com/martonpaulo/ink-tools/issues/584)];
+  puzzle-core's `normalizeRead` folds both.
 - PluginHost's JS runs plain text work far slower than a Mac: picture-search's text scorers took
   about 120 ms per pass over 12 results, and its first ranking in a fresh JS instance (after an
   install) took 1057 ms for 18 results, against 87 ms later on the same instance [measured,
