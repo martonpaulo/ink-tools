@@ -27,7 +27,7 @@ final class Copy {
   static final String BUTTON_ALWAYS = "Always";
   static final String BUTTON_ALWAYS_DETAIL = "Over every app";
   static final String BUTTON_HIDDEN = "Hidden";
-  static final String BUTTON_HELP = "One tap switches to the next language; a long press opens this screen; drag it to move it. It hides while this screen is open.";
+  static final String BUTTON_HELP = "One tap switches to the next language; a long press opens this screen; drag it to move it. It hides while this screen or a plugin's view is open.";
   static final String RESET_PLACE = "Reset Button Position";
   static final String WATCHER_OFF = "Writing detection is off, so the floating button shows over every app.";
   /** What the service reads, said before the system's «full control» warning; the steps on its screen. */

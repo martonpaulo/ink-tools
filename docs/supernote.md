@@ -377,6 +377,15 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   Actions', Smart Pen's and Device Link's Settings, Device Link's «Receive» and Image Editing's
   editor [measured, Manta, 2026-11-26 and 2026-11-27, log `INKTOOLS ImageEditingBack: back key:
   listening`, then `back key`].
+- A plugin view is a window, never an activity: while Puzzles is open over a note the resumed
+  activity stays `NoteInsidePagesActivity`, and PluginHost adds a full-screen `TYPE_PHONE`,
+  translucent window that takes the focus (`addWindow … com.ratta.supernote.pluginhost`); × removes
+  it, while a view hidden after an action (`onVisibilityChange visibility:8`) keeps its window.
+  An app's `APPLICATION_OVERLAY` window, such as Handwriting Language's button, stays above it in
+  the z-order and takes the presses over it, so that app removes its button while PluginHost's
+  window is listed and no keyboard is open [measured, Manta, 2026-11-28, `dumpsys window`, the
+  app's watcher logged `plugin=true` 0.16 s after the open and `plugin=false` about 1.4 s after ×,
+  [#557](https://github.com/martonpaulo/ink-tools/issues/557)].
 - A plugin view without that module does not keep Back: on Device Link 0.2.0 beta 1, Back on
   «Receive» closed the view and the note under it, which left the task stack [measured, Manta,
   device round 9, 2026-11-26, [#300](https://github.com/martonpaulo/ink-tools/issues/300)].

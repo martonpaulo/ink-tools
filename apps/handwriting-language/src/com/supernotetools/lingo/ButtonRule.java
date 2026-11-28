@@ -97,20 +97,17 @@ final class ButtonRule {
    * the settings screen shows the command that turns the service on. While the app's own screen is
    * in front the button never shows, so it never covers that screen's controls (owner, #275).
    * While a plugin view is open, the writing screen behind it takes no handwriting, so only the
-   * keyboard shows the button there (#415).
+   * keyboard shows the button there (#415), in «Always» too: a press on a plugin's control under
+   * the button changed the language instead (#557).
    */
   static boolean visible(
       Mode mode, boolean ownScreen, boolean watching, boolean keyboardOpen, boolean pluginView, String foreground) {
-    if (ownScreen) {
+    if (ownScreen || mode == Mode.HIDDEN) {
       return false;
     }
-    switch (mode) {
-      case ALWAYS:
-        return true;
-      case HIDDEN:
-        return false;
-      default:
-        return !watching || keyboardOpen || (!pluginView && isWritingScreen(foreground));
+    if (pluginView && !keyboardOpen) {
+      return false;
     }
+    return mode == Mode.ALWAYS || !watching || keyboardOpen || isWritingScreen(foreground);
   }
 }

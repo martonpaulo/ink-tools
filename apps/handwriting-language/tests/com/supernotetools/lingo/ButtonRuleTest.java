@@ -24,7 +24,8 @@ public final class ButtonRuleTest {
     check(!ButtonRule.visible(Mode.WRITING, false, true, false, true, NOTE), "a plugin view over a note page hides it (#415)");
     check(!ButtonRule.visible(Mode.WRITING, false, true, false, true, SETTINGS), "a plugin's Settings view hides it (#415)");
     check(ButtonRule.visible(Mode.WRITING, false, true, true, true, NOTE), "the keyboard open in a plugin view shows it");
-    check(ButtonRule.visible(Mode.ALWAYS, false, true, false, true, NOTE), "always visible shows it over a plugin view");
+    check(!ButtonRule.visible(Mode.ALWAYS, false, true, false, true, NOTE), "always visible hides it over a plugin view too (#557)");
+    check(ButtonRule.visible(Mode.ALWAYS, false, true, true, true, NOTE), "always visible shows it with the keyboard open in a plugin view");
     check(ButtonRule.isPluginView("com.ratta.supernote.pluginhost"), "PluginHost's window is a plugin view");
     check(!ButtonRule.isPluginView("com.ratta.supernote.note"), "the note app's window is none");
     check(!ButtonRule.isPluginView(null), "a window with no package is none");
