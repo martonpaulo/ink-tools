@@ -4,9 +4,9 @@ name: Validate shared packages
 on:
   push:
     branches: [main]
-    paths: ['packages/**', 'registry/**', '.github/workflows/validate-packages.yml']
+    paths: ['packages/**', 'registry/**', 'scripts/language_registry.py', 'scripts/languages.py', '.github/workflows/validate-packages.yml']
   pull_request:
-    paths: ['packages/**', 'registry/**', '.github/workflows/validate-packages.yml']
+    paths: ['packages/**', 'registry/**', 'scripts/language_registry.py', 'scripts/languages.py', '.github/workflows/validate-packages.yml']
   workflow_dispatch:
 
 permissions:

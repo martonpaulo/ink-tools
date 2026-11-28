@@ -8,6 +8,7 @@
  * The puzzle code names the language in its size token: `WS-15PT-H-7K2Q9X` is a 15 x 15 hard
  * Portuguese word search, so a typed code gives back the same theme and grid.
  */
+import { withoutAccents } from '@ink-tools/ink-core/languages';
 import { parsePuzzleCode, puzzleCode, type Difficulty, type PuzzleId } from '../code';
 import { type InkStroke } from '../check/cells';
 import { strokeSpan } from '../check/lines';
@@ -77,11 +78,11 @@ function alphabetOrder(alphabet: string): (a: string, b: string) => number {
  * the font holds A to Z, Ñ and no other accented letter.
  */
 export function pageTitle(name: string): string {
-  return name
-    .split(/(ñ|Ñ)/)
-    .map(part => (/^[ñÑ]$/.test(part) ? part : part.normalize('NFD').replace(/\p{M}/gu, '')))
-    .join('');
+  return withoutAccents(name, ch => FONT_ACCENTED.includes(ch));
 }
+
+/** The accented letters the page font draws (#379); every other one folds through the registry (#500). */
+const FONT_ACCENTED = ['ñ', 'Ñ'];
 
 function sizeToken(side: number, language: WordLanguage): string {
   return `${side}${language.toUpperCase()}`;

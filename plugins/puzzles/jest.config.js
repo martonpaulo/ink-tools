@@ -1,6 +1,7 @@
 const uiKit = require('../../packages/ui-kit/plugin-config');
 const snAdapter = require('../../packages/sn-adapter/plugin-config');
 const puzzleCore = require('../../packages/puzzle-core/plugin-config');
+const inkCore = require('../../packages/ink-core/plugin-config');
 
 module.exports = {
   preset: 'react-native',
@@ -11,6 +12,8 @@ module.exports = {
     ...uiKit.jest.moduleNameMapper,
     ...snAdapter.jestModuleNameMapper,
     ...puzzleCore.jestModuleNameMapper,
+    // ink-core's language registry, which the games fold letters through (#500).
+    ...inkCore.jestModuleNameMapper,
   },
   roots: ['<rootDir>'],
   transformIgnorePatterns: [

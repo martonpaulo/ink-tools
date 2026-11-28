@@ -1,0 +1,37 @@
+{
+  "about": "The one case table every language-registry reader runs (#500): TypeScript, Python, Java and Swift give these answers from languages.json.",
+  "fold": [
+    {"language": "pt", "text": "coração", "grid": "CORACAO"},
+    {"language": "pt", "text": "maçã", "grid": "MACA"},
+    {"language": "fr", "text": "cœur", "grid": "COEUR"},
+    {"language": "fr", "text": "noël", "grid": "NOEL"},
+    {"language": "de", "text": "müssen", "grid": "MUESSEN"},
+    {"language": "de", "text": "Straße", "grid": "STRASSE"},
+    {"language": "de", "text": "GROẞ", "grid": "GROSS"},
+    {"language": "de", "text": "Öl", "grid": "OEL"},
+    {"language": "es", "text": "niño", "grid": "NIÑO"},
+    {"language": "es", "text": "canción", "grid": "CANCION"},
+    {"language": "es", "text": "pingüino", "grid": "PINGUINO"},
+    {"language": "en", "text": "naïve", "grid": "NAIVE"},
+    {"language": "it", "text": "perché", "grid": "PERCHE"},
+    {"language": "pt", "text": "Ñ", "grid": "N"},
+    {"language": "en", "text": "co-op", "grid": null},
+    {"language": "pt", "text": "x1", "grid": null}
+  ],
+  "accents": [
+    {"text": "Limão", "plain": "Limao"},
+    {"text": "Ærø", "plain": "AEro"},
+    {"text": "São Paulo", "plain": "Sao Paulo"},
+    {"text": "niño", "plain": "nino"}
+  ],
+  "codes": [
+    {"language": "pt", "tag": "pt-BR", "tablet": "pt_BR", "wikipedia": "pt", "apertium": "por", "label": "PT"},
+    {"language": "es", "tag": "es-ES", "tablet": "es_ES", "wikipedia": "es", "apertium": "spa", "label": "ES"},
+    {"language": "zh", "tag": "zh-CN", "tablet": "zh_CN", "wikipedia": "zh", "apertium": "zho", "label": "ZH"},
+    {"language": "yue", "tag": "yue-HK", "tablet": "yue_HK", "wikipedia": "zh-yue", "apertium": "yue", "label": "YUE"}
+  ],
+  "pairs": [
+    {"from": "es", "to": "pt", "id": "es-ES>pt-BR"},
+    {"from": "pt", "to": "zh", "id": "pt-BR>zh-CN"}
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "about": "The pinned Unicode CLDR release the language registry is generated from (#500): scripts/language_registry.py downloads each npm package and checks its SHA-256.",
+  "cldr": "49.0.0",
+  "licence": "Unicode-3.0",
+  "packages": {
+    "cldr-core": {
+      "url": "https://registry.npmjs.org/cldr-core/-/cldr-core-49.0.0.tgz",
+      "sha256": "085b1c7d83f00692505c79d575c21eea89534466eb3e70b455688851a45c87bc"
+    },
+    "cldr-misc-full": {
+      "url": "https://registry.npmjs.org/cldr-misc-full/-/cldr-misc-full-49.0.0.tgz",
+      "sha256": "d0129e972402b1d6b32ab44c82c5a058c3f721bf61bf07b2b652c9444eba8821"
+    },
+    "cldr-transforms": {
+      "url": "https://registry.npmjs.org/cldr-transforms/-/cldr-transforms-49.0.0.tgz",
+      "sha256": "35a1a7adeefa1d4bb1b616944ff7c84a27e59633d5dae546a4c424086de45ac4"
+    }
+  }
+}

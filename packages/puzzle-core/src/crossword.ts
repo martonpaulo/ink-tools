@@ -16,6 +16,7 @@ import { type Difficulty, type PuzzleId } from './code';
 import { checkCells, readCells, type CheckResult, type InkStroke, type Recognize } from './check';
 import { type Grid } from './page/grid';
 import { childSeed, createRandom, type Random } from './random';
+import { isGridLetter, withoutAccents } from '@ink-tools/ink-core/languages';
 import { WORD_LANGUAGES, gridPattern, type WordLanguage } from './words';
 
 export interface CrosswordClueEntry {
@@ -312,11 +313,9 @@ export function generateCrossword(seed: string, size: number, difficulty: Diffic
   return best;
 }
 
-/** Spanish keeps Ñ as its own letter; every other accent is dropped, as the grid writes it. */
+/** The read in the grid's letters: a letter of the language's grid stays (Spanish Ñ), others fold (#500). */
 function gridLetter(text: string, language: WordLanguage): string {
-  return [...text.normalize('NFC')]
-    .map(ch => (language === 'es' && ch === 'Ñ' ? ch : ch.normalize('NFD').replace(/\p{M}/gu, '')))
-    .join('');
+  return withoutAccents(text, isGridLetter(language));
 }
 
 /**

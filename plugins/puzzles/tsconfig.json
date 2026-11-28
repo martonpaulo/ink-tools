@@ -13,6 +13,8 @@
       "@ink-tools/puzzle-core": ["../../packages/puzzle-core/src"],
       // The bundled word lists, which the main entry leaves out (#385).
       "@ink-tools/puzzle-core/word-lists": ["../../packages/puzzle-core/src/words-data"],
+      // The language registry the games fold letters through (#500).
+      "@ink-tools/ink-core/languages": ["../../packages/ink-core/languages"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

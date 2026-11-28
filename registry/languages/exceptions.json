@@ -1,0 +1,11 @@
+{
+  "about": "The language facts no CLDR file gives (#500), each with its source. scripts/language_registry.py copies them into languages.json; nothing else is written by hand.",
+  "wikipedia": {
+    "yue": {"value": "zh-yue", "source": "https://meta.wikimedia.org/wiki/List_of_Wikipedias: the Cantonese Wikipedia is zh-yue.wikipedia.org"}
+  },
+  "apertium": [
+    {"pair": "es-ES>pt-BR", "source": "packages/ink-core/src/apertium.ts: apertium.org's APy translates spa|por and por|spa"},
+    {"pair": "pt-BR>es-ES", "source": "packages/ink-core/src/apertium.ts: apertium.org's APy translates spa|por and por|spa"}
+  ],
+  "crossword": {}
+}

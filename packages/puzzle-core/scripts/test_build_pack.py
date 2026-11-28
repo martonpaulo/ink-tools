@@ -73,36 +73,23 @@ def tree(root: pathlib.Path, own_transform: bool = True) -> dict[str, pathlib.Pa
 
 
 class Cldr(unittest.TestCase):
-    def test_an_exemplar_set_reads_letters_and_strings(self):
-        self.assertEqual(p.unicode_set("[a b {ch} ñ]"), ["a", "b", "ch", "ñ"])
-
-    def test_the_plain_rules_of_a_transform_are_read_and_context_rules_skipped(self):
-        rules = p.transform_rules(OWN_TRANSFORM)
-        self.assertEqual(rules["ä"], "ae")
-        self.assertEqual(rules["Ä"], "AE")
-        self.assertNotIn("{$AE} [:Lowercase:]", rules)
-        self.assertEqual(p.transform_rules(LATIN_ASCII)["ŉ"], "n")
-
     def test_folding_keeps_the_alphabet_and_takes_the_own_transform_first(self):
         with tempfile.TemporaryDirectory() as tmp:
-            paths = tree(pathlib.Path(tmp))
-            letters = p.alphabet(paths["cldr"], CODE)
-            table = p.folding(paths["cldr"], CODE)
-        self.assertIn("Ñ", letters)
+            known = p.facts(tree(pathlib.Path(tmp))["cldr"], CODE)
+        self.assertIn("Ñ", known["languages"][CODE]["letters"])
         cases = [("niña", "NIÑA"), ("ömi", "OMI"), ("ärl", "AERL"), ("æble", "AEBLE"), ("straße", "STRASSE"),
                  ("cœur", "COEUR"), ("café", "CAFE")]
         for word, folded in cases:
             with self.subTest(word=word):
-                self.assertEqual(p.fold(word, letters, table), folded)
+                self.assertEqual(p.fold(word, CODE, known), folded)
         for word in ["a", "x1", "日本", "co-op"]:
             with self.subTest(word=word):
-                self.assertIsNone(p.fold(word, letters, table))
+                self.assertIsNone(p.fold(word, CODE, known))
 
     def test_without_an_own_transform_latin_ascii_and_the_marks_decide(self):
         with tempfile.TemporaryDirectory() as tmp:
-            paths = tree(pathlib.Path(tmp), own_transform=False)
-            letters, table = p.alphabet(paths["cldr"], CODE), p.folding(paths["cldr"], CODE)
-        self.assertEqual(p.fold("ärl", letters, table), "ARL")
+            known = p.facts(tree(pathlib.Path(tmp), own_transform=False)["cldr"], CODE)
+        self.assertEqual(p.fold("ärl", CODE, known), "ARL")
 
 
 class Pack(unittest.TestCase):

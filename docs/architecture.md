@@ -83,6 +83,15 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   the registry's item count per level, so those columns hold only what the public README may say
   ([#407](https://github.com/martonpaulo/ink-tools/issues/407)).
 
+- **The language registry** ([#500](https://github.com/martonpaulo/ink-tools/issues/500)), beside the registry of internals and apart from its
+  levels and probes: `scripts/language_registry.py` generates `registry/languages/languages.json`
+  from the Unicode CLDR release `registry/languages/sources.json` pins (each language's ISO 639-3
+  code, likely script and region, grid letters, and its own folding), with `exceptions.json`, the
+  facts no CLDR file gives, each with its source. The `registry` gate fails when the committed file
+  differs from a fresh generation. The readers fold and convert codes the same way and run
+  `registry/languages/cases.json`: TypeScript `@ink-tools/ink-core/languages` (its data generated as
+  `src/languages.generated.ts`) and Python `scripts/languages.py`. Inside, a language is BCP 47
+  (`pt-BR`); a translation direction's key is `es-ES>pt-BR`.
 - **Target: one registry of internals, four adapters** ([#294](https://github.com/martonpaulo/ink-tools/issues/294)). Every internal lives in one
   registry, data and not code, with one JSON Schema: per item its level, impact, owning tool,
   reason when below level 1, evidence (the vendor class or method, app versionCode, date), the path

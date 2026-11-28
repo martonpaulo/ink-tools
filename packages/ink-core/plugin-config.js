@@ -23,12 +23,14 @@ exports.metro = part => ({
 });
 
 /**
- * The Jest moduleNameMapper part: the package, and its conversion engine's own entry (#305), which
- * Metro finds as `conversion.ts` at the package root by itself.
+ * The Jest moduleNameMapper part: the package, its conversion engine's own entry (#305), which
+ * Metro finds as `conversion.ts` at the package root by itself, and the language registry's (#500).
  */
 exports.jestModuleNameMapper = {
   [`^${NAME}$`]: SOURCE,
   [`^${NAME}/conversion$`]: path.join(SOURCE, 'conversion'),
+  // The language registry's reader (#500), which Metro finds as `languages.ts` at the package root.
+  [`^${NAME}/languages$`]: path.join(SOURCE, 'languages'),
 };
 
 /** The synthetic strokes the engine's tests write, for a plugin's tests of it (#305). */
