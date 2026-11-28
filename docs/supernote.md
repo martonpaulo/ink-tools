@@ -42,6 +42,10 @@ the Nomad) or `getDeviceType()`, as `inkctl status` does ([#284](https://github.
   (0, 2440) after [measured, `user_rotation` 1 then 0, 2026-11-25,
   [#244](https://github.com/martonpaulo/ink-tools/issues/244)].
 - A page has the same 1920 x 2560 size; `getPageSize` answers it [measured, build 0.1.0 (3)].
+- The note's toolbar is a band 116 px wide at the left of the page, in portrait (y 0 to 1843) and in
+  landscape (y 0 to 1557 of 1920). Writing Posture (Settings › Display & Input › Gestures) does not
+  move it: set to the left-hand picture, the toolbar stayed at x 0 to 116. The band on the right is
+  not measured [measured, Manta, 2026-11-28, [#577](https://github.com/martonpaulo/ink-tools/issues/577)].
 - The note's page bar covers a portrait page's bottom 116 px, from y 2444 of 2560 (about 9.8 mm): a
   Puzzles footer line drawn lower lost the bottom of its «g», «9» and «,» under it [measured,
   Manta, Puzzles 0.1.0 beta 1, 2026-11-27, [#553](https://github.com/martonpaulo/ink-tools/issues/553)].
@@ -953,6 +957,11 @@ Firmware `Chauvet.E103.2610191001.2559`; detail and file-and-line evidence in
     each resumed activity (6 ms), but only when asked, so it needs a timer.
   - A `uiautomator` dump (`inkctl snapshot`, also `inkctl screen`) restarts the service
     (`onServiceConnected` again); `adb exec-out screencap -p` does not.
+  - The dump is killed («Killed», from `inkctl snapshot` and `adb exec-out uiautomator dump`) once
+    Settings has been open for about an hour with 200 to 300 MB of free RAM: Settings stays in memory
+    after its ×. `am force-stop com.ratta.settings`, `com.ratta.supernote.knowledge` and
+    `com.ratta.supernote.calendar` brought the read back; `screencap` kept working
+    [measured, Manta, 2026-11-28, [#577](https://github.com/martonpaulo/ink-tools/issues/577)].
   - NOTE's toolbar buttons are nodes with stable content descriptions (`pen_1`, `eraser_1`,
     `lasso`, …), not clickable: `ACTION_CLICK` fails, a `dispatchGesture` tap at the centre selects
     the tool in about 100 ms. No node shows which tool is selected. With the tablet asleep the
