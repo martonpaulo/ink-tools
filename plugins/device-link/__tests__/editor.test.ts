@@ -73,6 +73,7 @@ describe('operations on a closed note go through the file API by path', () => {
     await editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 4, rect: RECT}]});
     expect(calls).toEqual([
       `getElement ${JSON.stringify([NOTE, 0, 4])}`,
+      `getElement ${JSON.stringify([NOTE, 0, 4])}`,
       `place ${JSON.stringify([{type: 500}, 0, RECT])}`,
       `modifyByPath ${JSON.stringify([NOTE, 0, [{type: 500, placed: true}]])}`,
     ]);
@@ -82,6 +83,7 @@ describe('operations on a closed note go through the file API by path', () => {
     const {fake, calls} = host();
     const answer = await editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 4, rect: RECT, text: 'New\nline', fontSize: 48}]});
     expect(calls).toEqual([
+      `getElement ${JSON.stringify([NOTE, 0, 4])}`,
       `getElement ${JSON.stringify([NOTE, 0, 4])}`,
       `place ${JSON.stringify([{type: 500}, 0, RECT])}`,
       `retext ${JSON.stringify([{type: 500, placed: true}, 'New\nline', 48])}`,
@@ -116,6 +118,31 @@ describe('operations on a closed note go through the file API by path', () => {
     const refused = await refusal(editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 0, num: 5, rect: RECT}]}));
     expect(refused.detail).toMatchObject({refusal: 'bad-request', step: 1});
     expect(calls).toEqual([]);
+  });
+
+  it('refuses a picture move with no file before writing the operations ahead of it (#470)', async () => {
+    const matrix = [0, 1, -1, 0, 2000, 0];
+    const {fake, calls} = host(OTHER, {getElement: async (...args) => ok({type: args[2] === 508 ? 200 : 0})});
+    const refused = await refusal(
+      editAction(fake)({path: NOTE, ops: [{op: 'transformElements', page: 0, nums: [444], matrix}, {op: 'modifyElements', page: 0, num: 508, rect: RECT}]}),
+    );
+    expect(refused.message).toContain('operation 2 (modifyElements)');
+    expect(refused.message).toContain('nothing was written');
+    expect(refused.detail).toMatchObject({refusal: 'bad-request', step: 2, written: 0});
+    expect(calls.filter(call => /^(transform|modify|insert|delete)/.test(call))).toEqual([]);
+  });
+
+  it('names the operations written when a host call fails on operation N (#470)', async () => {
+    const {fake} = host(OTHER, {deleteByPath: async () => fail(7, 'no space')});
+    const refused = await refusal(
+      editAction(fake)({
+        path: NOTE,
+        ops: [{op: 'insertElements', page: 0, elements: [text]}, {op: 'insertElements', page: 0, elements: [text]}, {op: 'deleteElements', page: 0, nums: [1]}],
+      }),
+    );
+    expect(refused.message).toContain('operation 3 (deleteElements)');
+    expect(refused.message).toContain('operations 1 to 2 were written');
+    expect(refused.detail).toMatchObject({step: 3, written: 2});
   });
 
   it('transforms each stroke, read by its number, then modifies them in one call (#326)', async () => {
@@ -209,7 +236,7 @@ describe('operations on the open note use the open-note calls', () => {
     const {fake, calls} = host(NOTE);
     await editAction(fake)({path: NOTE, ops: [{op: 'modifyElements', page: 1, num: 2, rect: RECT}, {op: 'removePage', page: 2}]});
     expect(calls[0]).toBe('save []');
-    expect(calls.slice(1).map(call => call.split(' ')[0])).toEqual(['getElement', 'place', 'modifyOpen', 'removePage']);
+    expect(calls.slice(1).map(call => call.split(' ')[0])).toEqual(['getElement', 'getElement', 'place', 'modifyOpen', 'removePage']);
   });
 
   it('saves first for a keyword, which goes by path on the open note too (#346)', async () => {
@@ -296,7 +323,7 @@ describe('each refusal is named, with the open note', () => {
       }),
     );
     expect(refused.code).toBe(1);
-    expect(refused.message).toBe('tablet-refused: operation 2 (insertPage): insertNotePage: bad template');
+    expect(refused.message).toBe('tablet-refused: operation 2 (insertPage): insertNotePage: bad template; operation 1 was written');
     expect(refused.detail).toMatchObject({refusal: 'tablet-refused', step: 2, sdkCode: 802, results: [{ok: true, op: 'deleteElements'}]});
     expect(calls.some(call => call.startsWith('removePage'))).toBe(false);
   });

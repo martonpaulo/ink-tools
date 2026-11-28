@@ -312,7 +312,7 @@ export function parseRequest(args: Record<string, unknown>): EditRequest {
 
 /** A step that did not apply: its refusal's name and, for an SDK error, the code it gave. */
 class Stopped extends Error {
-  constructor(readonly refusal: string, message: string, readonly sdkCode?: number) {
+  constructor(readonly refusal: string, message: string, readonly sdkCode?: number, readonly step?: number) {
     super(message);
   }
 }
@@ -410,6 +410,34 @@ async function movePicture(
   return {page, num, rect, replaced: true};
 }
 
+/**
+ * Every refusal that a read of the note can foretell, before any write (#470): a transform of an
+ * element that is no stroke, a modify of a text box that is none, a picture moved without its file.
+ * An element a read cannot find is left to its own step, since an earlier operation may add it.
+ */
+async function precheck(ops: Operation[], path: string, host: EditHost): Promise<void> {
+  for (const [index, operation] of ops.entries()) {
+    const refuse = (message: string) => new Stopped(REFUSAL.badRequest, message, undefined, index + 1);
+    if (operation.op === 'transformElements') {
+      for (const num of operation.nums) {
+        const element = await host.getElement(path, operation.page, num);
+        if (element.ok && (element.value as {type?: number}).type !== STROKE_TYPE) {
+          throw refuse(`element ${num} is not a stroke: a picture or a text box is sent a rect`);
+        }
+      }
+    } else if (operation.op === 'modifyElements') {
+      const element = await host.getElement(path, operation.page, operation.num);
+      const type = element.ok ? (element.value as {type?: number}).type : undefined;
+      if (type === PICTURE_TYPE && !operation.file) {
+        throw refuse(`element ${operation.num} is a picture: a picture moves only with its file`);
+      }
+      if (type !== undefined && type !== PICTURE_TYPE && operation.text && type !== TEXT_TYPE) {
+        throw refuse(`element ${operation.num} is not a text box: only a text box takes a text`);
+      }
+    }
+  }
+}
+
 /** The open note's path, or null when none is open or the call failed. */
 async function openNotePath(host: EditHost): Promise<string | null> {
   const open = await host.openNote();
@@ -446,6 +474,7 @@ export function editAction(host: EditHost, now: () => number = Date.now) {
           throw new Stopped(REFUSAL.saveFailed, 'saveCurrentNote did not save the open note; nothing was applied');
         }
       }
+      await precheck(ops, path, host);
       for (const operation of ops) {
         const started = now();
         const result = await runOne(operation, path, open, host);
@@ -455,9 +484,13 @@ export function editAction(host: EditHost, now: () => number = Date.now) {
       if (!(error instanceof Stopped)) {
         throw error;
       }
-      const detail = {refusal: error.refusal, openNote, path, step: results.length + 1, results, sdkCode: error.sdkCode};
+      const step = error.step ?? results.length + 1;
+      const written = error.step === undefined ? results.length : 0;
+      const detail = {refusal: error.refusal, openNote, path, step, written, results, sdkCode: error.sdkCode};
       const code = error.refusal === REFUSAL.tabletRefused ? ACTION_FAILED : undefined;
-      throw new ActionRefused(`${error.refusal}: operation ${results.length + 1} (${ops[results.length].op}): ${error.message}`, code, detail);
+      // Name what the tablet kept, so the editor undoes only the rest (#470).
+      const kept = error.step !== undefined ? '; nothing was written' : written > 0 ? (written === 1 ? '; operation 1 was written' : `; operations 1 to ${written} were written`) : '';
+      throw new ActionRefused(`${error.refusal}: operation ${step} (${ops[step - 1].op}): ${error.message}${kept}`, code, detail);
     }
     return {line: `DeviceLink: edit: ${results.length} operations applied to ${path}`, path, open, openNote, results};
   };
