@@ -56,4 +56,22 @@ import Testing
             return
         }
     }
+
+    /// A page one render window drew stays drawn for the next window of the same note, so a fresh
+    /// window waits for no draw; the app still drops a page far from the view (#319).
+    @Test func aRenderKeepsTheDrawnPagesTheAppWouldDrop() async throws {
+        let note = try Fixtures.note("content.note")
+        #expect(note.pages.count >= 4)
+        for keeps in [true, false] {
+            let pages = PageImages(note: note)
+            pages.keepsPages = keeps
+            await pages.show([0])
+            await pages.show([3])
+            guard case .ready = pages.page(0) else {
+                #expect(!keeps, "page 0 was dropped though the renders keep pages")
+                continue
+            }
+            #expect(keeps, "page 0 stayed drawn though the app drops it")
+        }
+    }
 }

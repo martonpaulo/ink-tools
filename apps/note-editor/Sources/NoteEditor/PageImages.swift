@@ -93,6 +93,13 @@ final class PageImages {
     /// reads «loading» whenever the capture is made (#472).
     @ObservationIgnored var holdsDraws = false
 
+    /// Set by the renders so a page one window drew stays drawn for the next: `show` drops no page,
+    /// and a fresh window of the same note finds its pages drawn and waits for nothing (#472).
+    @ObservationIgnored var keepsPages = PageImages.rendering
+
+    /// True in the renders' process: every `PageImages` made keeps its pages.
+    nonisolated(unsafe) static var rendering = false
+
     func page(_ index: Int) -> State { pages[index] ?? .loading }
     func thumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar) -> State { thumbnails[size]?[index] ?? .loading }
 
@@ -117,7 +124,7 @@ final class PageImages {
     func show(_ visible: Set<Int>) async {
         guard let first = visible.min(), let last = visible.max() else { return }
         let kept = max(first - 1, 0)...min(last + 1, note.pages.count - 1)
-        for index in pages.keys where !kept.contains(index) {
+        for index in pages.keys where !kept.contains(index) && !keepsPages {
             pages[index] = nil
         }
         for index in visible.sorted() + [first - 1, last + 1] where kept.contains(index) {

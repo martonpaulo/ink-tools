@@ -27,7 +27,10 @@ final class RenderTests {
     /// The fake inkctl scripts and the copies a render makes, removed when the suite ends.
     let scratch = FileManager.default.temporaryDirectory.appending(path: "render-tests-\(UUID().uuidString)")
 
+    init() { PageImages.rendering = true }
+
     deinit {
+        PageImages.rendering = false
         try? FileManager.default.removeItem(at: scratch)
     }
 
@@ -653,13 +656,19 @@ final class RenderTests {
 /// A wait is drawn held (`PageImages.holdsDraws`), a page is caught once this window's draws, resamples
 /// and decodes have ended (`PageImages.running`, at most 5 s), and the sync line reads «3 s» for a second.
 ///
+/// A render's cost is its windows: each takes about 0.8 s to lay out and draw, and a window with a
+/// toolbar is drawn at least twice (`settled`). A page one window drew stays drawn for the next
+/// (`PageImages.keepsPages`), so a fresh window waits for no draw: `make renders` ran 926 s with the
+/// pages dropped and 506-666 s with them kept, and the first windows of the process are three
+/// throwaway ones (`warmUps`), as they draw a grey scroll edge band behind the toolbar.
+///
 /// What cannot be fixed here, the toolbar's Liquid Glass: it samples what the window server composites,
-/// so about one window in 15 draws a capsule or the overflow button blank, and the first windows of a
-/// process draw a grey scroll edge band behind the toolbar that later ones do not, whatever the wait. A
-/// state can repeat in two fresh windows in a row, so `settled` (a capture of a window with a toolbar
-/// is kept once a fresh window draws it again) lowers the chance and does not remove it. A render that
-/// never repeats, or was still drawing after 5 s, is named in `unsettled.txt` beside the renders. Judge
-/// the toolbar band (the top 52 points beside the sidebar) of no render by one run alone.
+/// so about one window in 15 draws a capsule or the overflow button blank, whatever the wait. A state
+/// can repeat in two fresh windows in a row, so `settled` (a capture of a window with a toolbar is kept
+/// once a fresh window draws it again) lowers the chance and does not remove it. A render that never
+/// repeats, or was still drawing after 5 s, is named in `unsettled.txt` beside the renders. Judge the
+/// toolbar band (the top 52 points beside the sidebar) of no render by one run alone. The marks of
+/// «find-matches» moved by a pixel between two runs of the same code, cause not found.
 @MainActor
 final class OffscreenWindow: NSWindow {
     override var backingScaleFactor: CGFloat { 1 }
@@ -688,6 +697,8 @@ final class OffscreenWindow: NSWindow {
     /// Whether a window is being captured: one at a time, so the wait for `PageImages.running`
     /// counts this window's draws and no other test's (`PageImages.captureScope`).
     private static var capturing = false
+    private static var warmedUp = false
+    private static let warmUps = 3
 
     static func capture(of view: AnyView, size: CGSize, dark: Bool) async throws -> Capture {
         while capturing {
@@ -696,6 +707,15 @@ final class OffscreenWindow: NSWindow {
         }
         capturing = true
         defer { capturing = false }
+        if !warmedUp {
+            // The first windows of a process draw a grey band behind the toolbar that later ones do not:
+            // three throwaway windows of the first view go first, so no kept render is one of them (#472).
+            warmedUp = true
+            for _ in 0..<warmUps {
+                PageImages.captureScope += 1
+                _ = try await captureNow(of: view, size: size, dark: dark)
+            }
+        }
         PageImages.captureScope += 1
         return try await captureNow(of: view, size: size, dark: dark)
     }
