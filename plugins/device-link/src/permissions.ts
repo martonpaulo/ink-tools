@@ -24,6 +24,13 @@ export const NEEDED = [
   PERMISSION_FILE_DELETE,
 ] as const;
 
+/**
+ * The permissions a refusal does not stop: the delete only removes the copy a long received text
+ * saved beside the note, so a person who refuses it still sends and receives, and the copy stays
+ * (tablet row 141, #593).
+ */
+const OPTIONAL: readonly string[] = [PERMISSION_FILE_DELETE];
+
 export type PermissionDeps = {
   has: typeof hasPermission;
   request: typeof requestPermission;
@@ -53,7 +60,7 @@ export async function ensurePermissions(
         ? `requestPermission ${permission}: ${asked.value}`
         : `requestPermission ${permission} failed: ${asked.code} ${asked.message}`,
     );
-    if (!(asked.ok && isGranted(asked.value))) {
+    if (!(asked.ok && isGranted(asked.value)) && !OPTIONAL.includes(permission)) {
       return permission;
     }
   }

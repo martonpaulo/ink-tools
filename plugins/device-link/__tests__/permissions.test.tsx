@@ -53,6 +53,12 @@ test.each([0, -1])('an answer of %p is a refusal that stops the asking', async a
   expect(d.request).toHaveBeenCalledTimes(1);
 });
 
+test('a refused delete permission stops nothing: the text copy only stays (#593)', async () => {
+  const d = deps(['plugin.permission.INTERNET', 'plugin.permission.FILE:READ', 'plugin.permission.FILE:WRITE'], 0);
+  await expect(ensurePermissions(d)).resolves.toBeNull();
+  expect((d.request as jest.Mock).mock.calls).toEqual([['plugin.permission.FILE:DELETE', copy.permissionReason]]);
+});
+
 test('a failed hasPermission is asked, never taken as granted', async () => {
   const d = deps([]);
   d.has = jest.fn(async () => fail(-1, 'host'));
