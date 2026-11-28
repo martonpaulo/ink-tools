@@ -26,3 +26,11 @@ Changed: written in Swift; grey output only; the old `SN_FILE_ASA_` format, page
 and the `SN_ASA_COMPRESS` encoding are not read; a page without `LAYERINFO` shows every layer, where
 `supernotelib` shows only `MARK` layers; the background's empty pixels stay white 255; a run past
 the page's pixel count fails at once.
+
+## adb, for Advanced mode (not shipped yet)
+
+No adb binary ships yet. When Advanced mode bundles one ([#498](https://github.com/martonpaulo/ink-tools/issues/498)), it is built from
+AOSP source, never Google's platform-tools binary, whose SDK licence forbids redistribution; this
+file then gets one row per part it links, and the bundle carries the licence and `NOTICE` texts,
+libusb (LGPL-2.1) as its own dynamic library, and the list of changed files. The check and the
+list: [`docs/research/2026-11-adb-bundling-licence.md`](../../docs/research/2026-11-adb-bundling-licence.md).
