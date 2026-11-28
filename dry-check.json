@@ -166,14 +166,14 @@
     "owner": "plugins/device-link/native/src/com/relay/localsend/Protocol.java",
     "other": "cli/inkctl/src/inkctl",
     "pattern": "/api/localsend/v2",
-    "golden": "plugins/device-link/src/localsend/protocol.json"
+    "golden": "plugins/device-link/src/localsend/localsend-golden.json"
    },
    {
     "rule": "LocalSend JSON message limit: 64 KiB",
     "owner": "plugins/device-link/native/src/com/relay/localsend/Protocol.java",
     "other": "plugins/device-link/src/localsend",
     "pattern": "MAX_\\w*BYTES = 64 \\* 1024",
-    "golden": "plugins/device-link/src/localsend/protocol.json"
+    "golden": "plugins/device-link/src/localsend/localsend-golden.json"
    },
    {
     "rule": "Account Sync native module name: BridgeFiles",
@@ -215,7 +215,7 @@
     "owner": "cli/inkctl/src/inkctl",
     "other": "plugins/device-link/src/localsend",
     "pattern": "53317",
-    "golden": "plugins/device-link/src/localsend/protocol.json"
+    "golden": "plugins/device-link/src/localsend/localsend-golden.json"
    },
    {
     "rule": "A failure log's word for a firmware or app version it could not read: unread",

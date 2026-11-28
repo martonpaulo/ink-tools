@@ -7,10 +7,11 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "validate": "npm run lint && npm run typecheck && npm test && npm run test:native",
+    "validate": "npm run lint && npm run typecheck && npm test && npm run test:bundle && npm run test:native",
     "start": "react-native start",
     "build": "bash buildPlugin.sh && node scripts/native-build.cjs --package",
-    "test:native": "node scripts/native-build.cjs --test"
+    "test:native": "node scripts/native-build.cjs --test",
+    "test:bundle": "node scripts/bundle-check.cjs"
   },
   "dependencies": {
     "react": "19.0.0",

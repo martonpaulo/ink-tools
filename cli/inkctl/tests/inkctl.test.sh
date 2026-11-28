@@ -2574,8 +2574,8 @@ ADB_CONNECT_FAILS=1 run status >/dev/null 2>&1
 check "an unreachable tablet gets no signal" "$?$(signals | wc -l | tr -d ' ')" "30"
 reset_device
 
-# LocalSend's port and API base have one golden file, Device Link's protocol.json (#295).
-localsend_golden="$repo_root/../../plugins/device-link/src/localsend/protocol.json"
+# LocalSend's port and API base have one golden file, Device Link's localsend-golden.json (#295).
+localsend_golden="$repo_root/../../plugins/device-link/src/localsend/localsend-golden.json"
 check "inkctl's LocalSend port and API base are the golden ones" "$(python3 -c 'import json,re,sys; g=json.load(open(sys.argv[1])); s=open(sys.argv[2]).read(); print(int(re.search(r"^LOCALSEND_PORT = (\d+)", s, re.M).group(1)) == g["port"], re.search(r"^LOCALSEND_INFO = \"([^\"]+)/info\"", s, re.M).group(1) == g["apiBase"])' "$localsend_golden" "$repo_root/src/inkctl")" "True True"
 
 check "no test reached the real browser opener" "$([ -f "$work/real-browser-reached" ] && echo reached || echo never)" "never"

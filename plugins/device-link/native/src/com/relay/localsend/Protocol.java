@@ -2,7 +2,7 @@ package com.relay.localsend;
 
 /**
  * The LocalSend values Java shares with the TypeScript protocol module and inkctl (#295). Their one
- * golden file is `src/localsend/protocol.json`, which `ProtocolTest` reads. Pure Java.
+ * golden file is `src/localsend/localsend-golden.json`, which `ProtocolTest` reads. Pure Java.
  */
 public final class Protocol {
   /** The path every LocalSend v2 route starts with. */

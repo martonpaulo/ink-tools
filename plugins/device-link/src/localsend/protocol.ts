@@ -4,9 +4,9 @@
  * untrusted and is checked here before use.
  *
  * Protocol: https://github.com/localsend/protocol (v2.1). The port, the API base and the message
- * limit come from `protocol.json`, the golden file the Java tests and inkctl's test read too (#295).
+ * limit come from `localsend-golden.json`, the golden file the Java tests and inkctl's test read too (#295).
  */
-import golden from './protocol.json';
+import golden from './localsend-golden.json';
 
 /** The LocalSend port and multicast group every receiver listens on by default. */
 export const LOCALSEND_PORT = golden.port;

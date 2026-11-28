@@ -13,7 +13,7 @@ import case_check  # noqa: E402
 class Collisions(unittest.TestCase):
     def test_an_ordinary_tree_passes(self):
         self.assertEqual(case_check.collisions([
-            "src/EditorView.tsx", "src/editor.ts", "src/a.ts", "src/a.test.ts", "src/b.ts", "src/b.tsx", "README.md",
+            "src/EditorView.tsx", "src/editor.ts", "src/a.ts", "src/a.test.ts", "src/b.ts", "src/c.d.ts", "src/c.json", "README.md",
         ]), [])
 
     def test_files_equal_once_lowercased_fail(self):
@@ -27,6 +27,23 @@ class Collisions(unittest.TestCase):
         """#226: `./src/Editor` resolved to editor.ts on the owner's Mac."""
         self.assertEqual(case_check.collisions(["src/Editor.tsx", "src/editor.ts"]),
                          [("module", "src/Editor.tsx", "src/editor.ts")])
+
+    def test_a_json_file_beside_a_module_of_its_name_fails(self):
+        """#586: Metro took `./protocol` for protocol.json while Jest took protocol.ts."""
+        self.assertEqual(case_check.collisions(["plugins/device-link/src/localsend/protocol.json",
+                                                 "plugins/device-link/src/localsend/protocol.ts"]),
+                         [("module", "plugins/device-link/src/localsend/protocol.json",
+                           "plugins/device-link/src/localsend/protocol.ts")])
+
+    def test_modules_of_one_name_and_two_extensions_fail(self):
+        self.assertEqual(case_check.collisions(["src/b.ts", "src/b.tsx"]),
+                         [("module", "src/b.ts", "src/b.tsx")])
+
+    def test_a_json_file_of_another_case_passes(self):
+        self.assertEqual(case_check.collisions(["plugins/x/App.tsx", "plugins/x/app.json"]), [])
+
+    def test_the_same_name_in_two_folders_passes(self):
+        self.assertEqual(case_check.collisions(["a/protocol.json", "b/protocol.ts"]), [])
 
     def test_reads_only_tracked_files(self):
         with tempfile.TemporaryDirectory() as folder:

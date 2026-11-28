@@ -8,12 +8,12 @@ import java.util.regex.Pattern;
 
 /**
  * Plain JVM test, no framework: run by `npm run test:native` from the plugin folder. The Java side
- * of `src/localsend/protocol.json`, the golden file protocol.ts and inkctl read too (#295).
+ * of `src/localsend/localsend-golden.json`, the golden file protocol.ts and inkctl read too (#295).
  */
 public final class ProtocolTest {
   public static void main(String[] args) throws Exception {
     String golden =
-        new String(Files.readAllBytes(Paths.get("src/localsend/protocol.json")), StandardCharsets.UTF_8);
+        new String(Files.readAllBytes(Paths.get("src/localsend/localsend-golden.json")), StandardCharsets.UTF_8);
     check(Protocol.API_BASE.equals(field(golden, "apiBase")), "the API base is the golden one");
     check(Receiver.BASE.equals(Protocol.API_BASE + "/"), "the receiver routes under the API base");
     check(
@@ -32,7 +32,7 @@ public final class ProtocolTest {
     Matcher found =
         Pattern.compile("\"" + name + "\"\\s*:\\s*\"?([^\",}\\s]+)\"?").matcher(json);
     if (!found.find()) {
-      throw new AssertionError("protocol.json has no " + name);
+      throw new AssertionError("localsend-golden.json has no " + name);
     }
     return found.group(1);
   }

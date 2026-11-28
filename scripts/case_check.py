@@ -8,8 +8,11 @@ macOS and Windows disks ignore case, so the owner's Mac sees one file where Linu
 
 - `path`: two tracked files or folders equal once lowercased (`Docs/a.md` and `docs/b.md` too);
 - `module`: two script modules in one folder (`.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`) whose
-  names are equal once lowercased and stripped of the extension, since an import without one, such
-  as `./src/Editor`, may resolve to either.
+  names are equal once lowercased and stripped of the extension, or a `.json` file and a script
+  module of the very same name, since an import without an extension, such as `./src/Editor` or
+  `./protocol`, may resolve to either: Jest and Metro try the extensions in different orders (#586:
+  `protocol.json` shadowed `protocol.ts` in the device bundle while the tests passed), so a pair of
+  the same case fails too, `a.ts` beside `a.tsx` included. `App.tsx` beside `app.json` is no pair.
 
 Reads `git ls-files`, so untracked and ignored files never count. Prints one `kind: a <-> b` line
 per pair. Exit 0 with none, 1 with pairs, 2 on a bad root.
@@ -42,14 +45,19 @@ def collisions(paths):
         pure = PurePosixPath(path)
         if pure.suffix in MODULE_SUFFIXES:
             groups.setdefault(("module", str(pure.with_suffix("")).lower()), []).append(path)
+    tracked_paths = set(paths)
+    for path in paths:
+        pure = PurePosixPath(path)
+        if pure.suffix == ".json":
+            for suffix in MODULE_SUFFIXES:
+                if str(pure.with_suffix(suffix)) in tracked_paths:
+                    groups.setdefault(("module", str(pure.with_suffix(""))), []).extend([path, str(pure.with_suffix(suffix))])
     for (kind, _key), members in groups.items():
         members = sorted(set(members))
         for index, first in enumerate(members):
             for second in members[index + 1:]:
                 if kind == "module" and first.lower() == second.lower():
                     continue  # already a `path` pair
-                if kind == "module" and PurePosixPath(first).with_suffix("") == PurePosixPath(second).with_suffix(""):
-                    continue  # `a.ts` beside `a.tsx`: same case, an ordinary pair
                 pairs.add((kind, first, second))
     return sorted(pairs)
 
