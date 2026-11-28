@@ -102,6 +102,10 @@ export const copy = {
   'press.failedTitle': (edit: string) => `${edit} did not work`,
   'page.failedTitle': 'The page could not be read',
   'press.failedReason': 'Close, then press the edit again.',
+  /** The Error state when the pen marks of Crop or Erase could not be deleted (#556). */
+  'press.guideKeptTitle': (edit: string) => `${edit} changed nothing`,
+  'press.guideKept':
+    'The tablet did not let Image Editing delete the pen marks drawn on the picture, so the picture and the marks stay as they were.',
   /** The toast of a page-wide press (#140). */
   'page.done': (edited: number, pictures: number) =>
     pictures === 0

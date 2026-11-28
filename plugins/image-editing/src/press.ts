@@ -136,6 +136,13 @@ function failedProblem(what: string): Problem {
   return {what, reason: copy['press.failedReason']};
 }
 
+/** The Error state of a failed press: its plain cause when known (#556), else what failed. */
+function pressProblem(name: string, done: Extract<Done, {kind: 'failed'}>): Problem {
+  return done.cause === 'guide-kept'
+    ? {what: copy['press.guideKeptTitle'](name), reason: copy['press.guideKept']}
+    : failedProblem(copy['press.failedTitle'](name));
+}
+
 /** Runs `edit`'s press; the value is the edit's outcome, or null when a permission was missing. */
 export async function pressEdit(
   edit: EditDefinition,
@@ -164,7 +171,7 @@ export async function pressEdit(
   const reason = reasonOf(edit.name, done);
   if (done.kind === 'failed' && !NO_FILE_PERMISSION.test(done.why)) {
     deps.log(`${edit.id}: failed: ${done.why}`);
-    deps.fail(failedProblem(copy['press.failedTitle'](edit.name)));
+    deps.fail(pressProblem(edit.name, done));
   } else if (reason) {
     deps.toast(reason);
   }

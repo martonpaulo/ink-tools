@@ -4,7 +4,8 @@ import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {WorkingStrip} from '@ink-tools/ui-kit';
 import {pressables, quietWorking, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {copy} from '../src/copy';
-import {GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE} from '../src/crop';
+import {CropDeps, GUIDE_OUTSIDE, NO_GUIDE, NOT_PICTURE_AND_GUIDE, runCrop} from '../src/crop';
+import {fail, ok, PICTURE_TYPE, STROKE_TYPE} from '@ink-tools/sn-adapter/official';
 import {Done, NOT_EDITED, NOT_ONE_PICTURE} from '../src/edit';
 import {MARKS_OUTSIDE, NO_MARKS, NOT_PICTURE_AND_MARKS} from '../src/erase';
 import {EDITS} from '../src/edits';
@@ -102,4 +103,41 @@ test('a press that failed on the tablet shows the Error state with its reason an
   expect(
     pressables(tree.root).length,
   ).toBeGreaterThan(0);
+});
+
+test('a Crop whose guide the host refuses to delete (106) runs no edit and says why in plain words (#556)', async () => {
+  const crop = jest.fn();
+  const host: CropDeps = {
+    lassoed: async () =>
+      ok([
+        {type: PICTURE_TYPE, numInPage: 1, picture: {rect: {left: 200, top: 300, right: 500, bottom: 500}}},
+        {type: STROKE_TYPE, numInPage: 2},
+      ]),
+    notePath: async () => ok('/Note/a.note'),
+    pageNum: async () => ok(0),
+    pageSize: async () => ok({width: 1920, height: 2560}),
+    points: async () => ok([{x: 250, y: 330}, {x: 450, y: 470}]),
+    range: async () => ok({maxX: 21632, maxY: 16224, display: {width: 1920, height: 2560}}),
+    remove: async () => fail(106, 'Invalid API parameters'),
+    recycle: async () => undefined,
+    lasso: jest.fn(async () => ok(true)),
+    crop,
+    log: () => undefined,
+  };
+  const working = quietWorking({failed: copy['working.failed'], timeout: copy['working.timeout']});
+  const {d} = deps([], {kind: 'nothing', why: ''});
+  d.edit = () => runCrop(host);
+  d.fail = problem => working.hold(problem);
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = renderer.create(<WorkingStrip working={working} />);
+  });
+  await act(async () => {
+    await pressEdit(EDITS.find(edit => edit.id === 'crop')!, d);
+  });
+  expect(crop).not.toHaveBeenCalled();
+  expect(host.lasso).not.toHaveBeenCalled();
+  const shown = shownTexts(tree.root);
+  expect(shown).toEqual([copy['press.guideKeptTitle']('Crop'), copy['press.guideKept']]);
+  expect(shown.join(' ')).not.toMatch(/did not work|Close, then/);
 });

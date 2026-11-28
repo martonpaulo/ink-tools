@@ -198,9 +198,11 @@ async function guided(
   }
   const removed = await deps.remove(nums, page.value);
   if (!removed.ok || removed.value === false) {
+    // No edit runs: the picture and its guide stay as they were, and the view says so (#556).
     return {
       kind: 'failed',
       why: removed.ok ? 'the guide was not deleted' : why('delete the guide', removed),
+      cause: 'guide-kept',
     };
   }
   const relassoed = await deps.lasso(split.picture);

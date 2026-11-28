@@ -110,6 +110,7 @@ test('marks that cannot be deleted stop the press before the picture changes', a
   expect(await runErase(w.deps)).toEqual({
     kind: 'failed',
     why: `delete the guide: ${THROWN_CODE} refused`,
+    cause: 'guide-kept',
   });
   expect(w.calls).toEqual([]);
 });

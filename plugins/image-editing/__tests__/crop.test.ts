@@ -141,6 +141,7 @@ test('a guide that cannot be deleted stops the press before the picture changes'
   expect(await runCrop(w.deps)).toEqual({
     kind: 'failed',
     why: `delete the guide: ${THROWN_CODE} refused`,
+    cause: 'guide-kept',
   });
   expect(w.calls).toEqual([]);
 });

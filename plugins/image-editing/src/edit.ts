@@ -138,7 +138,13 @@ export type Done =
       path?: string;
     }
   | {kind: 'nothing'; why: string}
-  | {kind: 'failed'; why: string};
+  | {kind: 'failed'; why: string; cause?: FailureCause};
+
+/**
+ * A failure the view explains in plain words instead of «did not work»: `guide-kept`, the pen
+ * guide of Crop or Erase was not deleted, so no edit ran and the page is as it was (#556).
+ */
+export type FailureCause = 'guide-kept';
 
 const PIXEL_EDITS: Record<string, PixelEdit> = {
   enhance: 'enhance',
