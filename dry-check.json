@@ -603,7 +603,6 @@
   "constants": {
    "counts": {
     "apps/handwriting-language/scripts/build.cjs": 3,
-    "apps/handwriting-language/src/com/supernotetools/lingo/ButtonPlace.java": 1,
     "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java": 1,
     "apps/ink-tools-helper/scripts/build.cjs": 4,
     "apps/note-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
