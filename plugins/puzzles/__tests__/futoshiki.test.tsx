@@ -105,6 +105,7 @@ describe('the futoshiki game (#390)', () => {
         await settle();
       });
       expect(shownTexts(tree.root)).toContain(playCopy['here.preparing']);
+      expect(shownTexts(tree.root)).not.toContain('Loading…');
       expect(made).toBe(0);
       await act(async () => {
         jest.runAllTimers();

@@ -206,8 +206,8 @@ export function GameView({
    */
   const prepared = useCallback(
     async (board: PageBoard): Promise<Puzzle | null> => {
-      const kept = board.made();
-      if (kept) {return kept;}
+      const ready = board.made();
+      if (ready) {return ready;}
       setScreen({kind: 'working', text: playCopy['here.preparing']});
       await nextFrame();
       const started = Date.now();
@@ -273,7 +273,8 @@ export function GameView({
       const retry = () => {
         check(shown);
       };
-      setScreen({kind: 'working'});
+      // One wait screen per press: «Preparing the puzzle…» at once when its puzzle is still to make.
+      setScreen({kind: 'working', text: shown.made() ? undefined : playCopy['here.preparing']});
       pages.log(`${game.id}: check pressed on ${shown.code}`);
       const now = await onScreen(shown, retry);
       if (!now) {return;}
@@ -299,7 +300,7 @@ export function GameView({
       const retry = () => {
         answer(shown);
       };
-      setScreen({kind: 'working'});
+      setScreen({kind: 'working', text: shown.made() ? undefined : playCopy['here.preparing']});
       await nextFrame();
       const now = await onScreen(shown, retry);
       if (!now) {return;}
