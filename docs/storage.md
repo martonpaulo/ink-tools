@@ -1,0 +1,40 @@
+# Storage inventory
+
+Every place an Ink Tools tool keeps data on the tablet or the Mac, or downloads data, with the tool
+that owns it, its bound, its size and whether the person sees that size today
+([#485](https://github.com/martonpaulo/ink-tools/issues/485)). The rule each row follows is
+[`product.md` › Constraints](product.md#constraints): show the size, ask before a download or a
+store grows past its bound, and free it in one action.
+
+`scripts/storage_inventory.py` (gate `docs`) fails when a code file that stores data is named in no
+row's Code column, so a new place cannot appear without its row. A size reads «not measured» until a
+measurement on the Manta or the Mac fills it in.
+
+## On the tablet
+
+| Place | Owner tool | Code | Bound | Typical / largest size | Disclosed today |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| The shared folder, `.data/plugin/inktools-shared/` (registry `storage.shared-folder`) | sn-adapter, for every tool | `packages/sn-adapter/src/official/storage.ts` | none of its own: the sum of the stores in it | not measured | no: any tool's Settings will show it item by item with a button to free it ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| The language pack store, the `packs` folder of the shared folder, with its catalog | pack-store; Lasso Actions downloads | `packages/pack-store/src/store.ts` | `maxPackBytes` per pack and a free-space margin, in the package's `values.json` | not measured | yes: the size is shown and confirmed before each download, again for a new version and on a metered network ([#503](https://github.com/martonpaulo/ink-tools/issues/503)) |
+| Picture downloads of an insert (`insert-*` in the plugin's private folder) | picture-search, for Lasso Actions and Image Editing | `packages/picture-search/src/insert/insertPicture.ts`, `packages/picture-search/src/storage/files.ts`, `packages/picture-search/native/com/inktools/files/Ink2PicFilesModule.java`, `packages/picture-search/native/com/inktools/files/FileWrites.java`, `packages/picture-search/native/com/inktools/files/SafePaths.java`, `packages/picture-search/native/com/inktools/files/Registry.java` | one file per insert, removed after it | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Picture thumbnails | picture-search | `packages/picture-search/src/insert/thumbs.ts` | a file count, about 30 MB (`thumbs.ts`) | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| The picture search cache | picture-search | `packages/picture-search/src/cache.ts`, `packages/picture-search/src/storage/text.ts` | an entry count and a week's age (`cache.ts`) | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Stickers written for reuse (`EXPORT` and the Sticker import folders) | picture-search, for Lasso Actions | `packages/picture-search/src/insert/sticker.ts` | none: one file per sticker the person makes | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Settings files of the picture tools | picture-search | `packages/picture-search/src/storage/settings.ts` | one small JSON file per plugin | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Lasso Actions' inserted pictures (its pictures folder and `pictures.json`) and picks | Lasso Actions | `plugins/lasso-actions/native/com/lookup/files/LookupFilesPackage.java`, `plugins/lasso-actions/src/library.ts`, `plugins/lasso-actions/src/picks.ts` | none: one file per picture kept | not measured | in part: Settings names old folders to delete, not their size ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Account Sync's settings, secrets, sign-in drop folder and device-round file | Account Sync | `plugins/account-sync/src/settingsStore.ts`, `plugins/account-sync/src/secretStore.ts`, `plugins/account-sync/src/actions.ts` | small files, one per provider | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Device Link's TLS identity, settings, received files, pending items, rendered PDF pages and the Note Editor helper folder | Device Link | `plugins/device-link/native/src/com/relay/localsend/Identity.java`, `plugins/device-link/native/src/com/relay/localsend/Receiver.java`, `plugins/device-link/native/src/com/relay/localsend/PdfPages.java`, `plugins/device-link/native/src/com/relay/localsend/TextFiles.java`, `plugins/device-link/native/src/com/relay/localsend/RelayModule.java`, `plugins/device-link/src/native.ts`, `plugins/device-link/src/settings/device.ts`, `plugins/device-link/src/receive/pending.ts`, `plugins/device-link/src/editor/operations.ts` | a received file's size limit; pending items until placed | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Image Editing's working folder (edits, Styles previews, history) and its debug files | Image Editing | `plugins/image-editing/native/src/com/retouch/image/RetouchModule.java`, `plugins/image-editing/src/native.ts`, `plugins/image-editing/src/edit.ts`, `plugins/image-editing/src/styles.ts`, `plugins/image-editing/src/debug.ts` | previews deleted after use; debug files only while the switch is on | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Puzzles' page pictures and its kept choices | Puzzles | `plugins/puzzles/native/com/puzzles/view/PageFileModule.java`, `plugins/puzzles/src/play/pages.ts`, `plugins/puzzles/src/play/kept.ts` | one PNG per new puzzle page | not measured | no ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Smart Pen's action folder (pen tapes for inkctl) | Smart Pen | `plugins/smart-pen/src/actions.ts` | one tape per recording | not measured | no: a developer action ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |
+| Ink Tools Probe's channel and rendered pages | Ink Tools Probe (developer plugin) | `plugins/ink-tools-probe/src/helper.ts`, `plugins/ink-tools-probe/src/noteApi.ts` | one answer and one page at a time | not measured | not needed: a developer tool, not shipped to users |
+
+## On the Mac
+
+| Place | Owner tool | Code | Bound | Typical / largest size | Disclosed today |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Note Editor's Application Support folders: Backups, Pictures and From Tablet | Note Editor | `apps/note-editor/Sources/NoteEditorKit/AppFolders.swift`, `apps/note-editor/Sources/NoteEditorKit/NoteBackups.swift`, `apps/note-editor/Sources/NoteEditor/OpenFromTablet.swift`, `apps/note-editor/Sources/NoteEditor/PictureImport.swift` | none yet: one backup per save | not measured | no ([#523](https://github.com/martonpaulo/ink-tools/issues/523)) |
+| Note Editor's OCR index in Caches | Note Editor | `apps/note-editor/Sources/NoteEditor/NoteIndexer.swift`, `apps/note-editor/Sources/NoteEditorKit/NoteIndex.swift` | one file per note | not measured | no ([#523](https://github.com/martonpaulo/ink-tools/issues/523)) |
+| Note Editor's temporary files: send snapshots, the element clipboard, inkctl's error file and the helper requests | Note Editor | `apps/note-editor/Sources/NoteEditorKit/BaseSnapshots.swift`, `apps/note-editor/Sources/NoteEditorKit/ElementClipboard.swift`, `apps/note-editor/Sources/NoteEditorKit/Inkctl.swift`, `apps/note-editor/Sources/NoteEditorKit/WritePath.swift` | removed after each send or paste | not measured | no ([#523](https://github.com/martonpaulo/ink-tools/issues/523)) |
+| Files the person exports or renders to a path they choose | Note Editor, NoteFormat's tools | `apps/note-editor/Sources/NoteEditor/VectorExport.swift`, `apps/note-editor/NoteFormat/Sources/note-render/main.swift`, `apps/note-editor/NoteFormat/Sources/note-tool/main.swift` | the person's own file | the file's own size | not needed: the person picks the file |
+| inkctl's cache, `~/.cache/inkctl/` (snapshot, history, firmware watch) | inkctl | `cli/inkctl/src/inkctl` | the history grows one line per run | not measured | no: a developer tool ([#485](https://github.com/martonpaulo/ink-tools/issues/485)) |

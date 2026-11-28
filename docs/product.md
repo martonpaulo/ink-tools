@@ -104,6 +104,12 @@ plugin appears in the native Calendar, and an edit on the tablet reaches the sou
   framework file/network guard and the four plugin permissions (`FILE:READ/WRITE/DELETE`, `INTERNET`).
 - The native Calendar app reads one Google account's primary calendar only; bridge works
   around this by writing aggregated events directly through the calendar content provider.
+- Every feature that writes to disk, holds a large amount of memory or downloads data discloses it
+  ([#485](https://github.com/martonpaulo/ink-tools/issues/485)): it shows how much it uses in its
+  own Settings or status, asks before a download or before a cache grows past a stated bound, and
+  frees that space in one action. Any tool's Settings shows the shared folder's space item by item,
+  and uninstalling one tool never deletes what another uses. Every place is a row of the
+  [storage inventory](storage.md), which the `boundaries` gate keeps complete.
 
 ## Accepted evidence gaps
 
