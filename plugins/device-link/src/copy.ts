@@ -12,6 +12,13 @@ export const copy = {
   readingText: 'Reading the handwriting…',
   noText: 'No text recognized',
   cancel: 'Cancel',
+  /** «Send Selection»'s choice of text or image (#307). */
+  sendTo: (alias: string) => `To ${alias}`,
+  asImage: 'Send as image',
+  asImageHint: 'A picture of the selection instead of its text',
+  textPreview: 'Text to send',
+  textPreviewHint: 'Correct the text before you send it.',
+  send: 'Send',
   devices: 'Send to',
   /** The second line of a receiver whose alias another one shares (#307). */
   twinDevice: (model: string | undefined, tail: string) =>

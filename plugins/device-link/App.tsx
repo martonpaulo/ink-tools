@@ -18,9 +18,12 @@ import {Device} from './src/localsend/protocol';
 import {relay, Relay} from './src/native';
 import {ALIAS, noteHost, pickDeps, textDeps} from './src/run';
 import {onBackgroundSwitch, setBackground} from './src/receive/background';
-import {PickDevice, PickView} from './src/PickDevice';
+import {PickDevice, PickView, SelectionView} from './src/PickDevice';
 import {
   cancelPick,
+  chooseKind,
+  confirmChoice,
+  editText,
   onPickState,
   pickDevice,
   pickState,
@@ -154,7 +157,7 @@ export function TextView({
 
 /**
  * Relay's views: the «Loading…» strip, «Send Text», the pick of «Send Page» and «Send Selection»
- * (#307), «Receive», else Settings (#98): the LocalSend devices one search finds, one radio each
+ * (#307), a selection's choice of text or image, «Receive», else Settings (#98): the LocalSend devices one search finds, one radio each
  * (#274), the one picked listed first on each send; the title bar's × closes the view.
  */
 export default function App({
@@ -208,6 +211,20 @@ export default function App({
         devices={picking.devices}
         onPick={device => pickDevice(deps, device)}
         onClose={() => cancelPick(deps)}
+      />
+    );
+  }
+  if (picking.phase === 'reading' || picking.phase === 'choosing') {
+    const deps = pickDeps(close, toast, native);
+    return (
+      <SelectionView
+        device={picking.device}
+        kind={picking.phase === 'choosing' ? picking.kind : null}
+        text={picking.phase === 'choosing' ? picking.text : ''}
+        onKind={chooseKind}
+        onText={editText}
+        onSend={() => confirmChoice(deps)}
+        onCancel={() => cancelPick(deps)}
       />
     );
   }

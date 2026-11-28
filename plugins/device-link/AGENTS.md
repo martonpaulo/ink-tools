@@ -8,7 +8,10 @@ only what is specific here. A `CLAUDE.md` symlink points at this file.
 **Built, not yet on the device** ([#98](https://github.com/martonpaulo/supernote-tools/issues/98)): «Send Page» (sidebar) and «Send Selection» (lasso
 toolbar) send a PNG to the LocalSend device picked from a list on each send ([#307](https://github.com/martonpaulo/ink-tools/issues/307): `findForSend`,
 `src/send/pickSession.ts`, `src/PickDevice.tsx`; none found opens Settings' «No LocalSend device
-found»), with a toast for the result. `src/localsend/protocol.ts` owns the LocalSend v2 bodies and
+found»), with a toast for the result. «Send Selection» then asks text or image
+(`SelectionView`, `src/send/selectionKind.ts`): the recognized text in an editable preview, a
+«Send as image» switch that works at any time, text preselected for plain handwriting and image
+for a shape, a picture, a text box or arrows ([#307](https://github.com/martonpaulo/ink-tools/issues/307)). `src/localsend/protocol.ts` owns the LocalSend v2 bodies and
 answers; `src/send/sendPng.ts` the flow; `src/settings/device.ts` the pins, a fingerprint per alias
 set on the first sent item and refused when it changes (`pinnedSend`), and the last pick, listed
 first; `native/` the Java module `RelayLocalSend`

@@ -39,7 +39,7 @@ import {Editor as ImageEditor} from '../../../plugins/image-editing/src/EditorVi
 import type {EditorState as ImageEditorState} from '../../../plugins/image-editing/src/editor';
 import {defaultSettings as imageEditingSettings} from '../../../plugins/image-editing/src/edits';
 import {StylesGrid as ImageStylesGrid} from '../../../plugins/image-editing/src/StylesGrid';
-import {PickView as DeviceLinkPick} from '../../../plugins/device-link/src/PickDevice';
+import {PickView as DeviceLinkPick, SelectionView as DeviceLinkSelection} from '../../../plugins/device-link/src/PickDevice';
 import {ReceiveView as DeviceLinkReceive, SettingsForm as DeviceLinkSettings, TextView as DeviceLinkText} from '../../../plugins/device-link/App';
 import type {Device as TransferDevice} from '../../../plugins/device-link/src/localsend/protocol';
 import {refusedProblem as deviceLinkRefused} from '../../../plugins/device-link/src/permissions';
@@ -590,6 +590,8 @@ export const SCREENS: ScreenRender[] = [
   {name: 'image-editing-erase', render: () => imageEditor({draw: 'erase'})},
   {name: 'image-editing-erase-stroked', render: () => imageEditor({draw: 'erase', marks: [STROKE], strokes: ['/w/101-stroke.png']})},
   {name: 'device-link-pick', render: () => mount(<DeviceLinkPick title="Send Page" devices={TRANSFER_DEVICES} onPick={noop} onClose={noop} />)},
+  {name: 'device-link-selection-text', render: () => mount(<DeviceLinkSelection device={TRANSFER_DEVICES[0]} kind="text" text="Buy milk and bread" onKind={noop} onText={noop} onSend={noop} onCancel={noop} />)},
+  {name: 'device-link-selection-image', render: () => mount(<DeviceLinkSelection device={TRANSFER_DEVICES[0]} kind="image" text="" onKind={noop} onText={noop} onSend={noop} onCancel={noop} />)},
   {name: 'device-link-text', render: () => mount(<DeviceLinkText state={{phase: 'ready', text: 'Buy milk and bread', devices: TRANSFER_DEVICES.slice(0, 2)}} onSend={noop} onCancel={noop} />)},
   {name: 'device-link-receive', render: () => mount(<DeviceLinkReceive state="ready" onStop={noop} onClose={noop} />)},
   {name: 'device-link-settings', render: () => mount(<DeviceLinkSettings settings={{fingerprint: 'self', pins: {}, last: TRANSFER_DEVICES[0], background: true}} devices={TRANSFER_DEVICES} onChoose={noop} onSearch={noop} onBackground={noop} onClose={noop} />)},

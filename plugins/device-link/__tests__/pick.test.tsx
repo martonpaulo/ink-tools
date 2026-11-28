@@ -289,6 +289,11 @@ function pickDeps(overrides: Partial<PickDeps> = {}): PickDeps {
       kind: 'toast' as const,
       text: `Sent to ${device.alias}`,
     })),
+    read: jest.fn(async () => ({text: 'Buy milk', kind: 'text' as const})),
+    sendText: jest.fn(async (device: Device) => ({
+      kind: 'toast' as const,
+      text: `Sent to ${device.alias}`,
+    })),
     run: jest.fn(task => task()),
     toast: jest.fn(),
     fail: jest.fn(),

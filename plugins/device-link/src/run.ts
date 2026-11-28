@@ -48,6 +48,7 @@ import {sendText} from './send/sendText';
 import {sendNote} from './send/sendNote';
 import {TextDeps} from './send/textSession';
 import {Capture, PickDeps} from './send/pickSession';
+import {preselect, SelectionRead} from './send/selectionKind';
 import {working} from './working';
 import {Device} from './localsend/protocol';
 import {copy} from './copy';
@@ -278,7 +279,7 @@ export const noteHost: NoteHost = boundedPage({
 });
 
 /** The lassoed handwriting as text, as Lookup reads it (`ink-core`); null when there is none. */
-async function readLassoText(): Promise<string | null> {
+async function readLassoText(known?: object[]): Promise<string | null> {
   const read = await readLassoQuery({
     getLassoElements,
     getLassoRect,
@@ -288,12 +289,32 @@ async function readLassoText(): Promise<string | null> {
     recognizeElements,
     emptyLasso: message => fail(EMPTY_LASSO_CODE, message),
     failure: message => fail(THROWN_CODE, message),
-  });
+  }, known);
   if (!read.ok) {
     console.log(`Relay: read the lasso failed: ${read.code}`);
     return null;
   }
   return read.value.query;
+}
+
+/**
+ * The lasso of «Send Selection» for the choice of text or image (#307): its elements, read once,
+ * give the preselection, and their recognition the preview; nothing recognized is an image.
+ */
+export async function readSelection(
+  elements: () => Promise<Result<object[]>> = getLassoElements,
+  read: (known: object[]) => Promise<string | null> = readLassoText,
+): Promise<SelectionRead> {
+  const lassoed = await elements();
+  if (!lassoed.ok) {
+    log(`read the selection failed: ${lassoed.code}`);
+    return {text: '', kind: 'image'};
+  }
+  const text = lassoed.value.length === 0 ? null : await read(lassoed.value);
+  // Only the kind is logged, never the recognized text.
+  const kind = preselect(lassoed.value as Array<{type?: unknown}>, text ?? '');
+  sendLog(`selection preselected as ${kind}`);
+  return {text: text ?? '', kind};
 }
 
 function sendTo(device: Device, text: string, native: Relay): Promise<string> {
@@ -315,6 +336,8 @@ export function pickDeps(
 ): PickDeps {
   return {
     send: (capture, device) => sendPicked(capture, device, native),
+    read: () => readSelection(),
+    sendText: async (device, text) => ({kind: 'toast', text: await sendTo(device, text, native)}),
     run: task => working.run(task),
     toast,
     fail: line => working.hold(sendFailedProblem(line)),
