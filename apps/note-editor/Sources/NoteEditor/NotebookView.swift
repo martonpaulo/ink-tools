@@ -895,7 +895,9 @@ struct PageView: View {
             }
             .overlay { FindMarks(page: page.index, pixels: page.pixels, size: size) }
             .task(id: key) {
-                guard resample, let image = await PageImages.fit(full, to: drawn) else { return }
+                guard resample, let image = await PageImages.counted({ await PageImages.fit(full, to: drawn) }) else {
+                    return
+                }
                 fitted = Fitted(key: key, image: image)
             }
     }

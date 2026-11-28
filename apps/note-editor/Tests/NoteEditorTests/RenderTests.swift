@@ -86,9 +86,9 @@ final class RenderTests {
             ("syncing", NoteWatch()), ("synced", NoteWatch()), ("offline", offline), ("failed", gone),
         ] {
             try await render("sync-\(state)", Self.sizes) {
-                // Synced 3 s before each render, however long the renders before it took.
+                // Synced 3.5 s before each render: the line reads «3 s» until 4 s have passed, however long the renders took.
                 var shown = watch
-                if state == "synced" { shown.pulled(stamp, at: Date().addingTimeInterval(-3)) }
+                if state == "synced" { shown.pulled(stamp, at: Date().addingTimeInterval(-3.5)) }
                 let live = LiveNote(
                     tabletPath: "Note/Garden.note", local: scratch.appending(path: "Garden.note"),
                     inkctl: Inkctl(executable: nil, environment: [:]), watch: shown)
@@ -128,6 +128,7 @@ final class RenderTests {
         await unselectable.loadElements(0)
         try await render("notebook-elements-unreadable", Self.sizes) { NotebookView(pages: unselectable) }
         let loading = PageImages(note: note)
+        loading.holdsDraws = true
         try await render("notebook-loading", Self.sizes) { NotebookView(pages: loading) }
         try await render("unreadable", Self.sizes) {
             NotebookWindow(document: NoteDocument(data: Data("not a note".utf8)))
@@ -617,16 +618,26 @@ final class RenderTests {
         return Inkctl(executable: executable, environment: ["PATH": "/usr/bin:/bin"])
     }
 
-    /// Draws `content` in both appearances at each size, as `<name>-<light|dark>-<size>.png`.
+    /// Draws `content` in both appearances at each size, as `<name>-<light|dark>-<size>.png`. A
+    /// capture is kept once two fresh windows in a row draw the same (`OffscreenWindow.settled`, #472).
     private func render(_ name: String, _ sizes: [(name: String, size: CGSize)], content: () -> some View) async throws
     {
         for (sizeName, size) in sizes {
             for dark in [false, true] {
-                let png = try await OffscreenWindow.png(of: AnyView(content()), size: size, dark: dark)
-                try png.write(to: folder.appending(path: "\(name)-\(dark ? "dark" : "light")-\(sizeName).png"))
+                let label = "\(name)-\(dark ? "dark" : "light")-\(sizeName)"
+                let capture = try await OffscreenWindow.settled(of: { AnyView(content()) }, size: size, dark: dark)
+                try capture.png.write(to: folder.appending(path: "\(label).png"))
+                if !capture.agreed {
+                    unsettled.append(label)
+                    try unsettled.joined(separator: "\n").appending("\n")
+                        .write(to: folder.appending(path: "unsettled.txt"), atomically: true, encoding: .utf8)
+                }
             }
         }
     }
+
+    /// The renders whose two last captures never matched: `unsettled.txt` beside them names each.
+    private var unsettled: [String] = []
 }
 
 /// A titled window that is never ordered in and draws at one pixel per point. Its capture leaves
@@ -635,6 +646,20 @@ final class RenderTests {
 /// effect under the toolbar. A selected sidebar row draws black in light mode for the same
 /// reason; its number follows `Tokens.sidebarText(on:)` on screen. `AppearanceTests` checks the
 /// page list's numbers in both appearances.
+///
+/// Two runs of the renders differed in a loading wait that ended, a page caught before its resample, a
+/// sync line's seconds and the toolbar's glass ([#472](https://github.com/martonpaulo/ink-tools/issues/472)),
+/// so a render holds only what repeats: 326 renders, 30 differing before, 4 after, all in the toolbar.
+/// A wait is drawn held (`PageImages.holdsDraws`), a page is caught once this window's draws, resamples
+/// and decodes have ended (`PageImages.running`, at most 5 s), and the sync line reads «3 s» for a second.
+///
+/// What cannot be fixed here, the toolbar's Liquid Glass: it samples what the window server composites,
+/// so about one window in 15 draws a capsule or the overflow button blank, and the first windows of a
+/// process draw a grey scroll edge band behind the toolbar that later ones do not, whatever the wait. A
+/// state can repeat in two fresh windows in a row, so `settled` (a capture of a window with a toolbar
+/// is kept once a fresh window draws it again) lowers the chance and does not remove it. A render that
+/// never repeats, or was still drawing after 5 s, is named in `unsettled.txt` beside the renders. Judge
+/// the toolbar band (the top 52 points beside the sidebar) of no render by one run alone.
 @MainActor
 final class OffscreenWindow: NSWindow {
     override var backingScaleFactor: CGFloat { 1 }
@@ -648,7 +673,34 @@ final class OffscreenWindow: NSWindow {
         responder == nil || responder === self ? super.makeFirstResponder(responder) : false
     }
 
+    /// One window's capture: whether it carries a toolbar of glass items, and whether nothing was
+    /// still drawing, resampling or decoding when it was made.
+    struct Capture {
+        let png: Data
+        let toolbar: Bool
+        let quiet: Bool
+    }
+
     static func png(of view: AnyView, size: CGSize, dark: Bool) async throws -> Data {
+        try await capture(of: view, size: size, dark: dark).png
+    }
+
+    /// Whether a window is being captured: one at a time, so the wait for `PageImages.running`
+    /// counts this window's draws and no other test's (`PageImages.captureScope`).
+    private static var capturing = false
+
+    static func capture(of view: AnyView, size: CGSize, dark: Bool) async throws -> Capture {
+        while capturing {
+            // timing-independent: a turn of the main actor for the capture in progress to end.
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        capturing = true
+        defer { capturing = false }
+        PageImages.captureScope += 1
+        return try await captureNow(of: view, size: size, dark: dark)
+    }
+
+    private static func captureNow(of view: AnyView, size: CGSize, dark: Bool) async throws -> Capture {
         let window = OffscreenWindow(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -656,7 +708,8 @@ final class OffscreenWindow: NSWindow {
         window.isReleasedWhenClosed = false
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         let hosting = NSHostingView(
-            rootView: view.frame(width: size.width, height: size.height).environment(\.progressDelay, .zero))
+            rootView: view.frame(width: size.width, height: size.height).environment(\.progressDelay, .zero)
+        )
         hosting.sceneBridgingOptions = [.toolbars, .title]
         window.contentView = hosting
         window.setContentSize(size)
@@ -666,12 +719,37 @@ final class OffscreenWindow: NSWindow {
             // timing-independent: turns of the main actor for SwiftUI to lay out; the renders are checked by eye.
             try await Task.sleep(for: .milliseconds(20))
         }
+        // Draws, resamples and decodes run off the main actor and land when they land, so a page was
+        // caught half drawn under load (#472): wait until none of this window's runs, for five quiet turns in a row.
+        var quiet = 0
+        for _ in 0..<250 where quiet < 5 {
+            // timing-independent: a turn of the main actor per check; the wait ends on PageImages.running, bounded at 5 s.
+            try await Task.sleep(for: .milliseconds(20))
+            quiet = PageImages.running(in: PageImages.captureScope) == 0 ? quiet + 1 : 0
+        }
         guard let bitmap = frame.bitmapImageRepForCachingDisplay(in: frame.bounds) else {
             throw CocoaError(.fileWriteUnknown)
         }
         frame.cacheDisplay(in: frame.bounds, to: bitmap)
         guard let png = bitmap.representation(using: .png, properties: [:]) else { throw CocoaError(.fileWriteUnknown) }
+        let toolbar = window.toolbar?.items.isEmpty == false
         window.close()
-        return png
+        return Capture(png: png, toolbar: toolbar, quiet: quiet >= 5)
+    }
+
+    /// Captures tried before a render is named unsettled.
+    private static let attempts = 6
+
+    /// The capture of a window with a toolbar that a fresh window draws again, with whether two in a
+    /// row matched; a window with no toolbar is drawn once.
+    static func settled(of make: () -> AnyView, size: CGSize, dark: Bool) async throws -> (png: Data, agreed: Bool) {
+        var last = try await capture(of: make(), size: size, dark: dark)
+        guard last.toolbar else { return (last.png, last.quiet) }
+        for _ in 1..<attempts {
+            let next = try await capture(of: make(), size: size, dark: dark)
+            if next.png == last.png { return (next.png, next.quiet) }
+            last = next
+        }
+        return (last.png, false)
     }
 }

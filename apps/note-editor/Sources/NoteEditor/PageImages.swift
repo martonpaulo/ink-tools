@@ -71,18 +71,41 @@ final class PageImages {
         let pixels: CGSize
     }
 
+    /// The window the renders are capturing. A draw, resample or decode that starts meanwhile counts
+    /// for it, so a capture waits for its own window's work and never for another test's (#472).
+    static var captureScope = 0
+    private static var inFlight: [Int: Int] = [:]
+
+    /// How many draws, resamples and decodes started in `scope` still run.
+    static func running(in scope: Int) -> Int { inFlight[scope] ?? 0 }
+
+    /// Runs one draw, resample or decode and counts it while it runs.
+    static func counted<Result>(_ work: () async -> Result) async -> Result {
+        let scope = captureScope
+        inFlight[scope, default: 0] += 1
+        defer {
+            if inFlight[scope] == 1 { inFlight[scope] = nil } else { inFlight[scope, default: 1] -= 1 }
+        }
+        return await work()
+    }
+
+    /// Set by the renders to draw a wait as a fixed state: no page or thumbnail starts to draw, so it
+    /// reads «loading» whenever the capture is made (#472).
+    @ObservationIgnored var holdsDraws = false
+
     func page(_ index: Int) -> State { pages[index] ?? .loading }
     func thumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar) -> State { thumbnails[size]?[index] ?? .loading }
 
     /// Draws one page at full size, unless it is drawn or being drawn. A page a newer copy
     /// changed keeps its old drawing on screen until the new one is ready (#315).
     func loadPage(_ index: Int) async {
+        guard !holdsDraws else { return }
         guard pages[index] == nil || stalePages.contains(index), !drawingPages.contains(index) else { return }
         stalePages.remove(index)
         drawingPages.insert(index)
         defer { drawingPages.remove(index) }
         if pages[index] == nil { pages[index] = .loading }
-        let (state, missing) = await Self.draw(note, index, thumbnailPixels: nil, logger: logger)
+        let (state, missing) = await Self.counted { await Self.draw(note, index, thumbnailPixels: nil, logger: logger) }
         // A page scrolled away while it drew is not kept.
         guard pages[index] != nil else { return }
         pages[index] = state
@@ -116,7 +139,7 @@ final class PageImages {
     /// page's elements are decoded once and kept, as they are small (#324).
     func loadElements(_ index: Int) async {
         guard elements[index] == nil else { return }
-        elements[index] = await Self.decode(note, index, logger: logger)
+        elements[index] = await Self.counted { await Self.decode(note, index, logger: logger) }
     }
 
     /// The selectable elements of a page, ready, or `nil` while they decode or when they failed.
@@ -198,14 +221,16 @@ final class PageImages {
     /// Draws one thumbnail, as many pixels as its box shows on a display of `scale`.
     func loadThumbnail(_ index: Int, _ size: ThumbnailSize = .sidebar, scale: CGFloat) async {
         // The task of a row whose page a delete removed may still start once (#329).
-        guard note.pages.indices.contains(index) else { return }
+        guard note.pages.indices.contains(index), !holdsDraws else { return }
         let stale = staleThumbnails[size, default: []].contains(index)
         guard thumbnails[size]?[index] == nil || stale else { return }
         staleThumbnails[size]?.remove(index)
         if thumbnails[size]?[index] == nil { thumbnails[size, default: [:]][index] = .loading }
         let points = PageFit.fitted(page: self.size(of: index), in: size.box)
         let pixels = PageFit.pixels(for: points, scale: scale)
-        let (state, missing) = await Self.draw(note, index, thumbnailPixels: pixels, logger: logger)
+        let (state, missing) = await Self.counted {
+            await Self.draw(note, index, thumbnailPixels: pixels, logger: logger)
+        }
         thumbnails[size, default: [:]][index] = state
         missingTemplates[index] = missing
     }
