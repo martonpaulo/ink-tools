@@ -1,6 +1,6 @@
 /** One receive (#49): from the offer to the note, with a scripted module and note. */
 import {inkUnderRect, PAGE_BAR_PX} from '@ink-tools/ink-core';
-import {fail, ok} from '@ink-tools/sn-adapter/official';
+import {fail, MODULE_CODE, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {refusedProblem} from '../src/permissions';
 import {
@@ -14,7 +14,8 @@ import {
   receiveOne,
   resetPlacedForTests,
   textBox,
-  fitText,
+  pagesOf,
+  wrapLines,
 } from '../src/receive/receive';
 import {receiveState, runReceive} from '../src/receive/session';
 import {fakeRelay} from '../test-support/fakeRelay';
@@ -33,6 +34,9 @@ function note(overrides: Partial<NoteHost> = {}) {
     log: jest.fn(),
     closeView: jest.fn(async () => ok(true)),
     insertText: jest.fn(async () => ok(true)),
+    insertTextOnPage: jest.fn(async () => ok(true)),
+    insertPage: jest.fn(async () => ok(true)),
+    pageTemplate: jest.fn(async () => ok('style_white')),
     lasso: jest.fn(async () => ok(true)),
     insertImage: jest.fn(async () => ok(true)),
     imageSize: jest.fn(async () => ok({width: 923, height: 1200})),
@@ -366,31 +370,65 @@ describe('a received text keeps clear of the note\'s page bar (#577)', () => {
   });
 });
 
-describe('a received text longer than the page\'s room is cut at its box, not drawn over the bar (#577)', () => {
+describe('a received text longer than the page\'s room goes whole over new pages (#577, #593)', () => {
   const MANTA = {width: 1920, height: 2560};
-  const long = 'word '.repeat(2000);
+  /** One page's lines (the box is 960 px wide: 54 characters a line at font size 32). */
+  const PER_LINE = 54;
+  const words = Array.from({length: 1100}, (_, index) => `w${index}`);
+  const long = words.join(' ');
+  const wordsOf = (parts: string[]) => parts.join(' ').split(/\s+/);
+  const host = (overrides: Partial<NoteHost> = {}) =>
+    note({pageSize: jest.fn(async () => ok(MANTA)), occupied: jest.fn(async () => ok({rects: [], complete: true})), ...overrides});
 
-  test('the inserted text fits its box and ends with the cut mark', async () => {
-    const host = note({
-      pageSize: jest.fn(async () => ok(MANTA)),
-      occupied: jest.fn(async () => ok({rects: [], complete: true})),
-    });
-    const result = await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]).api, host, 'Supernote');
-    expect(result).toBe(copy.receivedTextCut);
-    const box = (host.insertText as jest.Mock).mock.calls[0][0];
-    expect(box.rect.bottom).toBeLessThanOrEqual(MANTA.height - PAGE_BAR_PX);
-    expect(box.text.endsWith('…')).toBe(true);
-    expect(box.text.length).toBeLessThan(long.length);
-    // Cut again at the same box, it is whole: no line is left to draw past the box.
-    expect(fitText(box.text, box.rect).cut).toBe(false);
+  test('a text three pages long lands whole: two pages are inserted, no line is past any box', async () => {
+    expect(pagesOf(MANTA, long).length).toBe(3);
+    const h = host();
+    const result = await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]).api, h, 'Supernote');
+    expect(result).toBe(copy.receivedTextPages(3));
+    expect((h.insertPage as jest.Mock).mock.calls).toEqual([
+      ['/note.note', 1, 'style_white'],
+      ['/note.note', 2, 'style_white'],
+    ]);
+    const first = (h.insertText as jest.Mock).mock.calls[0][0];
+    const more = (h.insertTextOnPage as jest.Mock).mock.calls;
+    expect(more.map(call => call[1])).toEqual([1, 2]);
+    const boxes = [first, ...more.map(call => call[0])];
+    for (const box of boxes) {
+      expect(box.rect.bottom).toBeLessThanOrEqual(MANTA.height - PAGE_BAR_PX);
+      expect(wrapLines(box.text, PER_LINE).length * 48).toBeLessThanOrEqual(box.rect.bottom - box.rect.top);
+    }
+    // Every word, in order, and none twice.
+    expect(wordsOf(boxes.map(box => box.text))).toEqual(words);
   });
 
-  test('a text that fits, and each paragraph before the cut, stay whole', () => {
-    const rect = textBox(MANTA, 'one\ntwo');
-    expect(fitText('one\ntwo', rect)).toEqual({text: 'one\ntwo', cut: false});
-    const cut = fitText('first\n' + long, rect);
-    expect(cut.cut).toBe(true);
-    expect(cut.text.startsWith('first\n')).toBe(true);
+  test('a text that fits is one box on the page, with no page inserted', async () => {
+    const h = host();
+    const result = await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: 'one\ntwo'}})]).api, h, 'Supernote');
+    expect(result).toBe(copy.receivedText);
+    expect(h.insertPage).not.toHaveBeenCalled();
+    expect(pagesOf(MANTA, 'one\ntwo')).toEqual(['one\ntwo']);
+  });
+
+  test('when a page cannot be inserted the whole text is saved beside the note, never dropped', async () => {
+    const h = host({insertPage: jest.fn(async () => fail(MODULE_CODE, 'refused'))});
+    const {api, calls} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]);
+    const result = await receiveOne(api, h, 'Supernote');
+    expect(result).toEqual(expect.stringContaining('saved whole as note received text'));
+    expect(calls.written).toEqual([long]);
+    expect(h.insertText).not.toHaveBeenCalled();
+  });
+
+  test('when that file cannot be written either, the text waits for the next note', async () => {
+    const h = host({insertPage: jest.fn(async () => fail(MODULE_CODE, 'refused'))});
+    const writeText = jest.fn(async (path: string) => {
+      if (path.endsWith('.txt')) {
+        throw new Error('no write');
+      }
+      return null;
+    });
+    const result = await receiveOne(fakeRelay({writeText}, [offer({t: {fileType: 'text/plain', preview: long}})]).api, h, 'Supernote');
+    expect(result).toBe(copy.textKeptWaiting);
+    expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining('pending.json'), expect.stringContaining(words[1099]));
   });
 });
 

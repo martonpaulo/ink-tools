@@ -60,6 +60,12 @@ export type NoteHost = NoteFiles & {
   log(line: string): void;
   closeView(): Promise<unknown>;
   insertText(box: TextBoxInput): Promise<Result<boolean>>;
+  /** A text box on page `page` (from 0) of the open note, which need not be the shown one (#577). */
+  insertTextOnPage(box: TextBoxInput, page: number): Promise<Result<boolean>>;
+  /** A new page at index `page` of the open note, after saving it, so no ink written since is lost (#263, #577). */
+  insertPage(notePath: string, page: number, template: string): Promise<Result<boolean>>;
+  /** The system template a new page takes, by the name `insertNotePage` accepts. */
+  pageTemplate(): Promise<Result<string>>;
   lasso(rect: Rect): Promise<Result<boolean>>;
   insertImage(path: string): Promise<Result<boolean>>;
   /** A picture file's own size in pixels, for the rect the host places it at (#196). */
@@ -77,10 +83,7 @@ export function textBox(page: Size, text: string, after: number | null = null): 
   const width = Math.round(page.width / 2);
   const left = Math.round((page.width - width) / 2);
   const first = Math.round(page.height * 0.15);
-  const perLine = Math.max(1, Math.floor(width / (TEXT_FONT_SIZE * CHAR_WIDTH)));
-  const lines = text
-    .split('\n')
-    .reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)), 0);
+  const lines = wrapLines(text, perLine(width)).length;
   // Never under the note's page bar (#577).
   const floor = writableSize(page).height - LINE_HEIGHT;
   const below = after === null ? first : after + LINE_HEIGHT;
@@ -89,29 +92,66 @@ export function textBox(page: Size, text: string, after: number | null = null): 
   return {left, top, right: left + width, bottom: Math.max(bottom, top + LINE_HEIGHT)};
 }
 
+/** How many characters one line of a box `width` wide holds, by the same estimate everywhere. */
+function perLine(width: number): number {
+  return Math.max(1, Math.floor(width / (TEXT_FONT_SIZE * CHAR_WIDTH)));
+}
+
+type Line = {text: string; tail: string};
+
 /**
- * `text` cut to the lines `rect` holds, with «…» where it was cut: the host draws a longer text
- * past its box, over the page bar (#577, tablet row 134). Same line estimate as {@link textBox}.
- * shortcut: the cut is by that estimate, not the host's own wrap; measure the real wrap to upgrade.
+ * The lines a host draws `text` in, wrapped at words in `perLine` characters, an overlong word
+ * broken: each line keeps the blank that followed it (`tail`), so the lines join back to the text
+ * (a run of blanks counts as one). The line count is what a box must hold (#577).
+ * shortcut: the wrap is this estimate, not the host's own; measure the real wrap to upgrade.
  */
-export function fitText(text: string, rect: Rect): {text: string; cut: boolean} {
-  const perLine = Math.max(1, Math.floor((rect.right - rect.left) / (TEXT_FONT_SIZE * CHAR_WIDTH)));
-  let room = Math.max(1, Math.floor((rect.bottom - rect.top) / LINE_HEIGHT));
-  const kept: string[] = [];
-  const paragraphs = text.split('\n');
-  for (let index = 0; index < paragraphs.length; index += 1) {
-    const need = Math.max(1, Math.ceil(paragraphs[index].length / perLine));
-    if (need <= room) {
-      kept.push(paragraphs[index]);
-      room -= need;
-      continue;
+export function wrapLines(text: string, width: number): Line[] {
+  const lines: Line[] = [];
+  for (const paragraph of text.split('\n')) {
+    let current = '';
+    for (const word of paragraph.split(' ')) {
+      if (current === '') {
+        current = word;
+      } else if (current.length + 1 + word.length <= width) {
+        current += ` ${word}`;
+      } else {
+        lines.push({text: current, tail: ' '});
+        current = word;
+      }
+      while (current.length > width) {
+        lines.push({text: current.slice(0, width), tail: ''});
+        current = current.slice(width);
+      }
     }
-    // One character fewer than the room holds, so the «…» fits too.
-    const part = paragraphs[index].slice(0, Math.max(0, room * perLine - 1)).trimEnd();
-    kept.push(`${part}…`);
-    return {text: kept.join('\n'), cut: true};
+    lines.push({text: current, tail: '\n'});
   }
-  return {text, cut: false};
+  return lines;
+}
+
+/** The lines one page holds below the first box line and above the page bar. */
+function pageLines(page: Size): number {
+  const floor = writableSize(page).height - LINE_HEIGHT;
+  return Math.max(1, Math.floor((floor - Math.round(page.height * 0.15)) / LINE_HEIGHT));
+}
+
+/**
+ * `text` as the pieces that each fill at most one page, in order: one piece when it fits, else the
+ * lines of its wrap cut every page's worth, so no piece draws a line past its box (#577). Nothing
+ * is dropped: the pieces say again every word of `text`.
+ */
+export function pagesOf(page: Size, text: string): string[] {
+  const lines = wrapLines(text, perLine(Math.round(page.width / 2)));
+  const room = pageLines(page);
+  if (lines.length <= room) {
+    return [text];
+  }
+  const pieces: string[] = [];
+  for (let from = 0; from < lines.length; from += room) {
+    const part = lines.slice(from, from + room);
+    const joined = part.map(line => line.text + line.tail).join('');
+    pieces.push(joined.replace(/[ \n]$/, ''));
+  }
+  return pieces;
 }
 
 /**
@@ -172,20 +212,63 @@ export function freeTextBox(
   return moved ? {rect: moved, free: true} : {rect, free: false};
 }
 
-async function placeText(host: NoteHost, text: string): Promise<string> {
+/** Where the text is kept when it cannot go on pages: the note's own folder, else the waiting list. */
+async function keepText(native: Relay, host: NoteHost, dir: string, notePath: string | null, text: string): Promise<string> {
+  if (notePath !== null) {
+    const base = notePath.replace(/\.note$/, '');
+    const path = `${base} received text ${Date.now()}.txt`;
+    if ((await native.writeText(path, text)).ok) {
+      host.log(`receive: the text did not fit and its pages could not be added: saved whole as ${path}`);
+      return copy.textSavedAs(path.slice(path.lastIndexOf('/') + 1));
+    }
+  }
+  const kept = await addPending(native, dir, {kind: 'text', text});
+  host.log(`receive: the text did not fit and its pages could not be added: ${kept ? 'it waits' : 'it could not be kept'}`);
+  return kept ? copy.textKeptWaiting : copy.insertFailed;
+}
+
+/** The page and note an open-page key names, `<note path>#<page>`. */
+function openPage(key: string | null): {notePath: string; page: number} | null {
+  const cut = key === null ? -1 : key.lastIndexOf('#');
+  const page = key === null ? Number.NaN : Number(key.slice(cut + 1));
+  return key !== null && cut > 0 && Number.isInteger(page) ? {notePath: key.slice(0, cut), page} : null;
+}
+
+/**
+ * New pages after the open one for `rest`, the pieces of a text that went past the first page, one
+ * piece each, clear of the page bar (#577). Every page is inserted first, as an insert drops the
+ * ink written since the note's last save (#263). False when one could not be added.
+ */
+async function addPages(host: NoteHost, at: {notePath: string; page: number}, count: number): Promise<boolean> {
+  const template = await host.pageTemplate();
+  if (!template.ok) {
+    return false;
+  }
+  for (let index = 0; index < count; index += 1) {
+    const inserted = await host.insertPage(at.notePath, at.page + 1 + index, template.value);
+    if (!inserted.ok || inserted.value !== true) {
+      return false;
+    }
+  }
+  return true;
+}
+
+async function placeText(native: Relay, host: NoteHost, dir: string, text: string): Promise<string> {
   const size = await host.pageSize();
   if (!size.ok) {
     return copy.noNote;
   }
   const key = await host.pageKey();
   const page = key.ok ? key.value : null;
+  const pieces = pagesOf(size.value, text);
+  const at = openPage(page);
   const after = page !== null && lastText?.page === page ? lastText.bottom : null;
   const occupied = await host.occupied();
   const read = occupied.ok ? occupied.value : null;
   // A partial read places at the usual place, never by what was read (#152): placed by part of a
   // full page, a box landed over the person's ink.
   const known = read?.complete ? read.rects : null;
-  const {rect, free} = freeTextBox(size.value, text, after, known);
+  const {rect, free} = freeTextBox(size.value, pieces[0], after, known);
   if (!free) {
     host.log(
       known === null
@@ -193,14 +276,17 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
         : `receive: no free band of ${rect.bottom - rect.top} px: the text goes over the ink`,
     );
   }
-  const fitted = fitText(text, rect);
-  if (fitted.cut) {
-    host.log(`receive: the text is longer than the page's room: cut to ${fitted.text.length} of ${text.length} characters`);
-  }
   await host.closeView();
-  const inserted = await host.insertText({text: fitted.text, rect, fontSize: TEXT_FONT_SIZE});
+  const more = pieces.slice(1);
+  if (more.length > 0) {
+    // Whole on pages after this one (#577); never cut.
+    if (at === null || !(await addPages(host, at, more.length))) {
+      return keepText(native, host, dir, at?.notePath ?? null, text);
+    }
+  }
+  const inserted = await host.insertText({text: pieces[0], rect, fontSize: TEXT_FONT_SIZE});
   if (!inserted.ok || inserted.value !== true) {
-    return copy.insertFailed;
+    return more.length > 0 && at !== null ? keepText(native, host, dir, at.notePath, text) : copy.insertFailed;
   }
   lastText = page === null ? null : {page, bottom: rect.bottom};
   // Selected, so the person moves it at once, but never with the person's ink in it (#168).
@@ -211,7 +297,15 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
     // A failed lasso still leaves the text in place.
     await host.lasso(rect);
   }
-  return fitted.cut ? copy.receivedTextCut : copy.receivedText;
+  for (let index = 0; at !== null && index < more.length; index += 1) {
+    const box = {text: more[index], rect: textBox(size.value, more[index]), fontSize: TEXT_FONT_SIZE};
+    const placed = await host.insertTextOnPage(box, at.page + 1 + index);
+    if (!placed.ok || placed.value !== true) {
+      // The pages are in; what is not on one is kept, never dropped.
+      return keepText(native, host, dir, at.notePath, more.slice(index).join('\n'));
+    }
+  }
+  return pieces.length > 1 ? copy.receivedTextPages(pieces.length) : copy.receivedText;
 }
 
 /**
@@ -409,7 +503,7 @@ export async function receiveOne(
       landed(kept ? copy.keptForNote : copy.noNote);
       return;
     }
-    landed(item.kind === 'text' ? await placeText(host, item.text) : await placeImage(native, host, item.path));
+    landed(item.kind === 'text' ? await placeText(native, host, dir.value, item.text) : await placeImage(native, host, item.path));
   };
   await placePending(native, host, dir.value, landed);
   try {
@@ -478,7 +572,7 @@ export async function placePending(
   // Saved first, so an item is never placed twice when a place throws.
   await savePending(native, pluginDir, []);
   for (const item of waiting) {
-    onItem(item.kind === 'text' ? await placeText(host, item.text) : await placeImage(native, host, item.path));
+    onItem(item.kind === 'text' ? await placeText(native, host, pluginDir, item.text) : await placeImage(native, host, item.path));
   }
   return waiting.length;
 }

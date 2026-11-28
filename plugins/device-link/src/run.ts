@@ -5,6 +5,7 @@
 import {
   closePluginView,
   createNote,
+  createTextBox,
   EMPTY_LASSO_CODE,
   fail,
   getCurrentFilePath,
@@ -15,10 +16,13 @@ import {
   getPluginDirPath,
   insertImage,
   insertNotePage,
+  insertPageElements,
   insertText,
   lassoElements,
   lassoImage,
   nativeTimers,
+  noteSystemTemplates,
+  onSavedPage,
   occupiedRects,
   ok,
   pageImage,
@@ -278,6 +282,15 @@ export const noteHost: NoteHost = boundedPage({
   log,
   closeView: closePluginView,
   insertText,
+  insertTextOnPage: async (box, page) => {
+    const made = await createTextBox(box);
+    return made.ok ? insertPageElements([made.value], page) : made;
+  },
+  insertPage: (notePath, page, template) => onSavedPage(() => insertNotePage(notePath, page, template)),
+  pageTemplate: async () => {
+    const names = await noteSystemTemplates();
+    return names.ok ? ok(names.value.includes('style_white') ? 'style_white' : names.value[0]) : names;
+  },
   lasso: lassoElements,
   insertImage,
   imageSize: pictureSize,
