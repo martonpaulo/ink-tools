@@ -32,6 +32,8 @@ type FakeOptions = {
  */
 export function fakePages({code = null, ink = [], read = () => ({ok: true, text: null}), failHere = false}: FakeOptions = {}) {
   const calls: string[] = [];
+  /** Every line the view logged, in order. */
+  const logs: string[] = [];
   const inserted: {code: string; png: Uint8Array; after: number}[] = [];
   const on = {here: HERE, code, failHere};
   const turn = (page: number, pageCode: string | null = null) => {
@@ -65,13 +67,15 @@ export function fakePages({code = null, ink = [], read = () => ({ok: true, text:
     },
     hide: async () => calls.push('hide'),
     show: async () => calls.push('show'),
-    log: () => {},
+    log: line => {
+      logs.push(line);
+    },
   };
   /** Makes the next page reads fail, or answer again. */
   const failReads = (fail: boolean) => {
     on.failHere = fail;
   };
-  return {pages, calls, inserted, turn, failReads};
+  return {pages, calls, logs, inserted, turn, failReads};
 }
 
 /** Kept choices in memory (#569): `file` is what the device keeps, shared by every view given it. */

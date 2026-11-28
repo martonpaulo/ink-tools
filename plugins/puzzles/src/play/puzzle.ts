@@ -67,7 +67,22 @@ export type GamePage = {
   /** A puzzle's code, `MZ-10X13-E-7K2Q9X`, or a board's name and seed, `gomoku-7K2Q9X`. */
   code: string;
   page: Raster;
+  /** How long drawing the page took, in milliseconds, which «Add Page» logs apart from making the puzzle (#379). */
+  drawMs?: number;
 };
+
+/** The clock of the «Add Page» times (#379): milliseconds, as fine as the runtime gives them. */
+export const clock = (): number => (typeof performance === 'undefined' ? Date.now() : performance.now());
+
+/**
+ * The page `draw` makes of a puzzle already made, timed apart from the making (#379): `made` is
+ * the argument, so its generation ran before this call and `drawMs` holds the drawing alone.
+ */
+export function drawn<P, G extends GamePage>(made: P, draw: (made: P) => G): G & {drawMs: number} {
+  const start = clock();
+  const page = draw(made);
+  return {...page, drawMs: clock() - start};
+}
 
 /** One puzzle on its page: its check and its answer. */
 export type Puzzle = GamePage & {

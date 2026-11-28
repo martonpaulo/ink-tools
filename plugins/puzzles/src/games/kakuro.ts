@@ -17,7 +17,7 @@ import {
   type Kakuro,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const kakuroCopy = {
   title: 'Kakuro',
@@ -60,6 +60,6 @@ export const KAKURO: PuzzleGame = {
       initial: 'easy',
     },
   ],
-  create: (choices, seed, shape) => board(newKakuro(seed, Number(choices.size), choices.band as Difficulty), shape),
+  create: (choices, seed, shape) => drawn(newKakuro(seed, Number(choices.size), choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(kakuroFromCode(code), shape),
 };

@@ -18,7 +18,7 @@ import {
   type MazeShape,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const mazeCopy = {
   title: 'Maze',
@@ -69,7 +69,7 @@ export const MAZE: PuzzleGame = {
     create: (choices, seed, shape) => {
       const band = choices.band as MazeBand;
       const size = mazePageSize(choices.shape as MazeShape, band, shape.orientation);
-      return board(generateMaze(seed, size, band), shape);
+      return drawn(generateMaze(seed, size, band), made => board(made, shape));
     },
     open: (code, shape) => board(mazeFromCode(code), shape),
 };

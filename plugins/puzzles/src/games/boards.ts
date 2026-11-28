@@ -6,7 +6,7 @@
  * strings are its own.
  */
 import {BOARD_GAMES, boardRule, renderBoardPage, type BoardGame} from '@ink-tools/puzzle-core';
-import type {PuzzleGame} from '../play/puzzle';
+import {drawn, type PuzzleGame} from '../play/puzzle';
 
 export const boardsCopy = {
   titles: {
@@ -23,7 +23,7 @@ const boardGame = (game: BoardGame): PuzzleGame => ({
   // The page's rule is a sentence; the game list's subtitles carry no full stop, as the puzzles' do.
   subtitle: boardRule(game).replace(/\.$/, ''),
   options: [],
-  create: (_choices, seed, shape) => ({code: `${game}-${seed}`, page: renderBoardPage(game, shape)}),
+  create: (_choices, seed, shape) => drawn(game, made => ({code: `${game}-${seed}`, page: renderBoardPage(made, shape)})),
 });
 
 export const BOARDS: readonly PuzzleGame[] = BOARD_GAMES.map(boardGame);

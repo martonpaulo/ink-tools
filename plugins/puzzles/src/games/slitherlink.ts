@@ -20,7 +20,7 @@ import {
   type Slitherlink,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const slitherlinkCopy = {
   title: 'Slitherlink',
@@ -64,7 +64,7 @@ export const SLITHERLINK: PuzzleGame = {
   ],
   create: (choices, seed, shape) => {
     const side = Number(choices.size);
-    return board(newSlitherlink(seed, {width: side, height: side}, choices.band as Difficulty), shape);
+    return drawn(newSlitherlink(seed, {width: side, height: side}, choices.band as Difficulty), made => board(made, shape));
   },
   open: (code, shape) => board(slitherlinkFromCode(code), shape),
 };
