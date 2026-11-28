@@ -9,6 +9,7 @@ import {
   mazeFromCode,
   mazeLayout,
   mazePageSize,
+  placedPageCode,
   puzzleCode,
   type InkStroke,
   type Maze,
@@ -49,7 +50,7 @@ describe('the maze game (#386)', () => {
     await press(tree, 'Difficulty: Hard');
     await press(tree, playCopy['new.add']);
     const expected = generateMaze(SEED, mazePageSize('circle', 'hard', 'portrait'), 'hard');
-    expect(inserted.map(page => page.code)).toEqual([puzzleCode(expected.id)]);
+    expect(inserted.map(page => page.code)).toEqual([placedPageCode(puzzleCode(expected.id))]);
     // The note reload of the insert can end the view's JavaScript, so the view is closed before it.
     expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
     expect(back).toHaveBeenCalled();

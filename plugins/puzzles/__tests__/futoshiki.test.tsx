@@ -5,6 +5,7 @@ import {
   encodePng,
   futoshikiFromCode,
   generateFutoshiki,
+  placedPageCode,
   puzzleCode,
   type Futoshiki,
 } from '@ink-tools/puzzle-core';
@@ -38,7 +39,7 @@ describe('the futoshiki game (#390)', () => {
     expect(shownTexts(tree.root)).not.toContain(playCopy.bands.hard);
     await press(tree, playCopy['new.add']);
     const expected = generateFutoshiki(SEED, 5, 'easy');
-    expect(inserted.map(page => page.code)).toEqual([puzzleCode(expected.id)]);
+    expect(inserted.map(page => page.code)).toEqual([placedPageCode(puzzleCode(expected.id))]);
     expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
     const again = FUTOSHIKI.create({size: '5', band: 'easy'}, SEED, SHAPE);
     expect(Buffer.from(inserted[0].png).equals(Buffer.from(encodePng(again.page)))).toBe(true);

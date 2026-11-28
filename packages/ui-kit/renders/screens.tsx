@@ -69,7 +69,7 @@ import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, placedPageCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -416,7 +416,8 @@ const binairoInk = (unread = false) => () => {
 /** A game's pages: the current page holds `code` and `ink`, which the tablet reads back, or the host cannot read it. */
 const gamePages = (code: string | null, ink: () => InkStroke<object>[], failing = false): PuzzlesPages => ({
   here: async () => (failing ? {ok: false, code: 118, message: 'no note open'} : {ok: true, value: {notePath: '/Note/Puzzles.note', page: 0, size: {width: 1920, height: 2560}, orientation: 'portrait'}}),
-  codeOf: async () => ({ok: true, value: code}),
+  // A page made now: its background's name carries the current page layout (#553).
+  codeOf: async () => ({ok: true, value: code === null ? null : placedPageCode(code)}),
   insert: async () => ({ok: true, value: true}),
   ink: async () => ({ok: true, value: ink()}),
   read: async (_here, elements) => ({ok: true, text: elements.map(element => (element as {digit?: string}).digit ?? '').join(' ').trim() || null}),

@@ -21,6 +21,7 @@ import {SLITHERLINK} from './games/slitherlink';
 import {STAR_BATTLE} from './games/starBattle';
 import {SUDOKU} from './games/sudoku';
 import {puzzleEntry} from './play/GameView';
+import type {PuzzleGame} from './play/puzzle';
 
 export type GameViewProps = {
   /** Back to the game list. */
@@ -41,4 +42,7 @@ export type Game = {
   View: React.ComponentType<GameViewProps>;
 };
 
-export const GAMES: readonly Game[] = [MAZE, JIGSAW, SUDOKU, KILLER, CALCUDOKU, FUTOSHIKI, KAKURO, SLITHERLINK, BRIDGES, NONOGRAM, STAR_BATTLE, BINAIRO, HITORI, ...BOARDS].map(game => puzzleEntry(game));
+/** Every game of the list, in its order: the puzzles, then the pass-and-play boards. */
+export const PUZZLE_GAMES: readonly PuzzleGame[] = [MAZE, JIGSAW, SUDOKU, KILLER, CALCUDOKU, FUTOSHIKI, KAKURO, SLITHERLINK, BRIDGES, NONOGRAM, STAR_BATTLE, BINAIRO, HITORI, ...BOARDS];
+
+export const GAMES: readonly Game[] = PUZZLE_GAMES.map(game => puzzleEntry(game));

@@ -6,7 +6,7 @@
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
-import {cellCenter, encodePng, type Grid, type InkStroke, type ReadText} from '@ink-tools/puzzle-core';
+import {cellCenter, encodePng, PAGE_LAYOUT, placedPageCode, type Grid, type InkStroke, type PageLayoutVersion, type ReadText} from '@ink-tools/puzzle-core';
 import {THROWN_CODE} from '@ink-tools/sn-adapter/official';
 import {GameView} from '../src/play/GameView';
 import type {Here, PagePorts} from '../src/play/pages';
@@ -18,8 +18,10 @@ export const SEED = '7K2Q9X';
 export const HERE: Here = {notePath: '/storage/emulated/0/Note/Puzzles.note', page: 2, size: {width: 1920, height: 2560}, orientation: 'portrait'};
 
 type FakeOptions = {
-  /** The puzzle the current page holds, by its background's name. */
+  /** The puzzle code the current page holds; its background's name adds the page layout. */
   code?: string | null;
+  /** The layout the page was drawn by: the current one, or 1 for a page with no mark in its name (#553). */
+  layout?: PageLayoutVersion;
   ink?: InkStroke<object>[];
   /** The tablet's reading of some strokes; by default it reads nothing. */
   read?: (elements: object[]) => ReadText;
@@ -30,12 +32,14 @@ type FakeOptions = {
  * Fake pages: every call is recorded, and every inserted page kept, with the page it went after.
  * `turn` moves to another page, as the page bar does while the view stays mounted (#542).
  */
-export function fakePages({code = null, ink = [], read = () => ({ok: true, text: null}), failHere = false}: FakeOptions = {}) {
+export function fakePages({code = null, layout = PAGE_LAYOUT, ink = [], read = () => ({ok: true, text: null}), failHere = false}: FakeOptions = {}) {
   const calls: string[] = [];
   const inserted: {code: string; png: Uint8Array; after: number}[] = [];
-  const on = {here: HERE, code, failHere};
+  /** A page's background name: a page of layout 1 has the bare code. */
+  const named = (puzzle: string | null) => (puzzle === null || layout === 1 ? puzzle : placedPageCode(puzzle, layout));
+  const on = {here: HERE, code: named(code), failHere};
   const turn = (page: number, pageCode: string | null = null) => {
-    Object.assign(on, {here: {...HERE, page}, code: pageCode});
+    Object.assign(on, {here: {...HERE, page}, code: named(pageCode)});
   };
   const pages: PagePorts = {
     here: async () => {
@@ -142,7 +146,7 @@ export async function expectSolved(game: PuzzleGame, code: string, ink: InkStrok
  */
 export async function expectAdded(tree: ReactTestRenderer, fake: ReturnType<typeof fakePages>, game: PuzzleGame, code: string, choices: Choices) {
   await press(tree, playCopy['new.add']);
-  expect(fake.inserted.map(page => page.code)).toEqual([code]);
+  expect(fake.inserted.map(page => page.code)).toEqual([placedPageCode(code)]);
   expect(fake.calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
   const again = game.create(choices, SEED, {orientation: HERE.orientation, hand: 'right'});
   expect(Buffer.from(fake.inserted[0].png).equals(Buffer.from(encodePng(again.page)))).toBe(true);

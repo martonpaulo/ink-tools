@@ -91,6 +91,13 @@ the blank rule carries `V2` (`NO-15X15V2-H-...`), and a code with no mark draws 
 `__tests__/determinism.test.ts` pins one puzzle per game; a changed pin needs a new mark, never a
 new value ([#561](https://github.com/martonpaulo/ink-tools/issues/561)).
 
+A page in a note keeps the layout it was printed with: its background's name is its code and the
+page layout, `SU-9-H-7K2Q9X-L2` (`placedPageCode`), and a name with no mark is a page of layout 1,
+from before the page bar margin of [#553](https://github.com/martonpaulo/ink-tools/issues/553).
+The Puzzles view opens a page inside `withPageLayout`, so «Check» reads the ink in the grid the
+page printed ([#573](https://github.com/martonpaulo/ink-tools/issues/573)). A change that moves a grid on the page adds a version to `PAGE_LAYOUT` in
+`src/page/layout.ts` and keeps the earlier ones.
+
 `ink-core`'s pinyin index (3.4 MB) is not exported from `index.ts`, so a plugin bundles it only
 when it imports `src/pinyin-data.ts` itself. `ink-core/scripts/build-pinyin-index.cjs` rebuilds it;
 `--check` fails when the committed file differs ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).

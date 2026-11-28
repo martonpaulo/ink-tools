@@ -1,6 +1,6 @@
 /** The pass-and-play boards in the Puzzles view (#402): «Add Page» only, no check and no solution. */
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
-import {BOARD_GAMES, boardRule, encodePng, renderBoardPage} from '@ink-tools/puzzle-core';
+import {BOARD_GAMES, boardRule, encodePng, renderBoardPage, placedPageCode} from '@ink-tools/puzzle-core';
 import {GAMES} from '../src/games';
 import {BOARDS, boardsCopy} from '../src/games/boards';
 import {playCopy} from '../src/play/copy';
@@ -24,7 +24,7 @@ describe('the pass-and-play boards (#402)', () => {
     const tree = await mount(board, pages, back);
     expect(shownTexts(tree.root)).toContain(playCopy['new.noteBoard']);
     await press(tree, playCopy['new.add']);
-    expect(inserted.map(page => page.code)).toEqual([`${game}-${SEED}`]);
+    expect(inserted.map(page => page.code)).toEqual([placedPageCode(`${game}-${SEED}`)]);
     expect(Buffer.from(inserted[0].png).equals(Buffer.from(encodePng(renderBoardPage(game, {orientation: 'portrait', hand: 'right'}))))).toBe(true);
     expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
     expect(back).toHaveBeenCalled();

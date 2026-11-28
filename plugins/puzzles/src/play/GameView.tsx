@@ -23,7 +23,7 @@ import {
   useBackKey,
   type Problem,
 } from '@ink-tools/ui-kit';
-import {encodePng, parsePuzzleCode, seedFromNumber, toBase64, type Raster} from '@ink-tools/puzzle-core';
+import {encodePng, pageCodeParts, parsePuzzleCode, placedPageCode, seedFromNumber, toBase64, withPageLayout, type Raster} from '@ink-tools/puzzle-core';
 import type {Game, GameViewProps} from '../games';
 import {playCopy} from './copy';
 import {devicePages, type Here, type PagePorts} from './pages';
@@ -52,6 +52,15 @@ type Screen =
   | {kind: 'error'; problem: Problem; retry: () => void};
 
 const shapeOf = (here: Here): PageShape => ({orientation: here.orientation, hand: HAND});
+
+/**
+ * The puzzle a page's background name holds, laid out as that page was printed: a page made before
+ * a layout change keeps its grid where its picture has it, so «Check» reads its ink there (#553).
+ */
+export function openPage(open: NonNullable<PuzzleGame['open']>, name: string, here: Here): Puzzle {
+  const {code, version} = pageCodeParts(name);
+  return {...withPageLayout(version, () => open(code, shapeOf(here))), code: name};
+}
 
 /** Lets the Loading view draw before a long synchronous step, such as drawing a page. */
 const nextFrame = () => new Promise<void>(resolve => setTimeout(resolve, 0));
@@ -94,7 +103,7 @@ export function GameView({
     let board: Puzzle | null = null;
     if (code.value !== null && game.open) {
       try {
-        board = game.open(code.value, shapeOf(here.value));
+        board = openPage(game.open, code.value, here.value);
       } catch (error) {
         // Another game's page, or a background no game made: this game has nothing to check there.
         pages.log(`${game.id}: ${code.value} is not a ${game.id} page: ${String(error)}`);
@@ -139,7 +148,7 @@ export function GameView({
       pages.log(`${game.id}: page ${here.value.page} holds ${code.value ?? 'no puzzle'}, not ${board.code}`);
       if (code.value !== null && game.open) {
         try {
-          return {here: here.value, board: game.open(code.value, shapeOf(here.value))};
+          return {here: here.value, board: openPage(game.open, code.value, here.value)};
         } catch (error) {
           pages.log(`${game.id}: ${code.value} is not a ${game.id} page: ${String(error)}`);
         }
@@ -163,7 +172,9 @@ export function GameView({
       let board: GamePage;
       let png: Uint8Array;
       try {
-        board = game.create(choices, seed(), shapeOf(here.value));
+        const made = game.create(choices, seed(), shapeOf(here.value));
+        // Its background's name says the layout it is drawn by, so the page opens by it later (#553).
+        board = {...made, code: placedPageCode(made.code)};
         png = encodePng(board.page);
       } catch (error) {
         return failed(playCopy['error.add'], retry, String(error));
@@ -299,8 +310,8 @@ function Ready({
   const thisPage = !game.open ? null : board ? (
     <RowGroup caption={playCopy['here.caption']}>
       <ActionRow
-        title={playCopy['here.title'](game.title, playCopy.bands[parsePuzzleCode(board.code).difficulty], board.size)}
-        subtitle={board.code}
+        title={playCopy['here.title'](game.title, playCopy.bands[parsePuzzleCode(pageCodeParts(board.code).code).difficulty], board.size)}
+        subtitle={pageCodeParts(board.code).code}
         action={{label: playCopy['here.check'], onPress: () => onCheck(board)}}
         secondAction={{label: playCopy['here.answer'], onPress: () => onAnswer(board)}}
       />

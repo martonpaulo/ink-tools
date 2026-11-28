@@ -42,6 +42,11 @@ import {
 import { cellPolygon } from '../src/page/grid';
 import { mmToPx, PAGE_MM, TONES } from '../src/page/look';
 import * as rasterModule from '../src/page/raster';
+import { kakuroFromCode } from '../src/kakuro';
+import { kakuroPageSpec } from '../src/kakuro-page';
+import { layoutNonogramPage } from '../src/nonogram-page';
+import { nonogramFromCode } from '../src/nonogram';
+import { pageCodeParts, PAGE_LAYOUT, placedPageCode, withPageLayout } from '../src/page/layout';
 import { SAMPLE_PAGES } from '../testing/pages';
 
 /**
@@ -315,6 +320,45 @@ describe('the note\'s page bar (#553)', () => {
 describe('each preset and layout matches its golden page', () => {
   test.each(SAMPLE_PAGES.map(([name, draw]) => [name, draw] as const))('%s', (name, draw) => {
     expectGolden(name, draw());
+  });
+});
+
+describe('a page keeps the layout it was printed with (#553)', () => {
+  const sample = (name: string) => SAMPLE_PAGES.find(([n]) => n === name)![1];
+
+  // The goldens of these pages as main drew them before the page bar margin (383153e9^).
+  test.each(['hitori-15mm-portrait-right', 'page-light-up-10mm-portrait-right'])('%s, drawn by layout 1, is the page printed before the page bar margin', name => {
+    expectGolden(`layout-1-${name}`, withPageLayout(1, sample(name)));
+  });
+
+  test('a 15 x 15 nonogram grid lay 23 px lower in layout 1, as the tablet measured, and the layout goes back after', () => {
+    const spec: PageSpec = { orientation: 'portrait', hand: 'right', cellMm: 7, lattice: 'square', columns: 15, rows: 15, clues: { top: 6, left: 6 } };
+    const old = withPageLayout(1, () => layoutPage(spec));
+    const now = layoutPage(spec);
+    expect([old.version, now.version, PAGE_LAYOUT]).toEqual([1, 2, 2]);
+    expect(old.grid.y - now.grid.y).toBe(23);
+    expect(() => withPageLayout(1, () => { throw new Error('drawn'); })).toThrow('drawn');
+    expect(layoutPage(spec)).toEqual(now);
+  });
+
+  test('the tablet\'s old pages lay out at the y they were printed at (shift 7)', () => {
+    const view = { orientation: 'portrait', hand: 'right' } as const;
+    const printed = withPageLayout(1, () => [
+      layoutNonogramPage(nonogramFromCode('NO-15X15-H-7Z9GEKG7'), view).grid.y,
+      layoutPage(kakuroPageSpec(kakuroFromCode('KK-6-E-KDT390HS'), view)).grid.y,
+      layoutPage(kakuroPageSpec(kakuroFromCode('KK-12-H-FY6ET29C'), view)).grid.y,
+    ]);
+    expect(printed).toEqual([658, 678, 501]);
+  });
+
+  test('a page\'s background name carries its layout; a name with none is a page of layout 1', () => {
+    expect(placedPageCode('SU-9-H-7K2Q9X')).toBe('SU-9-H-7K2Q9X-L2');
+    expect(pageCodeParts('SU-9-H-7K2Q9X-L2')).toEqual({ code: 'SU-9-H-7K2Q9X', version: 2 });
+    expect(pageCodeParts('NO-15X15-H-7Z9GEKG7')).toEqual({ code: 'NO-15X15-H-7Z9GEKG7', version: 1 });
+    // A seed never holds an L, so a seed that ends a code is never read as a mark.
+    expect(pageCodeParts('SU-9-H-P2')).toEqual({ code: 'SU-9-H-P2', version: 1 });
+    expect(pageCodeParts('gomoku-7K2Q9X-L2')).toEqual({ code: 'gomoku-7K2Q9X', version: 2 });
+    expect(() => pageCodeParts('SU-9-H-7K2Q9X-L9')).toThrow('page layout 9');
   });
 });
 

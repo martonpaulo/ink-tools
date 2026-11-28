@@ -39,6 +39,8 @@ export interface PageLayout {
   readonly sidePanel: Box | null;
   readonly belowPanel: Box | null;
   readonly footer: Box;
+  /** The page layout it was laid out by, which places the footer's lines. */
+  readonly version: PageLayoutVersion;
 }
 
 export class PageFitError extends Error {
@@ -51,8 +53,63 @@ export class PageFitError extends Error {
   }
 }
 
-/** The footer's two baselines, as shares of its height from its top. */
-const FOOTER_BASELINES = { first: 0.4, second: 0.88 } as const;
+/**
+ * The page layouts a page was drawn by. A page in a note keeps the layout it was printed with, as
+ * its background is that picture: «Check» reads the ink against the grid it was drawn in, and
+ * «Show Solution» draws on the same page. 1 is the layout before the page bar margin (#553): an
+ * 8 mm bottom margin, a 12 mm footer and no gap above it; 2 keeps the footer above the page bar.
+ */
+export type PageLayoutVersion = 1 | 2;
+/** The layout a new page is drawn by. A change that moves a grid on the page adds a version. */
+export const PAGE_LAYOUT: PageLayoutVersion = 2;
+
+interface LayoutMeasures {
+  bottomMm: number;
+  footerMm: number;
+  /** Whether the grid keeps `PAGE_MM.gap` above the footer (#553). */
+  gapAboveFooter: boolean;
+  /** The footer's two baselines, as shares of its height from its top. */
+  baselines: { first: number; second: number };
+}
+
+const LAYOUTS: Record<PageLayoutVersion, LayoutMeasures> = {
+  1: { bottomMm: PAGE_MM.margin, footerMm: 12, gapAboveFooter: false, baselines: { first: 0.42, second: 0.86 } },
+  2: { bottomMm: PAGE_MM.bottom, footerMm: PAGE_MM.footer, gapAboveFooter: true, baselines: { first: 0.4, second: 0.88 } },
+};
+
+let activeLayout: PageLayoutVersion = PAGE_LAYOUT;
+
+/**
+ * Runs `draw` with every page it lays out laid out by `version`, then goes back to the current
+ * layout: the Puzzles view opens a page made earlier inside it, so its grid and footer are where
+ * that page printed them. A game's page and its «Check» grid are both laid out while it opens.
+ */
+export function withPageLayout<T>(version: PageLayoutVersion, draw: () => T): T {
+  const was = activeLayout;
+  activeLayout = version;
+  try {
+    return draw();
+  } finally {
+    activeLayout = was;
+  }
+}
+
+/** The mark of the page layout in a page's background name: `L`, which no seed holds, and the version. */
+const LAYOUT_MARK = /^L(\d+)$/;
+
+/** A page's background name for a code: the code and the layout it is drawn by, `SU-9-H-7K2Q9X-L2`. */
+export function placedPageCode(code: string, version: PageLayoutVersion = PAGE_LAYOUT): string {
+  return `${code}-L${version}`;
+}
+
+/** The code and page layout a background name holds; a name with no mark is a page of layout 1. */
+export function pageCodeParts(name: string): { code: string; version: PageLayoutVersion } {
+  const at = name.lastIndexOf('-');
+  const mark = LAYOUT_MARK.exec(name.slice(at + 1).toUpperCase());
+  const version = mark ? Number(mark[1]) : 1;
+  if (!(version in LAYOUTS)) throw new RangeError(`«${name}» names page layout ${version}, which this version cannot draw`);
+  return mark ? { code: name.slice(0, at), version: version as PageLayoutVersion } : { code: name, version: 1 };
+}
 
 const SIDES: readonly Side[] = ['top', 'left', 'bottom', 'right'];
 
@@ -61,8 +118,9 @@ export function layoutPage(spec: PageSpec): PageLayout {
   if (!CELL_PRESETS_MM.includes(spec.cellMm)) throw new Error(`the cell presets are ${CELL_PRESETS_MM.join(', ')} mm, not ${spec.cellMm}`);
   const { width, height } = PAGE_SIZE[spec.orientation];
   const margin = mmToPx(PAGE_MM.margin);
-  const bottom = mmToPx(PAGE_MM.bottom);
-  const footerHeight = mmToPx(PAGE_MM.footer);
+  const measures = LAYOUTS[activeLayout];
+  const bottom = mmToPx(measures.bottomMm);
+  const footerHeight = mmToPx(measures.footerMm);
   const gap = mmToPx(PAGE_MM.gap);
   const cell = latticeCell(spec.lattice, mmToPx(spec.cellMm));
   const size = gridSize(spec.lattice, cell, spec.columns, spec.rows);
@@ -84,7 +142,7 @@ export function layoutPage(spec: PageSpec): PageLayout {
 
   const areaWidth = width - 2 * margin;
   // The gap keeps the grid's lowest line clear of the footer's first line, as it does the clues (#553).
-  const areaHeight = height - margin - bottom - footerHeight - gap;
+  const areaHeight = height - margin - bottom - footerHeight - (measures.gapAboveFooter ? gap : 0);
   if (contentWidth > areaWidth || contentHeight > areaHeight) {
     throw new PageFitError(spec, contentWidth - areaWidth, contentHeight - areaHeight);
   }
@@ -105,6 +163,7 @@ export function layoutPage(spec: PageSpec): PageLayout {
     sidePanel,
     belowPanel: belowHeight > 0 ? { x: margin, y: top + blockHeight + gap, width: areaWidth, height: belowHeight } : null,
     footer: { x: margin, y: height - bottom - footerHeight, width: width - 2 * margin, height: footerHeight },
+    version: activeLayout,
   };
 }
 
@@ -150,8 +209,9 @@ export function drawFooter(raster: Raster, layout: PageLayout, text: FooterText)
   if (titleWidth > footer.width) throw new Error(`the footer's first line is ${Math.ceil(titleWidth - footer.width)} px too long`);
   const ruleWidth = measureText(text.rule, size, FONT_WEIGHTS.regular);
   if (ruleWidth > footer.width) throw new Error(`the footer's rule is ${Math.ceil(ruleWidth - footer.width)} px too long: «${text.rule}»`);
-  const firstBaseline = footer.y + Math.round(footer.height * FOOTER_BASELINES.first);
-  const secondBaseline = footer.y + Math.round(footer.height * FOOTER_BASELINES.second);
+  const { baselines } = LAYOUTS[layout.version];
+  const firstBaseline = footer.y + Math.round(footer.height * baselines.first);
+  const secondBaseline = footer.y + Math.round(footer.height * baselines.second);
   drawText(raster, title, footer.x, firstBaseline, { ...style, weight: FONT_WEIGHTS.bold });
   drawText(raster, text.code, footer.x + footer.width, firstBaseline, { ...style, align: 'right' });
   drawText(raster, text.rule, footer.x, secondBaseline, style);

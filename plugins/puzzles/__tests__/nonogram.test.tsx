@@ -1,6 +1,6 @@
 /** The nonogram in the Puzzles view (#384): a size and a band, «Check» of the shaded cells and «Show Solution». */
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
-import {generateNonogram, layoutNonogramPage, nonogramFromCode, puzzleCode, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {generateNonogram, layoutNonogramPage, nonogramFromCode, puzzleCode, withPageLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 import {GAMES} from '../src/games';
 import {NONOGRAM, nonogramCopy} from '../src/games/nonogram';
 import {playCopy} from '../src/play/copy';
@@ -113,5 +113,22 @@ describe('the nonogram game (#384)', () => {
     await press(tree, playCopy['here.answer']);
     expect(shownTexts(tree.root)).toContain(playCopy['answer.note']);
     expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'codeOf']);
+  });
+
+  test('a page printed before the page bar margin is checked in the grid it printed (#553)', async () => {
+    // NO-15X15-H-7Z9GEKG7 was printed in shift 5, its name with no layout mark: its grid lies 23 px
+    // lower than the current layout puts it, so read there, its shading was all «unread».
+    const OLD = 'NO-15X15-H-7Z9GEKG7';
+    const old = nonogramFromCode(OLD);
+    const printed = withPageLayout(1, () => layoutNonogramPage(old, {orientation: HERE.orientation, hand: 'right'})).grid;
+    const ink = shaded(printed, old.solution.flatMap((filled, cell) => (filled ? [cell] : [])));
+    const tree = await mount(NONOGRAM, fakePages({code: OLD, layout: 1, ink}).pages);
+    expect(shownTexts(tree.root)).toContain(OLD);
+    await press(tree, playCopy['here.check']);
+    expect(shownTexts(tree.root)).toContain(playCopy['verdict.solved']);
+    // The same ink on a page of the current layout is off its cells.
+    const now = await mount(NONOGRAM, fakePages({code: OLD, ink}).pages);
+    await press(now, playCopy['here.check']);
+    expect(shownTexts(now.root)).not.toContain(playCopy['verdict.solved']);
   });
 });

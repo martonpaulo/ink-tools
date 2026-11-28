@@ -6,6 +6,7 @@ import {
   generateJigsawSudoku,
   jigsawExpected,
   jigsawLayout,
+  placedPageCode,
   puzzleCode,
   type InkStroke,
   type JigsawSudoku,
@@ -46,7 +47,7 @@ describe('the jigsaw sudoku game (#397)', () => {
     await press(tree, 'Difficulty: Medium');
     await press(tree, playCopy['new.add']);
     const expected = generateJigsawSudoku(SEED, 'medium');
-    expect(inserted.map(page => page.code)).toEqual([puzzleCode(expected.id)]);
+    expect(inserted.map(page => page.code)).toEqual([placedPageCode(puzzleCode(expected.id))]);
     expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'hide', 'insert']);
     expect(back).toHaveBeenCalled();
     const again = JIGSAW.create({band: 'medium'}, SEED, {orientation: 'portrait', hand: 'right'});
