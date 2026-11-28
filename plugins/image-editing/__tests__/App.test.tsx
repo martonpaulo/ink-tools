@@ -3,7 +3,7 @@ import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {Image, RootTagContext, ScrollView, StyleSheet} from 'react-native';
 import {screenBreaks} from '@ink-tools/ui-kit/screenBreaks';
-import {TitleBar} from '@ink-tools/ui-kit';
+import {ErrorView, TitleBar} from '@ink-tools/ui-kit';
 import {catchBackKey, fakeBackKeyModule} from '@ink-tools/ui-kit/backKeyTest';
 import App from '../App';
 import {defaultSettings, EDITS, setEdit, STYLES} from '../src/edits';
@@ -66,6 +66,7 @@ test('the Styles grid keeps the size rules, labels each tile, says when it faile
   const onPick = jest.fn();
   const onToggle = jest.fn();
   const onClose = jest.fn();
+  const onRetry = jest.fn();
   const ready: GridState = {
     phase: 'ready',
     tiles: [
@@ -89,6 +90,7 @@ test('the Styles grid keeps the size rules, labels each tile, says when it faile
         state={ready}
         onPick={onPick}
         onToggle={onToggle}
+        onRetry={() => {}}
         onClose={() => {}}
       />,
     );
@@ -114,22 +116,27 @@ test('the Styles grid keeps the size rules, labels each tile, says when it faile
   await act(async () => {
     failed = renderer.create(
       <StylesGrid
-        state={{phase: 'failed'}}
+        state={{phase: 'failed', reason: 'lasso', enabled: ['photo']}}
         onPick={onPick}
         onToggle={onToggle}
+        onRetry={onRetry}
         onClose={onClose}
       />,
     );
   });
-  expect(
-    failed.root.findAllByProps({children: 'Could not make the styles'}).length,
-  ).toBeGreaterThan(0);
-  // The grid opens with ui-kit's title bar, whose × closes as «Close» does (#311).
+  // A failure ends the grid in ui-kit's ErrorView: what failed, why, Retry and its × (#528).
+  const [error] = failed.root.findAllByType(ErrorView);
+  expect(error?.props.problem).toEqual({
+    what: copy['styles.failed'],
+    reason: copy['styles.failed.lasso'],
+  });
   const [bar] = failed.root.findAllByType(TitleBar);
-  expect(bar?.props.title).toBe(copy['edit.styles']);
+  expect(bar?.props.title).toBe(copy['styles.failed']);
   await act(async () => {
+    failed.root.findByProps({label: 'Retry'}).props.onPress();
     bar.props.onClose();
   });
+  expect(onRetry).toHaveBeenCalledTimes(1);
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
@@ -193,7 +200,11 @@ describe("Back does what the open screen's «Close» does (#204)", () => {
   });
 
   test('on the styles grid it closes the grid, never the view alone', async () => {
-    jest.spyOn(styles, 'gridState').mockReturnValue({phase: 'failed'});
+    jest.spyOn(styles, 'gridState').mockReturnValue({
+      phase: 'failed',
+      reason: 'render',
+      enabled: ['photo'],
+    });
     const closeStyles = jest
       .spyOn(styles, 'closeStyles')
       .mockResolvedValue(undefined);

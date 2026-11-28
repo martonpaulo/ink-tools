@@ -577,5 +577,5 @@ export const SCREENS: ScreenRender[] = [
   {name: 'image-editing-error', render: () => mount(<ErrorView problem={{what: imageEditingCopy['press.failedTitle']('Enhance'), reason: imageEditingCopy['press.failedReason']}} onClose={noop} />)},
   {name: 'image-editing-crop', render: () => imageEditor({draw: 'crop', marks: [STROKE]})},
   {name: 'image-editing-opening', render: () => imageEditor({phase: 'opening'})},
-  {name: 'image-editing-styles-failed', render: () => mount(<ImageStylesGrid state={{phase: 'failed'}} onPick={noop} onToggle={noop} onClose={noop} />)},
+  {name: 'image-editing-styles-failed', render: () => mount(<ImageStylesGrid state={{phase: 'failed', reason: 'render', enabled: ['photo']}} onPick={noop} onToggle={noop} onRetry={noop} onClose={noop} />)},
 ];

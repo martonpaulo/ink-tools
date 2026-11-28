@@ -6,6 +6,7 @@ import {
   closeStyles,
   gridState,
   openStyles,
+  retryStyles,
   orderStyles,
   parseMemory,
   pickStyle,
@@ -184,4 +185,15 @@ test('Close changes nothing on the page and deletes the previews', async () => {
   expect(w.files.has(STYLES_PATH)).toBe(false);
   expect(w.pngs()).toEqual([]);
   expect(close).toHaveBeenCalled();
+});
+
+test('Retry on a failed grid makes the same styles again (#528)', async () => {
+  const w = world();
+  w.deps.lassoElements = jest.fn(async () => ok([]));
+  await openStyles(['photo', 'dither'], w.deps);
+  expect(gridState()).toEqual({phase: 'failed', reason: 'lasso', enabled: ['photo', 'dither']});
+  const fixed = world();
+  await retryStyles(fixed.deps);
+  expect(styleOf()).toEqual(['photo', 'dither']);
+  await closeStyles(() => {}, fixed.deps);
 });

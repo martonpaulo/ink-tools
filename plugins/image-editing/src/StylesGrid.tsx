@@ -3,11 +3,11 @@
  * picture in one style on white paper, so a transparent picture lies on paper, never on black.
  * ui-kit's black title bar on top, as every full view opens (#311), whose × runs «Close». Two
  * switch rows below it, White to transparent and Thicker lines (#274); «Close» below. No slider and no
- * animation: the grid shows once all its tiles are made.
+ * animation: the grid shows once all its tiles are made. A failure shows ui-kit's ErrorView (#528).
  */
 import React from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Button, metrics, RowGroup, shared, SwitchRow, TitleBar} from '@ink-tools/ui-kit';
+import {Button, ErrorView, metrics, RowGroup, shared, SwitchRow, TitleBar} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {GridState} from './styles';
 import {StyleId, StyleOptions} from './native';
@@ -18,6 +18,7 @@ export type StylesGridProps = {
   state: GridState;
   onPick: (style: StyleId) => void;
   onToggle: (option: keyof StyleOptions) => void;
+  onRetry: () => void;
   onClose: () => void;
 };
 
@@ -25,8 +26,22 @@ export function StylesGrid({
   state,
   onPick,
   onToggle,
+  onRetry,
   onClose,
 }: StylesGridProps): React.JSX.Element {
+  if (state.phase === 'failed') {
+    // A failure ends the grid: ui-kit's ErrorView, with the reason and Retry (#528).
+    return (
+      <ErrorView
+        problem={{
+          what: copy['styles.failed'],
+          reason: copy[`styles.failed.${state.reason}`],
+        }}
+        onRetry={onRetry}
+        onClose={onClose}
+      />
+    );
+  }
   const ready = state.phase === 'ready' ? state : null;
   const rows = ready
     ? Array.from({length: Math.ceil(ready.tiles.length / COLUMNS)}, (_, row) =>
@@ -83,9 +98,7 @@ export function StylesGrid({
         </>
       ) : (
         <Text accessibilityLiveRegion="polite" style={shared.text}>
-          {state.phase === 'failed'
-            ? copy['styles.failed']
-            : copy['styles.making']}
+          {copy['styles.making']}
         </Text>
       )}
       <Button

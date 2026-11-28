@@ -18,6 +18,7 @@ import {
   gridState,
   onGridState,
   pickStyle,
+  retryStyles,
   toggleOption,
 } from './src/styles';
 import {StylesGrid} from './src/StylesGrid';
@@ -101,6 +102,7 @@ export default function App({
         state={grid}
         onPick={style => pickStyle(style, closeGrid).then(done => stylesDone(done))}
         onToggle={option => toggleOption(option)}
+        onRetry={() => retryStyles()}
         onClose={() => closeStyles(closeGrid)}
       />
     );

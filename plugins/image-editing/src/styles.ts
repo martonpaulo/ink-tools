@@ -209,7 +209,8 @@ export async function chooseStyle(
 export type GridState =
   | {phase: 'idle'}
   | {phase: 'making'}
-  | {phase: 'failed'}
+  /** `lasso`: the lasso is not one picture; `render`: no style could be made. Retry runs `enabled` again. */
+  | {phase: 'failed'; reason: 'lasso' | 'render'; enabled: readonly StyleId[]}
   | {phase: 'ready'; tiles: Tile[]; options: StyleOptions; source: Source};
 
 const IDLE: GridState = {phase: 'idle'};
@@ -250,7 +251,7 @@ export async function openStyles(
   const memory = await loadMemory(deps);
   const source = await readSource(deps);
   if (source === null) {
-    setGrid({phase: 'failed'});
+    setGrid({phase: 'failed', reason: 'lasso', enabled});
     return;
   }
   const options = {transparent: memory.transparent, thick: memory.thick};
@@ -262,10 +263,20 @@ export async function openStyles(
   );
   if (tiles.length === 0) {
     await removeFiles([source.path], deps);
-    setGrid({phase: 'failed'});
+    setGrid({phase: 'failed', reason: 'render', enabled});
     return;
   }
   setGrid({phase: 'ready', tiles, options, source});
+}
+
+/** Retry on a failed grid (#528): makes the same styles again from the lasso. */
+export async function retryStyles(deps: EditDeps = DEVICE): Promise<void> {
+  const state = grid;
+  if (state.phase !== 'failed') {
+    return;
+  }
+  setGrid(IDLE);
+  await openStyles(state.enabled, deps);
 }
 
 /** A toggle: only the tiles the option changes are rendered again, in place. */

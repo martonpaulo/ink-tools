@@ -72,6 +72,8 @@ export const copy = {
   'styles.thick': 'Thicker lines',
   'styles.making': 'Making the styles…',
   'styles.failed': 'Could not make the styles',
+  'styles.failed.lasso': 'Could not read one picture from the lasso. Lasso one picture, then try again.',
+  'styles.failed.render': 'No style could be made from this picture.',
   'styles.close': 'Close',
   'permission.files':
     'Image Editing keeps each picture as it was, for Undo and Restore original, in its own folder, which Supernote Cloud does not sync.',
