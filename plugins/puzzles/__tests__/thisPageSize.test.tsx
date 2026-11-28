@@ -41,7 +41,9 @@ describe('«This page» names the puzzle size (#545)', () => {
     // The second size, so a size the view only took from its defaults would show the wrong one.
     const choice = offered(size!, {})[1];
     const {texts, band} = await rowOf(game, {size: choice.value});
-    expect(texts).toContain(playCopy['here.title'](game.title, band, choice.label));
+    // A game that adds more to the size, as a Star Battle's stars per line (#584), shows it after the size.
+    const extra = game.sizeExtra?.(parsePuzzleCode(game.create(settle(game.options, {size: choice.value}), SEED, SHAPE).code).size);
+    expect(texts).toContain(playCopy['here.title'](game.title, band, extra === undefined ? choice.label : `${choice.label}, ${extra}`));
   });
 
   test.each(UNSIZED.map(game => [game.id, game] as const))('%s: a game with no size choice shows no size', async (_id, game) => {
