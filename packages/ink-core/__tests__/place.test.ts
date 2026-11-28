@@ -1,5 +1,7 @@
 import {
+  freePlaceRect,
   inkUnderRect,
+  insertPictureAt,
   MIN_PLACE_BAND,
   PLACE_GAP,
   placeAtLasso,
@@ -246,6 +248,51 @@ describe('placeAtLasso (#109)', () => {
     const full = {...place, rect: {left: 100, top: 40, right: 300, bottom: 2500}};
     expect((await placeAtLasso(host, '/p.png', picture, full)).ok).toBe(false);
     expect(host.insertPageElements).not.toHaveBeenCalled();
+  });
+});
+
+describe('freePlaceRect, a picture with no lasso to place it by (#540)', () => {
+  const photo = {width: 923, height: 1200};
+  const centred = {left: 498, top: 680, right: 1421, bottom: 1880};
+  const crossing = (rect: Rect, occupied: Rect[]) => inkUnderRect(rect, {rects: occupied, complete: true});
+
+  test('an empty page keeps the centre the host would choose', () => {
+    expect(freePlaceRect(photo, page, [])).toEqual(centred);
+  });
+
+  test('writing in the centre moves the picture to a free place of the same size', () => {
+    const writing = {left: 700, top: 1200, right: 1200, bottom: 1300};
+    const rect = freePlaceRect(photo, page, [writing]);
+    expect(crossing(rect, [writing])).toBeNull();
+    expect([rect.right - rect.left, rect.bottom - rect.top]).toEqual([923, 1200]);
+    expect(rect.top).toBe(writing.bottom + PLACE_GAP);
+  });
+
+  test('a page with no free place takes the place that crosses the fewest', () => {
+    const lines = [0, 1, 2, 3].map(i => ({left: 0, top: i * 640 + 300, right: 1920, bottom: i * 640 + 340}));
+    const crowded = [...lines, {left: 900, top: 0, right: 1000, bottom: 2560}];
+    const rect = freePlaceRect(photo, page, crowded);
+    expect(crowded.filter(other => crossing(rect, [other]) !== null)).toHaveLength(2);
+  });
+
+  test('a picture larger than the page shrinks to fit it', () => {
+    const rect = freePlaceRect({width: 3840, height: 2560}, page, []);
+    expect(rect).toEqual({left: 0, top: 640, right: 1920, bottom: 1920});
+  });
+});
+
+describe('insertPictureAt (#540)', () => {
+  test('inserts one Picture element at the rect on the page', async () => {
+    const insertPageElements = jest.fn(async () => ({ok: true as const, value: true}));
+    const host: PlaceHost<{ok: false; message: string}> = {
+      pictureType: 200,
+      createElement: async () => ({ok: true, value: {uuid: 'u'}}),
+      insertPageElements,
+      failure: message => ({ok: false, message}),
+    };
+    const rect = {left: 1, top: 2, right: 3, bottom: 4};
+    await expect(insertPictureAt(host, '/p.png', rect, 5)).resolves.toEqual({ok: true, value: rect});
+    expect(insertPageElements).toHaveBeenCalledWith([{uuid: 'u', type: 200, pageNum: 5, layerNum: 0, picture: {picturePath: '/p.png', rect}}], 5, 0);
   });
 });
 

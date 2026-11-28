@@ -4,7 +4,7 @@
  * through `insertImage`, which the host shows as its own floating selection, and is then lassoed
  * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`).
  */
-import {freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
+import {freePlaceRect, freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
 import {fail, Result, TextBoxInput, TIMEOUT_CODE} from '@ink-tools/sn-adapter/official';
 import type {HeldState, Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
@@ -62,6 +62,8 @@ export type NoteHost = NoteFiles & {
   insertText(box: TextBoxInput): Promise<Result<boolean>>;
   lasso(rect: Rect): Promise<Result<boolean>>;
   insertImage(path: string): Promise<Result<boolean>>;
+  /** Inserts a picture as a Picture element at `rect` on the open page, where the receive chose (#540). */
+  insertImageAt(path: string, rect: Rect): Promise<Result<boolean>>;
   /** A picture file's own size in pixels, for the rect the host places it at (#196). */
   imageSize(path: string): Promise<Result<Size>>;
   /** Waits `ms`, so a page read can retry while the host commits a floating picture (#196). */
@@ -172,13 +174,16 @@ async function placeText(host: NoteHost, text: string): Promise<string> {
     return copy.insertFailed;
   }
   lastText = page === null ? null : {page, bottom: rect.bottom};
+  // The text box's own frame, as the host stored it: lassoed by the rect asked for, the box reached
+  // far below a short text on the tablet (#540).
+  const frame = (await waitForAdded(host, read)) ?? rect;
   // Selected, so the person moves it at once, but never with the person's ink in it (#168).
-  const ink = inkUnderRect(rect, read);
+  const ink = inkUnderRect(frame, read);
   if (ink) {
     host.log(`receive: lassoElements skipped, ${ink}`);
   } else {
     // A failed lasso still leaves the text in place.
-    await host.lasso(rect);
+    await host.lasso(frame);
   }
   return copy.receivedText;
 }
@@ -258,7 +263,41 @@ async function expectedRect(host: NoteHost, path: string): Promise<Rect | null> 
 }
 
 /**
- * Places a received PNG or JPEG with `insertImage`, then lassoes it by its rect, found as the one
+ * The free place for the picture on a page read whole (#540): its own size, scaled to the page, where
+ * it crosses the fewest elements, the centre first; null when the page's or the picture's size is
+ * unknown.
+ */
+async function freeImageRect(host: NoteHost, path: string, read: OccupiedRead): Promise<Rect | null> {
+  const [page, picture] = [await host.pageSize(), await host.imageSize(path)];
+  if (!page.ok || !picture.ok) {
+    return null;
+  }
+  const rect = freePlaceRect(picture.value, page.value, read.rects);
+  if (!isFree(rect, read.rects)) {
+    host.log('receive: no free place for the picture: it goes where it covers the fewest elements');
+  }
+  return rect;
+}
+
+/** Lassoes the placed picture by its rect, never with the person's ink in it (#168). */
+async function lassoPlaced(host: NoteHost, rect: Rect, before: OccupiedRead | null): Promise<string> {
+  const ink = inkUnderRect(rect, before);
+  if (ink) {
+    host.log(`receive: lassoElements skipped, ${ink}`);
+    return copy.receivedImage;
+  }
+  const lassoed = await host.lasso(rect);
+  if (!lassoed.ok || lassoed.value !== true) {
+    // The picture stays placed; only the lasso is missing.
+    host.log('receive: lassoElements did not lasso the placed picture');
+  }
+  return copy.receivedImage;
+}
+
+/**
+ * Places a received PNG or JPEG as a Picture element at a free place of the page read whole, and
+ * lassoes it there (#540): `insertImage` put it in the page's centre, over the person's writing.
+ * Otherwise, with `insertImage`, then lassoes it by its rect, found as the one
  * rect the insert added to the page once the host commits it, else the centred rect the host
  * places it at, so another plugin's lasso row (Image Editing's «Document») acts on it: the host's
  * floating selection is no lasso for the plugin API (error 904, #196).
@@ -266,14 +305,23 @@ async function expectedRect(host: NoteHost, path: string): Promise<Rect | null> 
  */
 async function placeImage(native: Relay, host: NoteHost, path: string): Promise<string> {
   const before = await host.occupied();
+  const beforeRead = before.ok ? before.value : null;
+  const free = beforeRead?.complete ? await freeImageRect(host, path, beforeRead) : null;
   await host.closeView();
+  if (free !== null) {
+    const placed = await host.insertImageAt(path, free);
+    if (placed.ok && placed.value === true) {
+      keptImages.push(path);
+      return lassoPlaced(host, free, beforeRead);
+    }
+    host.log('receive: the picture element was not inserted: insertImage places it');
+  }
   const inserted = await host.insertImage(path);
   if (!inserted.ok || inserted.value !== true) {
     await native.remove(path);
     return copy.insertFailed;
   }
   keptImages.push(path);
-  const beforeRead = before.ok ? before.value : null;
   let rect = await waitForAdded(host, beforeRead);
   if (rect === null && beforeRead?.complete) {
     rect = await expectedRect(host, path);
@@ -285,17 +333,7 @@ async function placeImage(native: Relay, host: NoteHost, path: string): Promise<
     host.log('receive: lassoElements skipped, the placed picture is not found on the page');
     return copy.receivedImage;
   }
-  const ink = inkUnderRect(rect, beforeRead);
-  if (ink) {
-    host.log(`receive: lassoElements skipped, ${ink}`);
-    return copy.receivedImage;
-  }
-  const lassoed = await host.lasso(rect);
-  if (!lassoed.ok || lassoed.value !== true) {
-    // The picture stays placed; only the lasso is missing.
-    host.log('receive: lassoElements did not lasso the placed picture');
-  }
-  return copy.receivedImage;
+  return lassoPlaced(host, rect, beforeRead);
 }
 
 function refusedLine(taken: Taken | null): string {
