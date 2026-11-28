@@ -20,6 +20,7 @@ beforeEach(() => {
 function note(overrides: Partial<NoteHost> = {}): NoteHost {
   return {
     permissions: jest.fn(async () => null),
+    canDelete: async () => true,
     pluginDir: jest.fn(async () => ok('/plugin')),
     pageKey: jest.fn(async () => ok('/note.note#0')),
     pageSize: jest.fn(async () => ok(PAGE)),

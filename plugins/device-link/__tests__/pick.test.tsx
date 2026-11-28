@@ -50,7 +50,7 @@ const iphone: Device = {
   fingerprint: 'iphone-fp',
 };
 
-const fresh: Settings = {fingerprint: 'self', pins: {}, last: null, background: false};
+const fresh: Settings = {fingerprint: 'self', pins: {}, last: null, background: false, deleteRefused: false};
 
 /** One receiver's answer to the announce. */
 const register = (device: Device) => ({
@@ -123,6 +123,7 @@ describe('pins by alias', () => {
       pins: {Mac: 'mac-fp'},
       last: mac,
       background: false,
+      deleteRefused: false,
     });
   });
 

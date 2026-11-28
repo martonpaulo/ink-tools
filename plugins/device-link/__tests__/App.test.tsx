@@ -181,6 +181,7 @@ test('Back on a running receive closes only the view; the receiver goes on (#289
   });
   const host = {
     permissions: async () => null,
+    canDelete: async () => true,
     pluginDir: async () => ok('/plugin'),
   } as never;
   const running = runReceive(api, host, 'Supernote', () => {});
@@ -224,7 +225,7 @@ test('Send Text keeps the title bar\'s Close while it waits, never while it read
 });
 
 test('the send half announces the certificate fingerprint, the saved one only without it', async () => {
-  const settings = {fingerprint: 'saved', pins: {}, last: null, background: false};
+  const settings = {fingerprint: 'saved', pins: {}, last: null, background: false, deleteRefused: false};
   const {api} = fakeRelay();
   await expect(
     ownFingerprint(api, settings, async () => ok('/p')),

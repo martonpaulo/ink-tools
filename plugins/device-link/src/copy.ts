@@ -36,6 +36,8 @@ export const copy = {
   stop: 'Stop',
   receivedText: 'Text added to the note',
   receivedTextPages: (pages: number) => `Text added to the note, over ${pages} pages`,
+  receivedTextPagesKept: (pages: number, name: string) =>
+    `Text added to the note, over ${pages} pages. A copy is kept beside the note as ${name}`,
   textSavedAs: (name: string, pages: number) =>
     `Text over ${pages} pages, not all added: saved whole as ${name}, beside the note`,
   textKeptWaiting: (pages: number) => `Text over ${pages} pages, not all added: kept for the next note`,

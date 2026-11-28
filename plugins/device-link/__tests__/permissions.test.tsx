@@ -16,8 +16,10 @@ import {
 import {findForSend} from '../src/run';
 import {fakeRelay} from '../test-support/fakeRelay';
 
-function deps(granted: string[], answer = 2): PermissionDeps {
+function deps(granted: string[], answer = 2, refusedBefore = false): PermissionDeps {
   return {
+    refusedBefore: jest.fn(async () => refusedBefore),
+    rememberRefusal: jest.fn(async () => {}),
     has: jest.fn(async (permission: string) => ok(granted.includes(permission))),
     request: jest.fn(async () => ok(answer)),
     log: jest.fn(),
@@ -57,6 +59,26 @@ test('a refused delete permission stops nothing: the text copy only stays (#593)
   const d = deps(['plugin.permission.INTERNET', 'plugin.permission.FILE:READ', 'plugin.permission.FILE:WRITE'], 0);
   await expect(ensurePermissions(d)).resolves.toBeNull();
   expect((d.request as jest.Mock).mock.calls).toEqual([['plugin.permission.FILE:DELETE', copy.permissionReason]]);
+});
+
+test('a refused delete is remembered, and a remembered refusal is never asked again, so the host dialog shows once (#593)', async () => {
+  const held = ['plugin.permission.INTERNET', 'plugin.permission.FILE:READ', 'plugin.permission.FILE:WRITE'];
+  const first = deps(held, 0);
+  await expect(ensurePermissions(first)).resolves.toBeNull();
+  expect(first.rememberRefusal).toHaveBeenCalledWith('plugin.permission.FILE:DELETE');
+  const next = deps(held, 0, true);
+  await expect(ensurePermissions(next)).resolves.toBeNull();
+  expect(next.request).not.toHaveBeenCalled();
+  expect(next.rememberRefusal).not.toHaveBeenCalled();
+});
+
+test('a granted delete remembers no refusal, and a refusal of a needed permission is asked every time', async () => {
+  const granted = deps([]);
+  await ensurePermissions(granted);
+  expect(granted.rememberRefusal).not.toHaveBeenCalled();
+  const needed = deps([], 0, true);
+  await expect(ensurePermissions(needed)).resolves.toBe('plugin.permission.INTERNET');
+  expect(needed.request).toHaveBeenCalledTimes(1);
 });
 
 test('a failed hasPermission is asked, never taken as granted', async () => {

@@ -116,6 +116,7 @@ test('a PDF that arrives over LocalSend goes to a note, not into the open one', 
   const host: NoteHost = {
     ...files(),
     permissions: async () => null,
+    canDelete: async () => true,
     pluginDir: async () => ok('/plugin'),
     pageKey: async () => ok('/note.note#0'),
     occupied: async () => ok({rects: [], complete: true}),

@@ -33,7 +33,7 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
-import {ensurePermissions, refusedProblem} from './permissions';
+import {ensurePermissions, holdsDelete, refusedProblem} from './permissions';
 
 /** The native timer module `RelayPackage.java` registers; index.js ticks the editor helper on it. */
 const TICKS_MODULE = 'DeviceLinkTicks';
@@ -275,6 +275,7 @@ function pictureSize(path: string): Promise<Result<Size>> {
 /** The open note, as a receive places into it. */
 export const noteHost: NoteHost = boundedPage({
   permissions: ensurePermissions,
+  canDelete: holdsDelete,
   pluginDir: getPluginDirPath,
   pageKey: currentPageKey,
   pageSize: currentPageSize,

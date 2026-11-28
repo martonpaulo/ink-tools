@@ -24,6 +24,8 @@ export type Settings = {
   last: Device | null;
   /** «Receive in the background» (#289): a receiver started at plugin start; off by default. */
   background: boolean;
+  /** The person refused File delete, which only removes a long text's copy; not asked again (#593). */
+  deleteRefused: boolean;
 };
 
 /** What a receiver's announced fingerprint is to its pin (#307). */
@@ -168,7 +170,7 @@ export async function loadSettings(
   if (last !== null && !('pins' in parsed)) {
     pins[last.alias] = last.fingerprint;
   }
-  return {fingerprint, pins, last, background: parsed.background === true};
+  return {fingerprint, pins, last, background: parsed.background === true, deleteRefused: parsed.deleteRefused === true};
 }
 
 export async function saveSettings(

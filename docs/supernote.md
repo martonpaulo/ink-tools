@@ -763,6 +763,7 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   - With `FILE:READ` and `FILE:WRITE` granted, deleting a file the plugin wrote in `MyStyle/`
     fails: `SecurityException: Plugin [...] has no DELETE permission`. Deletes need
     `plugin.permission.FILE:DELETE`, which the SDK lists beside the other three.
+  - `requestPermission` of a permission set to «Don't Allow» shows the host's own dialog «Unable to Delete Files» («Cancel», «Go to Settings») at every call and answers 0 on Cancel; `hasPermission` answers false for it and for «Ask Every Time», so a plugin cannot tell them apart [measured, Manta, Device Link, 2026-11-28, [#593](https://github.com/martonpaulo/ink-tools/issues/593)].
 - `convertElement2Sticker` refuses a picture element with error 205, «Sticker conversion supports
   only normal strokes and geometries» [measured, Word Lookup, 2026-11-16, [#35](https://github.com/martonpaulo/ink-tools/issues/35)].
 - Each plugin install restarts PluginHost, so every enabled plugin's load pass runs again: one

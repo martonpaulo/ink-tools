@@ -15,6 +15,8 @@ import {
 } from '@ink-tools/sn-adapter/official';
 import type {Problem} from '@ink-tools/ui-kit';
 import {copy} from './copy';
+import {relay} from './native';
+import {loadSettings, saveSettings} from './settings/device';
 
 /** Every permission `PluginConfig.json` declares; `__tests__/permissions.test.tsx` checks both match. */
 export const NEEDED = [
@@ -35,13 +37,32 @@ export type PermissionDeps = {
   has: typeof hasPermission;
   request: typeof requestPermission;
   log: (line: string) => void;
+  /**
+   * Whether the person refused this optional permission before. The host shows its own «Unable to
+   * Delete Files» dialog at every `requestPermission` of a refused one, and `hasPermission` cannot
+   * tell a refusal from «Ask Every Time», so a refusal is remembered and not asked again (#593).
+   * shortcut: a permission set back to «Ask Every Time» in Settings is not asked again either;
+   * allowing it there still works, as `hasPermission` then answers true.
+   */
+  refusedBefore: (permission: string) => Promise<boolean>;
+  rememberRefusal: (permission: string) => Promise<void>;
 };
 
 const DEVICE: PermissionDeps = {
   has: hasPermission,
   request: requestPermission,
   log: line => console.log(`Relay: ${line}`),
+  refusedBefore: async () => (await loadSettings(relay())).deleteRefused,
+  rememberRefusal: async () => {
+    const native = relay();
+    await saveSettings(native, {...(await loadSettings(native)), deleteRefused: true});
+  },
 };
+
+/** Whether the host lets the plugin delete a file now; a read, never a dialog (#593). */
+export async function holdsDelete(deps: PermissionDeps = DEVICE): Promise<boolean> {
+  return held(PERMISSION_FILE_DELETE, deps);
+}
 
 /**
  * Asks for each permission the host has not granted, in order; answers the first one the person
@@ -54,14 +75,23 @@ export async function ensurePermissions(
     if (await held(permission, deps)) {
       continue;
     }
+    if (OPTIONAL.includes(permission) && (await deps.refusedBefore(permission))) {
+      deps.log(`${permission} refused before: not asked again`);
+      continue;
+    }
     const asked = await deps.request(permission, copy.permissionReason);
     deps.log(
       asked.ok
         ? `requestPermission ${permission}: ${asked.value}`
         : `requestPermission ${permission} failed: ${asked.code} ${asked.message}`,
     );
-    if (!(asked.ok && isGranted(asked.value)) && !OPTIONAL.includes(permission)) {
-      return permission;
+    if (!(asked.ok && isGranted(asked.value))) {
+      if (!OPTIONAL.includes(permission)) {
+        return permission;
+      }
+      if (asked.ok) {
+        await deps.rememberRefusal(permission);
+      }
     }
   }
   return null;

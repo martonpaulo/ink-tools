@@ -51,6 +51,8 @@ export type Size = {width: number; height: number};
 export type NoteHost = NoteFiles & {
   /** Asks for each declared permission; the first refused one, or null (#163). */
   permissions(): Promise<string | null>;
+  /** Whether the host lets the plugin delete a file; asked before a delete, never to show a dialog (#593). */
+  canDelete(): Promise<boolean>;
   pluginDir(): Promise<Result<string>>;
   /** Which page is open (note path and page), so a second text goes below the first (#49). */
   pageKey(): Promise<Result<string>>;
@@ -306,10 +308,17 @@ async function placeOverPages(
   }
   host.log(`receive: lassoElements skipped, the text is on ${pieces.length} pages`);
   if (copied !== null) {
-    // The host refuses a delete in shared storage without FILE:DELETE, and the copy then stayed
-    // beside the note with no line saying so (tablet row 141, #593).
-    const removed = await native.remove(copied);
-    host.log(removed.ok && removed.value ? 'receive: the saved copy of the text is removed' : `receive: the saved copy of the text could not be removed: ${copied}`);
+    // The host refuses a delete in shared storage without FILE:DELETE, so the permission is read
+    // first and a refused one is not attempted; the toast then says where the copy stays (#593).
+    const allowed = await host.canDelete();
+    const removed = allowed ? await native.remove(copied) : null;
+    if (removed !== null && removed.ok && removed.value) {
+      host.log('receive: the saved copy of the text is removed');
+    } else {
+      host.log(allowed ? 'receive: the delete failed, the copy stays beside the note' : 'receive: the File delete permission is not granted, the copy stays beside the note');
+      host.log(`receive: the saved copy of the text could not be removed: ${copied}`);
+      return copy.receivedTextPagesKept(pieces.length, copied.slice(copied.lastIndexOf('/') + 1));
+    }
   }
   return copy.receivedTextPages(pieces.length);
 }

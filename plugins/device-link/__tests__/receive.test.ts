@@ -29,6 +29,7 @@ beforeEach(resetPlacedForTests);
 function note(overrides: Partial<NoteHost> = {}) {
   const host: NoteHost = {
     permissions: jest.fn(async () => null),
+    canDelete: async () => true,
     pluginDir: jest.fn(async () => ok('/plugin')),
     pageKey: jest.fn(async () => ok('/note.note#0')),
     pageSize: jest.fn(async () => ok(PAGE)),
@@ -405,12 +406,22 @@ describe('a received text longer than the page\'s room goes whole over new pages
     expect(calls.removed).toEqual([expect.stringMatching(/^\/note received text \d+\.txt$/)]);
   });
 
-  test('a copy the host refuses to delete is named in the log, never left silent (tablet row 141)', async () => {
+  test('a copy the host fails to delete is named in the log and the line says a copy is kept and where (tablet row 141)', async () => {
     const h = host();
     const {api} = fakeRelay({remove: jest.fn(async () => false)}, [offer({t: {fileType: 'text/plain', preview: long}})]);
-    await expect(receiveOne(api, h, 'Supernote')).resolves.toBe(copy.receivedTextPages(3));
+    const result = await receiveOne(api, h, 'Supernote');
+    expect(result).toEqual(expect.stringMatching(/^Text added to the note, over 3 pages\. A copy is kept beside the note as note received text \d+\.txt$/));
     const lines = (h.log as jest.Mock).mock.calls.map(call => call[0]);
     expect(lines).toContainEqual(expect.stringMatching(/^receive: the saved copy of the text could not be removed: \/note received text \d+\.txt$/));
+  });
+
+  test('with the delete permission refused no delete is attempted, and the line says the copy is kept and where (tablet row 145, #593)', async () => {
+    const h = host({canDelete: jest.fn(async () => false)});
+    const {api, calls} = fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: long}})]);
+    const result = await receiveOne(api, h, 'Supernote');
+    expect(calls.removed).toEqual([]);
+    expect(calls.written).toEqual([long]);
+    expect(result).toEqual(expect.stringMatching(/^Text added to the note, over 3 pages\. A copy is kept beside the note as note received text \d+\.txt$/));
   });
 
   test('no text box goes in while the note reloads after a page insert (tablet row 141)', async () => {
