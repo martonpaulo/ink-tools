@@ -70,7 +70,7 @@
     "repeated": 1
    },
    "plugins/device-link/src/localsend/protocol.ts": {
-    "number": 23
+    "number": 18
    },
    "plugins/device-link/src/receive/receive.ts": {
     "number": 1

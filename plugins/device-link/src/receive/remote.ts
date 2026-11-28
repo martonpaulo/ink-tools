@@ -21,7 +21,8 @@
 import {ActionRefused, type ActionResult} from '@ink-tools/sn-adapter/official';
 import {copy} from '../copy';
 import {isNotePath} from '../editor/operations';
-import {Device, isPrivateAddress, MAX_ANSWER_BYTES} from '../localsend/protocol';
+import {PEN_PAUSE} from '../editor/penGate';
+import {Device, isPrivateAddress, MAX_ANSWER_BYTES, shortText} from '../localsend/protocol';
 import {Relay} from '../native';
 import {sendFile} from '../send/sendPng';
 import type {Self} from '../settings/device';
@@ -30,10 +31,24 @@ import type {Self} from '../settings/device';
 export const PAIR_CODE_MS = 2 * 60 * 1000;
 export const PAIR_CODE_DIGITS = 6;
 /**
- * How long an edit waits for the pen to lift before it is refused: below the native receiver's
- * wait for an answer (`RelayModule.DECIDE_MS`, 10 s), past which the Mac reads a 500.
+ * How long an edit waits for the pen to lift before it is refused, a quarter of the helper's own
+ * wait (5 s): below the native receiver's wait for an answer (`RelayModule.DECIDE_MS`, 10 s),
+ * past which the Mac reads a 500.
  */
-export const EDIT_PEN_MS = 5000;
+export const EDIT_PEN_MS = PEN_PAUSE.waitMs / 4;
+/** The HTTP status of each answer the Mac reads. */
+export const STATUS = {
+  done: 200,
+  accepted: 202,
+  badRequest: 400,
+  refused: 403,
+  editRefused: 422,
+  failed: 500,
+  noEditor: 503,
+} as const;
+/** The hex digits of the offer token a pairing code is read from: 48 bits, past a million codes. */
+const CODE_HEX_DIGITS = 12;
+const MAX_PORT = 65535;
 /** A pulled note's LocalSend type: the tablet's `.note` file, as bytes. */
 export const NOTE_FILE_TYPE = 'application/octet-stream';
 
@@ -67,9 +82,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function shortText(value: unknown, max = 256): value is string {
-  return typeof value === 'string' && value.length > 0 && value.length <= max;
-}
 
 /** Equal strings, compared in a time that does not depend on where they differ. */
 export function sameSecret(a: string, b: string): boolean {
@@ -116,7 +128,7 @@ async function savePairing(native: Relay, pluginDir: string, pairing: Pairing): 
 
 /** A code of PAIR_CODE_DIGITS digits from the receiver's random offer token (SecureRandom hex). */
 export function pairCode(randomHex: string): string {
-  const value = parseInt(randomHex.slice(0, 12), 16);
+  const value = parseInt(randomHex.slice(0, CODE_HEX_DIGITS), 16);
   return String(value % 10 ** PAIR_CODE_DIGITS).padStart(PAIR_CODE_DIGITS, '0');
 }
 
@@ -156,7 +168,7 @@ export function readMessage(text: string): RemoteMessage | null {
       typeof reply.port !== 'number' ||
       !Number.isInteger(reply.port) ||
       reply.port < 1 ||
-      reply.port > 65535
+      reply.port > MAX_PORT
     ) {
       return null;
     }
@@ -182,7 +194,7 @@ async function pair(native: Relay, dir: string, from: {fingerprint: string; alia
   if (code === null) {
     const shown = pairCode(offerToken);
     const saved = await savePairing(native, dir, {...pairing, pending: {code: shown, fingerprint: from.fingerprint, until: now + PAIR_CODE_MS}});
-    return saved ? answer(202, {pairing: 'code shown on the tablet'}, copy.pairCode(from.alias, shown)) : answer(500, {refusal: 'not-saved'});
+    return saved ? answer(STATUS.accepted, {pairing: 'code shown on the tablet'}, copy.pairCode(from.alias, shown)) : answer(STATUS.failed, {refusal: 'not-saved'});
   }
   const pending = pairing.pending;
   const good = pending !== null && now <= pending.until && pending.fingerprint === from.fingerprint && sameSecret(code, pending.code);
@@ -190,9 +202,9 @@ async function pair(native: Relay, dir: string, from: {fingerprint: string; alia
   const next: Pairing = good ? {paired: {fingerprint: from.fingerprint, grant: offerToken}, pending: null} : {...pairing, pending: null};
   const saved = await savePairing(native, dir, next);
   if (!good) {
-    return answer(403, {refusal: 'pair-refused'}, copy.pairRefused);
+    return answer(STATUS.refused, {refusal: 'pair-refused'}, copy.pairRefused);
   }
-  return saved ? answer(200, {grant: offerToken}, copy.paired(from.alias)) : answer(500, {refusal: 'not-saved'});
+  return saved ? answer(STATUS.done, {grant: offerToken}, copy.paired(from.alias)) : answer(STATUS.failed, {refusal: 'not-saved'});
 }
 
 /**
@@ -213,7 +225,7 @@ export async function handleRemote(
   const request = readMessage(message);
   if (from === null || request === null) {
     log('remote: a request of an unknown shape was refused');
-    return answer(400, {refusal: 'bad-request'});
+    return answer(STATUS.badRequest, {refusal: 'bad-request'});
   }
   if (request.request === 'pair') {
     log(`remote: pair ${request.code === null ? 'asked' : 'confirmed'}`);
@@ -222,24 +234,24 @@ export async function handleRemote(
   const {paired} = await loadPairing(native, pluginDir);
   if (paired === null || paired.fingerprint !== from.fingerprint || !sameSecret(request.grant, paired.grant)) {
     log(`remote: ${request.request} refused: not the paired Mac`);
-    return answer(403, {refusal: 'unpaired'});
+    return answer(STATUS.refused, {refusal: 'unpaired'});
   }
   if (request.request === 'edit') {
     if (edit === null) {
-      return answer(503, {refusal: 'no-editor'});
+      return answer(STATUS.noEditor, {refusal: 'no-editor'});
     }
     try {
-      return answer(200, {ok: true, ...(await edit(request.args))});
+      return answer(STATUS.done, {ok: true, ...(await edit(request.args))});
     } catch (error) {
       if (error instanceof ActionRefused) {
-        return answer(422, {ok: false, message: error.message, ...error.detail});
+        return answer(STATUS.editRefused, {ok: false, message: error.message, ...error.detail});
       }
       log(`remote: edit failed: ${(error as Error).message}`);
-      return answer(500, {ok: false, message: (error as Error).message});
+      return answer(STATUS.failed, {ok: false, message: (error as Error).message});
     }
   }
   const device: Device = {alias: from.alias, ip: request.reply.ip, port: request.reply.port, protocol: 'https', fingerprint: paired.fingerprint};
   const name = request.path.slice(request.path.lastIndexOf('/') + 1);
   log(`remote: pull of one note to ${from.alias}`);
-  return answer(202, {pull: 'sending'}, null, () => sendFile(native, self, device, request.path, name, undefined, undefined, NOTE_FILE_TYPE));
+  return answer(STATUS.accepted, {pull: 'sending'}, null, () => sendFile(native, self, device, request.path, name, undefined, undefined, NOTE_FILE_TYPE));
 }

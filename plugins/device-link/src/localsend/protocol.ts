@@ -126,7 +126,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function shortText(value: unknown, max: number): value is string {
+/** A text from another device, at most `max` characters: 256 for an alias, a fingerprint or an id. */
+export function shortText(value: unknown, max: number = 256): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= max;
 }
 
@@ -163,7 +164,7 @@ export function parseAnnounce(
     return null;
   }
   const {alias, fingerprint, port, protocol, deviceModel} = body;
-  if (!shortText(alias, 256) || !shortText(fingerprint, 256)) {
+  if (!shortText(alias) || !shortText(fingerprint)) {
     return null;
   }
   if (self !== undefined && fingerprint === self.fingerprint) {
@@ -189,7 +190,7 @@ export function parseAnnounce(
     protocol: scheme,
     fingerprint,
   };
-  if (shortText(deviceModel, 256)) {
+  if (shortText(deviceModel)) {
     device.deviceModel = deviceModel;
   }
   return device;
@@ -222,7 +223,7 @@ export function parsePrepareUpload(
   }
   const {sessionId} = body;
   const token = body.files[fileId];
-  if (!shortText(sessionId, 256) || !shortText(token, 256)) {
+  if (!shortText(sessionId) || !shortText(token)) {
     return {kind: 'failed', status};
   }
   return {kind: 'session', sessionId, fileToken: token};
@@ -339,7 +340,7 @@ export function readOffer(text: string): Taken {
     return {kind: 'refuse', reason: 'shape'};
   }
   const [fileId, file] = files[0];
-  if (!shortText(fileId, 256) || !isRecord(file) || typeof file.fileType !== 'string') {
+  if (!shortText(fileId) || !isRecord(file) || typeof file.fileType !== 'string') {
     return {kind: 'refuse', reason: 'shape'};
   }
   const fileType = file.fileType.toLowerCase();
@@ -384,8 +385,8 @@ export function decideOffer(
     case 'text':
       return {status: 204, body: '', fileId: null, extension: null, taken};
     case 'editor':
-      // Answered by `src/receive/remote.ts`, once the request ran; this is only its placeholder.
-      return {status: 500, body: '', fileId: null, extension: null, taken};
+      // Answered by `src/receive/remote.ts` once the request ran: this status is never sent.
+      return {status: 0, body: '', fileId: null, extension: null, taken};
     case 'image':
     case 'pdf':
       return {

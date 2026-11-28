@@ -1,8 +1,8 @@
 /** Note Editor through Device Link (#493): pairing once by a grant, an edit, a refusal and a pull. */
-import {ActionRefused, ok} from '@ink-tools/sn-adapter/official';
+import {ActionRefused} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {EDITOR_FILE_TYPE} from '../src/localsend/protocol';
-import {NoteHost, receiveOne, resetPlacedForTests} from '../src/receive/receive';
+import {receiveOne, resetPlacedForTests} from '../src/receive/receive';
 import {
   handleRemote,
   NOTE_FILE_TYPE,
@@ -12,6 +12,7 @@ import {
   sameSecret,
   serveEdits,
 } from '../src/receive/remote';
+import {fakeNote} from '../test-support/fakeNote';
 import {fakeRelay} from '../test-support/fakeRelay';
 
 const MAC = {alias: 'Studio Mac', fingerprint: 'mac-fp'};
@@ -45,24 +46,7 @@ const editorOffer = (message: object, token: string, from = MAC) => ({
 
 const EDIT_ARGS = {path: NOTE, ops: [{op: 'deleteElements', page: 0, nums: [3]}]};
 
-function note(): NoteHost {
-  return {
-    permissions: jest.fn(async () => null),
-    pluginDir: jest.fn(async () => ok('/plugin')),
-    pageKey: jest.fn(async () => ok('/note.note#0')),
-    pageSize: jest.fn(async () => ok({width: 1404, height: 1872})),
-    occupied: jest.fn(async () => ok({rects: [], complete: true})),
-    log: jest.fn(),
-    closeView: jest.fn(async () => ok(true)),
-    insertText: jest.fn(async () => ok(true)),
-    lasso: jest.fn(async () => ok(true)),
-    insertImage: jest.fn(async () => ok(true)),
-    imageSize: jest.fn(async () => ok({width: 1, height: 1})),
-    wait: jest.fn(async () => {}),
-    createNote: jest.fn(async () => ok(true)),
-    insertNotePage: jest.fn(async () => ok(true)),
-  };
-}
+const note = fakeNote;
 
 beforeEach(() => {
   resetPlacedForTests();

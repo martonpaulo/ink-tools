@@ -10,38 +10,19 @@ import {
   PLACED_WAIT_MS,
   freeTextBox,
   boundedPage,
-  NoteHost,
   receiveOne,
   resetPlacedForTests,
   textBox,
 } from '../src/receive/receive';
 import {receiveState, runReceive} from '../src/receive/session';
+import {fakeNote, FAKE_PAGE} from '../test-support/fakeNote';
 import {fakeRelay} from '../test-support/fakeRelay';
 
-const PAGE = {width: 1404, height: 1872};
+const PAGE = FAKE_PAGE;
 
 beforeEach(resetPlacedForTests);
 
-function note(overrides: Partial<NoteHost> = {}) {
-  const host: NoteHost = {
-    permissions: jest.fn(async () => null),
-    pluginDir: jest.fn(async () => ok('/plugin')),
-    pageKey: jest.fn(async () => ok('/note.note#0')),
-    pageSize: jest.fn(async () => ok(PAGE)),
-    occupied: jest.fn(async () => ok({rects: [], complete: true})),
-    log: jest.fn(),
-    closeView: jest.fn(async () => ok(true)),
-    insertText: jest.fn(async () => ok(true)),
-    lasso: jest.fn(async () => ok(true)),
-    insertImage: jest.fn(async () => ok(true)),
-    imageSize: jest.fn(async () => ok({width: 923, height: 1200})),
-    wait: jest.fn(async () => {}),
-    createNote: jest.fn(async () => ok(true)),
-    insertNotePage: jest.fn(async () => ok(true)),
-    ...overrides,
-  };
-  return host;
-}
+const note = fakeNote;
 
 const offer = (files: Record<string, unknown>) => ({
   kind: 'offer' as const,

@@ -4,37 +4,20 @@ import {copy} from '../src/copy';
 import {Arrival} from '../src/native';
 import {onBackgroundSwitch, placePendingOnPenUp, setBackground, startBackgroundIfOn} from '../src/receive/background';
 import {pendingPath, resetPendingForTests} from '../src/receive/pending';
-import {BACKGROUND_WAIT_MS, NoteHost, resetPlacedForTests} from '../src/receive/receive';
+import {BACKGROUND_WAIT_MS, resetPlacedForTests} from '../src/receive/receive';
 import {receiveState, receivingInBackground, runReceive} from '../src/receive/session';
 import {settingsPath} from '../src/settings/device';
+import {fakeNote, FAKE_PAGE} from '../test-support/fakeNote';
 import {fakeRelay} from '../test-support/fakeRelay';
 
-const PAGE = {width: 1404, height: 1872};
+const PAGE = FAKE_PAGE;
 
 beforeEach(() => {
   resetPlacedForTests();
   resetPendingForTests();
 });
 
-function note(overrides: Partial<NoteHost> = {}): NoteHost {
-  return {
-    permissions: jest.fn(async () => null),
-    pluginDir: jest.fn(async () => ok('/plugin')),
-    pageKey: jest.fn(async () => ok('/note.note#0')),
-    pageSize: jest.fn(async () => ok(PAGE)),
-    occupied: jest.fn(async () => ok({rects: [], complete: true})),
-    log: jest.fn(),
-    closeView: jest.fn(async () => ok(true)),
-    insertText: jest.fn(async () => ok(true)),
-    lasso: jest.fn(async () => ok(true)),
-    insertImage: jest.fn(async () => ok(true)),
-    imageSize: jest.fn(async () => ok({width: 100, height: 100})),
-    wait: jest.fn(async () => {}),
-    createNote: jest.fn(async () => ok(true)),
-    insertNotePage: jest.fn(async () => ok(true)),
-    ...overrides,
-  };
-}
+const note = fakeNote;
 
 const text = (preview: string): Arrival => ({
   kind: 'offer',
