@@ -30,6 +30,10 @@ function host(open: string | null = OTHER, overrides: Partial<EditHost> = {}) {
       calls.push(`retext ${JSON.stringify([element, text, fontSize])}`);
       return ok({...element, retexted: text});
     },
+    restyle: (element, style) => {
+      calls.push(`restyle ${JSON.stringify([element, style])}`);
+      return ok(element);
+    },
     transform: record('transform', {type: 0, transformed: true}),
     insertOpen: record('insertOpen', true),
     insertByPath: record('insertByPath', true),
@@ -112,6 +116,35 @@ describe('operations on a closed note go through the file API by path', () => {
       `modifyByPath ${JSON.stringify([NOTE, 0, [{type: 500, placed: true, retexted: 'New\nline'}]])}`,
     ]);
     expect(answer).toMatchObject({results: [{ok: true, op: 'modifyElements', num: 4, retexted: true}]});
+  });
+
+  it("passes a text box's style to the build and to a retext; a text with none keeps the box's own (#404)", async () => {
+    const built: unknown[] = [];
+    const styles: unknown[] = [];
+    const {fake} = host(OTHER, {
+      build: async spec => {
+        built.push(spec);
+        return ok({built: spec.kind});
+      },
+      restyle: (element, style) => {
+        styles.push(style);
+        return ok(element);
+      },
+    });
+    const font = `${EDITOR_FOLDER}Serif.ttf`;
+    await editAction(fake)({
+      path: NOTE,
+      ops: [
+        {op: 'insertElements', page: 0, elements: [{...text, bold: true, italic: false, align: 'center', font}, text]},
+        {op: 'modifyElements', page: 0, num: 4, rect: RECT, text: 'Heading', fontSize: 48, bold: true},
+        {op: 'modifyElements', page: 0, num: 5, rect: RECT, text: 'Plain', fontSize: 40},
+      ],
+    });
+    expect(built).toEqual([
+      {kind: 'text', text: 'Agenda', fontSize: 40, rect: RECT, style: {bold: true, italic: false, align: 'center', fontPath: font}},
+      {kind: 'text', text: 'Agenda', fontSize: 40, rect: RECT},
+    ]);
+    expect(styles).toEqual([{bold: true}]);
   });
 
   it('refuses a text for an element that is not a text box, and writes nothing (#264)', async () => {
@@ -301,6 +334,10 @@ describe('each refusal is named, with the open note', () => {
     ['a keyword that is not a text', {path: NOTE, ops: [{op: 'insertKeyword', page: 0, text: 7}]}, 'bad-request'],
     ['a keyword index below 0', {path: NOTE, ops: [{op: 'deleteKeyword', page: 0, index: -1}]}, 'bad-request'],
     ['a keyword index that is not whole', {path: NOTE, ops: [{op: 'deleteKeyword', page: 0, index: 0.5}]}, 'bad-request'],
+    ['a bold that is not true or false (#404)', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{...text, bold: 1}]}]}, 'bad-request'],
+    ['an align the text box lacks (#404)', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{...text, align: 'justify'}]}]}, 'bad-request'],
+    ['a font outside the helper folder (#404)', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{...text, font: '/system/fonts/Roboto.ttf'}]}]}, 'bad-request'],
+    ['a font that is no .ttf or .otf (#404)', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{...text, font: `${EDITOR_FOLDER}f.png`}]}]}, 'bad-request'],
     ['a picture outside the helper folder', {path: NOTE, ops: [{op: 'insertElements', page: 0, elements: [{kind: 'picture', file: '/sdcard/x.png', rect: RECT}]}]}, 'bad-request'],
   ])('%s is refused before any call', async (_name, args, name) => {
     const {fake, calls} = host();

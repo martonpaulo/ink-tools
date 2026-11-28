@@ -100,6 +100,9 @@ note, which inkctl asks before it opens another note ([#426](https://github.com/
 editor's Insert Page, the system ones by name and the PNGs straight in `MyStyle/` by full path,
 which `insertPage` also takes ([#451](https://github.com/martonpaulo/ink-tools/issues/451)). `insertElements` and `modifyElements` take an optional target `layer`, 0 to 3: the open-note calls' `layer` argument, and by path each element's `layerNum`, whether the file API follows it waiting for the device round ([#334](https://github.com/martonpaulo/ink-tools/issues/334)). To test on the device: each operation with the screen
 untouched, whether a picture element takes a path in that folder, and a stroke's `setRange` move.
+A text element and a text modify take an optional style, `bold`, `italic`, `align` and `font` (a
+.ttf or .otf in `EDITOR_FOLDER`), passed to sn-adapter's `TextBox` fields; which of them the
+tablet shows waits for the device probe of [#404](https://github.com/martonpaulo/ink-tools/issues/404).
 
 **Note Editor over Device Link built, not yet on the device** ([#493](https://github.com/martonpaulo/ink-tools/issues/493)): the receiver also takes
 one offer of `EDITOR_FILE_TYPE` whose `preview` is Note Editor's request (`src/receive/remote.ts`), and

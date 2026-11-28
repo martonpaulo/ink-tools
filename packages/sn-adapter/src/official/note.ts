@@ -9,11 +9,23 @@ export function insertImage(path: string): Promise<Result<boolean>> {
 }
 
 /** The text box a plugin inserts: the SDK's `TextBox` fields this repository sets (#115). */
+/** sn-plugin-lib 0.2.3's `TextBox.textAlign` values, in their order: 0 left, 1 center, 2 right (#404). */
+export const TEXT_ALIGNS = ['left', 'center', 'right'] as const;
+export type TextAlign = (typeof TEXT_ALIGNS)[number];
+
+/**
+ * A text box's style, the `TextBox` fields sn-plugin-lib 0.2.3 has (#404); a field left out is the
+ * host's default: plain, left-aligned, its own font. Which of them the tablet shows waits for the
+ * device probe of #404.
+ */
+export type TextStyle = {bold?: boolean; italic?: boolean; align?: TextAlign; fontPath?: string};
+
 export type TextBoxInput = {
   text: string;
   /** Page pixels, as `PluginFileAPI.getPageSize` measures the page. */
   rect: {left: number; top: number; right: number; bottom: number};
   fontSize: number;
+  style?: TextStyle;
 };
 
 /**

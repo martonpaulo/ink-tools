@@ -7,8 +7,8 @@
  * keyword goes in and out by path, the open note too (#346).
  */
 import {PluginFileAPI} from 'sn-plugin-lib';
-import {createTextBox, readAll, rebuildStroke, STROKE_TYPE, TEXT_TYPE} from './elements';
-import type {TextBoxInput} from './note';
+import {createTextBox, readAll, rebuildStroke, STROKE_TYPE, TEXT_TYPE, textStyleFields} from './elements';
+import type {TextBoxInput, TextStyle} from './note';
 import {createElement, PICTURE_TYPE} from './page';
 import type {PenPoint} from './pen';
 import {attempt, fail, ok, Result, THROWN_CODE} from './result';
@@ -25,7 +25,7 @@ export type EllipseSpec = {center: PenPoint; major: number; minor: number; angle
 /** An element the Mac asks for, in our words (#312); the helper checks every field before this. */
 export type NewElement =
   | {kind: 'stroke'; points: PenPoint[]; penColor: number; thickness: number}
-  | {kind: 'text'; text: string; rect: EditRect; fontSize: number}
+  | {kind: 'text'; text: string; rect: EditRect; fontSize: number; style?: TextStyle}
   | {kind: 'picture'; file: string; rect: EditRect}
   | {kind: 'geometry'; shape: GeometryShape; points: PenPoint[]; ellipse: EllipseSpec | null; penColor: number; penWidth: number};
 
@@ -90,7 +90,7 @@ export async function buildElement(spec: NewElement): Promise<Result<object>> {
         createElement,
       );
     case 'text':
-      return createTextBox({text: spec.text, rect: spec.rect, fontSize: spec.fontSize});
+      return createTextBox({text: spec.text, rect: spec.rect, fontSize: spec.fontSize, style: spec.style});
     case 'picture': {
       const made = await createElement(PICTURE_TYPE);
       if (!made.ok) {
@@ -274,6 +274,19 @@ export function retextElement(element: object, text: string, fontSize: number): 
   }
   placed.textBox.textContentFull = text;
   placed.textBox.fontSize = fontSize;
+  return ok(element);
+}
+
+/**
+ * Sets a text box read by `getElement` to `style`, in place, for a modify call (#404): each field
+ * left out goes back to the host's default. Refused for any other element.
+ */
+export function restyleElement(element: object, style: TextStyle): Result<object> {
+  const placed = element as Placed;
+  if (placed.type !== TEXT_TYPE || !placed.textBox) {
+    return fail(THROWN_CODE, 'the element is not a text box');
+  }
+  Object.assign(placed.textBox, textStyleFields(style));
   return ok(element);
 }
 

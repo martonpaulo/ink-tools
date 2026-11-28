@@ -289,6 +289,16 @@ describe('the editor helper calls (#312)', () => {
     expect(await page.placeElement(text, 0, rect)).toEqual({ok: true, value: {type: 500, pageNum: 0, textBox: {textRect: rect}}});
   });
 
+  it("writes a text box's style fields, each left out the host's default (#404)", () => {
+    const box = {text: 'x', rect, fontSize: 40};
+    expect(note.textBoxFields(box)).toMatchObject({fontPath: null, textAlign: 0, textBold: 0, textItalics: 0});
+    expect(note.textBoxFields({...box, style: {bold: true, italic: true, align: 'right', fontPath: '/f.ttf'}})).toMatchObject({fontPath: '/f.ttf', textAlign: 2, textBold: 1, textItalics: 1});
+    const stored = {type: 500, textBox: {textRect: rect, textContentFull: 'old', fontSize: 40, textBold: 1, textAlign: 1}};
+    expect(page.retextElement(structuredClone(stored), 'new', 40)).toMatchObject({value: {textBox: {textBold: 1, textAlign: 1}}});
+    expect(page.restyleElement(structuredClone(stored), {italic: true})).toMatchObject({value: {textBox: {textBold: 0, textAlign: 0, textItalics: 1, fontPath: null}}});
+    expect(page.restyleElement({type: 0}, {bold: true})).toMatchObject({ok: false, message: 'the element is not a text box'});
+  });
+
   it("sets a text box's text and font size, and refuses any other element (#264)", () => {
     const text = {type: 500, textBox: {textRect: rect, textContentFull: 'old', fontSize: 40}};
     expect(page.retextElement(text, 'new\nline', 48)).toEqual({ok: true, value: {type: 500, textBox: {textRect: rect, textContentFull: 'new\nline', fontSize: 48}}});

@@ -19,8 +19,10 @@ import {
   SHARED_ROOT,
   type ActionResult,
   STROKE_TYPE,
+  TEXT_ALIGNS,
   TEXT_TYPE,
   type EditRect,
+  type TextStyle,
   type Matrix,
   type NewElement,
   type Result,
@@ -64,8 +66,11 @@ export type Operation =
   | {op: 'deleteKeyword'; page: number; index: number}
   | {op: 'openNote'};
 
-/** A text box's new text and font size, for the Mac's edit of a text box made on the tablet (#264). */
-export type TextChange = {text: string; fontSize: number};
+/**
+ * A text box's new text and font size, for the Mac's edit of a text box made on the tablet (#264),
+ * and its style when the request names one (#404).
+ */
+export type TextChange = {text: string; fontSize: number; style?: TextStyle};
 
 export type EditRequest = {path: string; ops: Operation[]};
 
@@ -79,6 +84,8 @@ export interface EditHost {
   place(element: object, page: number, rect: EditRect): Promise<Result<object>>;
   /** Sets a text box's text and font size, refused for any other element (#264). */
   retext(element: object, text: string, fontSize: number): Result<object>;
+  /** Sets a text box's style fields, refused for any other element (#404). */
+  restyle(element: object, style: TextStyle): Result<object>;
   /** Scales, rotates or flips a stroke through `matrix`, refused when it leaves the page (#326). */
   transform(element: object, page: number, matrix: Matrix): Promise<Result<object>>;
   /** `layer`, when given, is the layer the elements go to (#334); without it the tablet chooses. */
@@ -222,11 +229,35 @@ function parseGeometry(raw: Record<string, unknown>): NewElement {
   return {kind: 'geometry', shape, points: [], ellipse: {center, major: a, minor: b, angle: 0}, penColor, penWidth};
 }
 
-/** A text box's text, 1 to LIMITS.text characters not all blank, and its font size. */
+/**
+ * A text box's style from the request's `bold`, `italic`, `align` and `font` (#404), each optional;
+ * undefined when it names none, so a modify keeps the box's own style. A font is a .ttf or .otf file
+ * inkctl wrote in EDITOR_FOLDER, as a picture is.
+ */
+function parseStyle(raw: Record<string, unknown>): TextStyle | undefined {
+  const {bold, italic, align, font} = raw;
+  if (bold === undefined && italic === undefined && align === undefined && font === undefined) {
+    return undefined;
+  }
+  check(bold === undefined || typeof bold === 'boolean', 'bold must be true or false');
+  check(italic === undefined || typeof italic === 'boolean', 'italic must be true or false');
+  check(align === undefined || TEXT_ALIGNS.includes(align as never), `align must be one of ${TEXT_ALIGNS.join(', ')}`);
+  const name = typeof font === 'string' && font.startsWith(EDITOR_FOLDER) ? font.slice(EDITOR_FOLDER.length) : '';
+  check(font === undefined || /^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,63}\.(ttf|otf)$/i.test(name), `font must be a .ttf or .otf in ${EDITOR_FOLDER}`);
+  return {
+    ...(bold === undefined ? {} : {bold: bold as boolean}),
+    ...(italic === undefined ? {} : {italic: italic as boolean}),
+    ...(align === undefined ? {} : {align: align as TextStyle['align']}),
+    ...(font === undefined ? {} : {fontPath: font as string}),
+  };
+}
+
+/** A text box's text, 1 to LIMITS.text characters not all blank, its font size and its style, if any. */
 function parseText(raw: Record<string, unknown>): TextChange {
   check(typeof raw.text === 'string' && raw.text.trim().length > 0 && raw.text.length <= LIMITS.text, `text must hold 1 to ${LIMITS.text} characters`);
   check(wholeIn(raw.fontSize, FONT_SIZES.min, FONT_SIZES.max), `fontSize must be a whole number from ${FONT_SIZES.min} to ${FONT_SIZES.max}`);
-  return {text: raw.text as string, fontSize: raw.fontSize as number};
+  const style = parseStyle(raw);
+  return {text: raw.text as string, fontSize: raw.fontSize as number, ...(style ? {style} : {})};
 }
 
 /** A keyword's text: 1 to LIMITS.keyword characters, not all blank, with no line break (#346). */
@@ -372,6 +403,10 @@ async function runOne(operation: Operation, path: string, open: boolean, host: E
         throw new Stopped(REFUSAL.badRequest, `element ${operation.num} is not a text box: only a text box takes a text`);
       }
       const placed = await must('place', host.place(element, operation.page, operation.rect));
+      // A style the request names is set first, in place; a text with none keeps the box's own (#404).
+      if (text?.style) {
+        await must('restyle', Promise.resolve(host.restyle(placed, text.style)));
+      }
       const changed = text ? await must('retext', Promise.resolve(host.retext(placed, text.text, text.fontSize))) : placed;
       const at = layerArg(operation);
       await must('modify', open ? host.modifyOpen(operation.page, [changed], ...at) : host.modifyByPath(path, operation.page, [changed], ...at));

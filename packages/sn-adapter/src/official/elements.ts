@@ -5,7 +5,7 @@
  * wrapper Ink2Pic calls (its sdk-boundary test), as image.ts and file.ts are.
  */
 import {PluginCommAPI, PointUtils} from 'sn-plugin-lib';
-import type {TextBoxInput} from './note';
+import {TEXT_ALIGNS, type TextBoxInput, type TextStyle} from './note';
 import {createElement, type Size} from './page';
 import type {PenPoint} from './pen';
 import {REGISTRY} from '../registry.generated';
@@ -81,17 +81,28 @@ export function integerRect(rect: TextBoxInput['rect']): TextBoxInput['rect'] {
   };
 }
 
+/** The SDK's style fields for `style` (#404): each left out is the host's default. */
+export function textStyleFields(style: TextStyle = {}): {fontPath: string | null; textAlign: number; textBold: number; textItalics: number} {
+  return {
+    fontPath: style.fontPath ?? null,
+    textAlign: TEXT_ALIGNS.indexOf(style.align ?? 'left'),
+    textBold: style.bold ? 1 : 0,
+    textItalics: style.italic ? 1 : 0,
+  };
+}
+
 /** The SDK's `TextBox` fields for `box`, shared by insertText and a text box element (#187). */
 export function textBoxFields(box: TextBoxInput): Record<string, unknown> {
+  const style = textStyleFields(box.style);
   return {
     fontSize: box.fontSize,
-    fontPath: null,
+    fontPath: style.fontPath,
     textContentFull: box.text,
     textRect: integerRect(box.rect),
     textDigestData: null,
-    textAlign: 0,
-    textBold: 0,
-    textItalics: 0,
+    textAlign: style.textAlign,
+    textBold: style.textBold,
+    textItalics: style.textItalics,
     textFrameWidthType: 0,
     textFrameStyle: 0,
     textEditable: 0,
