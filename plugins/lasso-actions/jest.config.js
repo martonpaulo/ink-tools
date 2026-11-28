@@ -2,6 +2,7 @@ const uiKit = require('../../packages/ui-kit/plugin-config');
 const inkCore = require('../../packages/ink-core/plugin-config');
 const snAdapter = require('../../packages/sn-adapter/plugin-config');
 const pictureSearch = require('../../packages/picture-search/plugin-config');
+const packStore = require('../../packages/pack-store/plugin-config');
 
 module.exports = {
   preset: 'react-native',
@@ -16,6 +17,8 @@ module.exports = {
     ...snAdapter.jestModuleNameMapper,
     // The shared picture search, for Lookup's picture buttons (#125).
     ...pictureSearch.jestModuleNameMapper,
+    // The shared language pack store, which this plugin downloads into (#503).
+    ...packStore.jestModuleNameMapper,
   },
   // The shared package's own tests run in Bridge's suite (#93).
   roots: ['<rootDir>'],

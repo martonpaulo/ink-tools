@@ -1,0 +1,8 @@
+{
+  "catalogUrl": "https://inktools.martonpaulo.com/packs/catalog.json",
+  "storeFolder": "packs",
+  "catalogFile": "catalog.json",
+  "partSuffix": ".part",
+  "maxPackBytes": 268435456,
+  "freeSpaceMarginBytes": 33554432
+}

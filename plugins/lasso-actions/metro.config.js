@@ -3,6 +3,7 @@ const uiKit = require('../../packages/ui-kit/plugin-config');
 const inkCore = require('../../packages/ink-core/plugin-config');
 const snAdapter = require('../../packages/sn-adapter/plugin-config');
 const pictureSearch = require('../../packages/picture-search/plugin-config');
+const packStore = require('../../packages/pack-store/plugin-config');
 
 /**
  * Metro configuration
@@ -18,6 +19,6 @@ const config = {
 
 module.exports = mergeConfig(
   getDefaultConfig(__dirname),
-  pictureSearch.metro(snAdapter.metro(inkCore.metro(uiKit.metro(__dirname)))),
+  packStore.metro(pictureSearch.metro(snAdapter.metro(inkCore.metro(uiKit.metro(__dirname))))),
   config,
 );

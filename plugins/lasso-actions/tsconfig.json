@@ -16,6 +16,8 @@
       "@ink-tools/picture-search": ["../../packages/picture-search/src"],
       // Its device and insert tiers, the file store and «Insert best picture» (#142).
       "@ink-tools/picture-search/*": ["../../packages/picture-search/src/*"],
+      // The shared language pack store (#503).
+      "@ink-tools/pack-store": ["../../packages/pack-store/src"],
       "*": ["./node_modules/@types/*", "./node_modules/*"]
     }
   },

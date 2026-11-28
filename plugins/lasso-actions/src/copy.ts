@@ -210,3 +210,29 @@ export const pictureCopy = {
   illustration: {...pictureFailures, 'search.empty': 'no illustration found.'},
   photo: {...pictureFailures, 'search.empty': 'no photo found.'},
 } as const;
+
+/**
+ * The language pack download's copy (#503): the size shown before any byte is fetched, the metered
+ * warning, and each missing requirement with the one step that fixes it.
+ */
+export const packCopy = {
+  ask: (language: string, size: string) => `Language ${language}: words and dictionary, ${size}. Download?`,
+  askUpdate: (language: string, size: string, version: string) =>
+    `A new version of the ${language} language pack: ${size}, replacing version ${version}. Download?`,
+  metered: 'You are on a metered network, such as a phone hotspot, so this download may cost you data.',
+  'button.download': 'Download',
+  'needs.what': 'The language pack cannot be downloaded now.',
+  'needs.network': 'The tablet has no network.',
+  'needs.networkFix': 'Turn on Wi-Fi in the tablet Settings, then try again.',
+  'needs.sharedFolder': 'Lasso Actions has no permission to keep files on the tablet.',
+  'needs.sharedFolderFix': 'Allow Lasso Actions to read and write files, then try again.',
+  'needs.freeSpace': 'The tablet has not enough free space for this pack.',
+  'needs.freeSpaceFix': (size: string) => `Free at least ${size} on the tablet, then try again.`,
+  'error.what': 'The language pack was not installed.',
+  'error.hash': 'The downloaded pack did not match its check, so it was deleted. Try again.',
+  'error.size': 'The downloaded pack has the wrong size, so it was deleted. Try again.',
+  'error.tooLarge': 'The pack is larger than Ink Tools allows.',
+  'error.catalog': 'The list of language packs could not be read. Try again later.',
+  'error.notInstalled': 'This language pack is not installed.',
+  'error.host': 'The pack could not be downloaded or saved. Try again.',
+} as const;

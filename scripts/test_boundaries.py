@@ -92,6 +92,24 @@ class Boundaries(unittest.TestCase):
             "plugins/a/src/define.ts": "fetch('https://pt.wiktionary.org/w/api.php');\n",
         }), [("plugins/a/src/define.ts", "dictionary")])
 
+    def test_pack_literals_only_in_the_pack_store(self):
+        owners = {
+            "packages/pack-store/src/values.json": '{"catalogUrl": "https://packs.example/catalog.json", "storeFolder": "packs"}\n',
+            "registry/items/storage.json": '{"items": [{"id": "storage.shared-folder", "values": {"folder": "/sdcard/x/inktools-shared"}}]}\n',
+        }
+        self.assertEqual(self.tree({
+            **owners,
+            "packages/pack-store/src/config.ts": "const url = 'https://packs.example/catalog.json';\n",
+            "plugins/a/__tests__/p.test.ts": "expect(path).toBe('/sdcard/x/inktools-shared/packs/en-1.pack');\n",
+            "plugins/a/src/packs.ts": "// the store, inktools-shared/packs, through @ink-tools/pack-store\n",
+        }), [])
+        self.assertEqual(self.tree({
+            **owners,
+            "plugins/a/src/packs.ts": "fetch('https://packs.example/catalog.json');\n",
+            "apps/b/src/Packs.java": 'String store = base + "/inktools-shared/packs";\n',
+            "cli/c/src/c.py": 'STORE = "inktools-shared/packs"\n',
+        }), [("apps/b/src/Packs.java", "pack"), ("cli/c/src/c.py", "pack"), ("plugins/a/src/packs.ts", "pack")])
+
     def test_no_url_class_in_tablet_code(self):
         self.assertEqual(self.tree({
             "packages/sync-core/src/http.ts": "// never `new URL(url).protocol` (#209)\nconst p = parseUrl(url);\n",

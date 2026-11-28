@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.base.json",
+  // The tests hash their fixture pack with Node's crypto and read it with Node's fs.
+  "compilerOptions": {"types": ["jest", "node"]},
+  "include": ["src", "__tests__", "testing"]
+}

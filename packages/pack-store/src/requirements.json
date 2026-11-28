@@ -1,0 +1,4 @@
+{
+  "download": ["network", "shared-folder", "free-space"],
+  "use": ["shared-folder"]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@ink-tools/pack-store",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "jest --passWithNoTests"
+  },
+  "devDependencies": {
+    "@ink-tools/sn-adapter": "*"
+  }
+}

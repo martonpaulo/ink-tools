@@ -118,6 +118,7 @@
     {"path": "packages/ui-kit/", "gates": ["account-sync", "lasso-actions", "device-link", "image-editing", "smart-pen", "ink-tools-probe", "puzzles"]},
     {"path": "packages/ink-core/", "gates": ["packages", "account-sync", "lasso-actions", "device-link", "image-editing", "smart-pen"]},
     {"path": "packages/picture-search/", "gates": ["packages", "account-sync", "lasso-actions", "image-editing", "smart-pen"]},
+    {"path": "packages/pack-store/", "gates": ["packages", "lasso-actions", "boundaries"]},
     {"path": "packages/sync-core/", "gates": ["packages", "account-sync"]},
     {"path": "packages/puzzle-core/", "gates": ["packages", "puzzles"]},
     {"path": "packages/sn-adapter/", "gates": ["packages", "account-sync", "lasso-actions", "device-link", "image-editing", "smart-pen", "puzzles"]},

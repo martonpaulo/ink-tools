@@ -16,6 +16,10 @@ The rules are `docs/architecture.md` › Layer rules:
   `www.googleapis.com`, `oauth2.googleapis.com`), and no code outside `packages/sync-core/` imports a
   service client module (`todoist`, `google`, `ics`, `http`) by its path: a plugin takes the
   provider-neutral `@ink-tools/sync-core`.
+- `pack`: no code outside `packages/pack-store/src/` names the language pack catalog URL or the
+  pack store's path (the shared folder's name, then the store's folder) as a literal: both are
+  values of `packages/pack-store/src/values.json` and the registry's `storage.shared-folder`, read
+  through `@ink-tools/pack-store` (#503). Read in every language this script reads; tests may name one.
 - `layer`: `packages/sn-adapter` imports no other `@ink-tools/` package, so no cycle joins it to
   `ink-core`; `packages/ui-kit` imports no plugin outside `renders/`, its dev harness (#491).
 - `dictionary`: no code outside `packages/ink-core/src/` names a dictionary host (`wiktionary.org`):
@@ -58,6 +62,7 @@ comment-only mention in a document. Prints one `path:line: rule: text` line per 
 Exit 0 with none, 1 with findings, 2 on a bad root.
 """
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -131,6 +136,40 @@ PYTHON = ".py"
 # The (path, rule) counts inkctl held when boundaries.py first read it (#295); they only go down.
 # inkctl's two providers moved into its registry block (#294).
 PENDING_HOST = {}
+
+
+PACK_CONFIG = "packages/pack-store/src/values.json"
+PACK_OWNER = "packages/pack-store/src/"
+SHARED_FOLDER_ITEMS = "registry/items/storage.json"
+SHARED_FOLDER_ID = "storage.shared-folder"
+
+
+def pack_literals(root):
+    """The literals only the pack store may write (#503): its catalog URL and its store path.
+
+    Read from the files that own them, so the rule follows a changed value; a tree without the
+    pack store's config checks nothing.
+    """
+    try:
+        config = json.loads((root / PACK_CONFIG).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    literals = [config["catalogUrl"]]
+    try:
+        items = json.loads((root / SHARED_FOLDER_ITEMS).read_text(encoding="utf-8"))["items"]
+        shared = next(item for item in items if item["id"] == SHARED_FOLDER_ID)["values"]["folder"]
+        literals.append("%s/%s" % (shared.rstrip("/").rsplit("/", 1)[-1], config["storeFolder"]))
+    except (OSError, ValueError, KeyError, StopIteration):
+        pass  # a tree without the registry's shared folder checks the catalog URL alone
+    return literals
+
+
+def pack_findings(rel, lines, literals):
+    """[(path, line number, rule, text)] for each pack literal a file names outside a comment."""
+    return [(rel, number, "pack", "names the pack store's %s; read it from @ink-tools/pack-store (#503)" % literal)
+            for number, line in enumerate(lines, 1)
+            if not LINE_COMMENT.match(line) and not PYTHON_COMMENT.match(line)
+            for literal in literals if literal in line]
 
 
 def code_files(root):
@@ -335,7 +374,10 @@ def findings(root, pending=PENDING_CONTROLS, pending_host=None, pending_toasts=N
     toasts = []
     drawn = set()
     host = []
+    literals = pack_literals(root)
     for rel, suffix in code_files(root):
+        if literals and not is_test(rel) and not VENDOR_TEST_PARTS & set(rel.split("/")[:-1]) and not rel.startswith(PACK_OWNER):
+            found += pack_findings(rel, (root / rel).read_text(encoding="utf-8", errors="replace").splitlines(), literals)
         if suffix == PYTHON:
             host += host_findings(rel, (root / rel).read_text(encoding="utf-8", errors="replace").splitlines())
             continue
