@@ -58,6 +58,7 @@ import {
   lastFirst,
   loadSettings,
   ownIdentity,
+  renamed,
   saveSettings,
   Self,
 } from './settings/device';
@@ -94,7 +95,10 @@ export type Found =
   | {kind: 'pick'; devices: Device[]}
   | {kind: 'none'};
 
-/** The receivers one search finds, the last pick first (#307); none is `none`, never a pick. */
+/**
+ * The receivers one search finds, the last pick first (#307); none is `none`, never a pick. A last
+ * pick found under a new alias is saved under it (`renamed`, #98).
+ */
 export async function findReceivers(
   native: Relay,
   pluginDir: () => Promise<Result<string>> = getPluginDirPath,
@@ -105,7 +109,16 @@ export async function findReceivers(
     ...(await ownIdentity(native, settings, pluginDir)),
   };
   const found = await discoverDevices(native, self, pluginDir);
-  return found.ok ? lastFirst(found.value, settings.last) : [];
+  if (!found.ok) {
+    return [];
+  }
+  // Read again: a background switch turned during the search is kept.
+  const fresh = renamed(await loadSettings(native, pluginDir), found.value);
+  if (fresh !== null) {
+    sendLog(`${settings.last?.alias} is now named ${fresh.last?.alias}`);
+    await saveSettings(native, fresh, pluginDir);
+  }
+  return lastFirst(found.value, (fresh ?? settings).last);
 }
 
 /** The tap of «Send Page» or «Send Selection»: the permissions, then the search (#163, #307). */

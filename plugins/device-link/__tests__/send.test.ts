@@ -147,6 +147,11 @@ describe('a receiver that moved (#98)', () => {
   });
   const saved = JSON.stringify({fingerprint: 'self', pins: {Mac: mac.fingerprint}, last: mac});
 
+  /** One send of `name` to `device` that looks for it again when its offer cannot connect. */
+  function sendFinding(api: ReturnType<typeof fakeRelay>['api'], device: Device, name: string) {
+    return sendCapture(api, sender, device, TMP, name, made, () => 1, findAgain(api, sender, pluginDir));
+  }
+
   function moving(found: Device[], ...replies: Parameters<typeof answers>) {
     return fakeRelay({
       post: answers(...replies),
@@ -157,16 +162,7 @@ describe('a receiver that moved (#98)', () => {
 
   test('is found again by its fingerprint, saved there, and sent to', async () => {
     const {api, native, calls} = moving([moved], dead, {status: 200, body: session}, {status: 200});
-    const outcome = await sendCapture(
-      api,
-      sender,
-      mac,
-      TMP,
-      'selection',
-      made,
-      () => 1,
-      findAgain(api, sender, pluginDir),
-    );
+    const outcome = await sendFinding(api, mac, 'selection');
     expect(outcome).toEqual({kind: 'toast', text: 'Sent to Mac'});
     expect((native.post as jest.Mock).mock.calls.map(call => new URL(call[0]).host)).toEqual([
       `${mac.ip}:53317`,
@@ -183,18 +179,38 @@ describe('a receiver that moved (#98)', () => {
     expect(lines).toContain(`Relay: send: to Mac at ${moved.ip}:53317 over https`);
   });
 
+  test.each([
+    ['https', 'http'],
+    ['http', 'https'],
+  ] as const)(
+    'a receiver saved over %s that now serves %s is sent to over the new scheme, saved so',
+    async (was, now) => {
+      // The iPhone with LocalSend «Encryption» turned off keeps its port and serves http (#98).
+      const before = {...mac, protocol: was};
+      const after = {...mac, protocol: now};
+      const {api, native, calls} = fakeRelay({
+        post: answers(dead, {status: 204}),
+        discover: jest.fn(async () => [register(after)]),
+        readText: jest.fn(async () =>
+          JSON.stringify({fingerprint: 'self', pins: {Mac: mac.fingerprint}, last: before}),
+        ),
+      });
+      const outcome = await sendFinding(api, before, 'page');
+      expect(outcome).toEqual({kind: 'toast', text: 'Mac refused the file'});
+      const posts = (native.post as jest.Mock).mock.calls;
+      expect(posts.map(call => new URL(call[0]).protocol)).toEqual([`${was}:`, `${now}:`]);
+      // Only https is pinned; http has no certificate to check.
+      expect(posts[1][4]).toBe(now === 'https' ? mac.fingerprint : null);
+      expect(JSON.parse(calls.written[0]).last).toEqual(after);
+      expect(logged.mock.calls.map(call => call[0])).toContain(
+        `Relay: send: to Mac at ${mac.ip}:53317 over ${now}`,
+      );
+    },
+  );
+
   test('found nowhere else, it is not reachable, with one offer and nothing saved', async () => {
     const {api, calls} = moving([], dead);
-    const outcome = await sendCapture(
-      api,
-      sender,
-      mac,
-      TMP,
-      'page',
-      made,
-      () => 1,
-      findAgain(api, sender, pluginDir),
-    );
+    const outcome = await sendFinding(api, mac, 'page');
     expect(outcome).toEqual({kind: 'toast', text: 'Mac not reachable'});
     expect(calls.written).toEqual([]);
     expect(logged.mock.calls.map(call => call[0])).toContain(

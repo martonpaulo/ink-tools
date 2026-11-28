@@ -22,6 +22,11 @@ send without one met «certificate required» and read «not reachable»), and e
 is a `Relay: send:` log line. Since beta 12, each send first logs its target (`to <alias> at
 <ip>:<port> over <protocol>`), and an offer that cannot connect looks for the receiver again by
 its fingerprint (`findAgain`): found at a new address, it is saved there and offered once more.
+A failed POST logs each exception's class and message, with its causes and no query string
+(`PinnedClient.describe`); a receiver that now serves the other scheme (the iPhone with
+«Encryption» off serves http) is found again the same way. A last pick a search finds by its
+fingerprint under a new alias is saved under it (`renamed`), so a send and Settings show the
+current name ([#98](https://github.com/martonpaulo/ink-tools/issues/98)).
 On beta 10 every send went to the address saved a week before, which the Mac no longer held, while
 discovery found it at its new one (measured on a beta 11 test build: the saved address failed in
 its connect, the found one gave no answer within the 10 s limit). An offer the receiver took and did not answer is `NO_ANSWER`

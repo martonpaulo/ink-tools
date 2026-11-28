@@ -27,6 +27,7 @@ import {
   checkPin,
   lastFirst,
   loadSettings,
+  renamed,
   Settings,
   trusted,
 } from '../src/settings/device';
@@ -172,6 +173,53 @@ describe('the list', () => {
     expect(deviceSubtitle(iphone, [iphone])).toBeUndefined();
     // A model that only repeats the alias is not shown again (#307).
     expect(deviceSubtitle({...iphone, deviceModel: 'iPhone'}, [iphone])).toBeUndefined();
+  });
+});
+
+describe('a renamed receiver (#98)', () => {
+  // The Mac renamed in LocalSend keeps its certificate: it is matched by fingerprint.
+  const studio = {...mac, alias: 'Studio Mac'};
+  const pinned: Settings = {...fresh, pins: {Mac: 'mac-fp'}, last: mac};
+
+  test('the last pick takes the new alias, pinned to the same fingerprint', () => {
+    expect(renamed(pinned, [iphone, studio])).toEqual({
+      ...pinned,
+      pins: {Mac: 'mac-fp', 'Studio Mac': 'mac-fp'},
+      last: studio,
+    });
+  });
+
+  test('nothing changes when the alias is the same, the pick is not found, or none was made', () => {
+    expect(renamed(pinned, [mac])).toBeNull();
+    expect(renamed(pinned, [iphone])).toBeNull();
+    expect(renamed(fresh, [studio])).toBeNull();
+  });
+
+  test('a new alias pinned to another receiver is never taken over', () => {
+    const taken = {...pinned, pins: {...pinned.pins, 'Studio Mac': 'other-fp'}};
+    expect(renamed(taken, [studio])).toBeNull();
+  });
+
+  test('a send search lists and saves the receiver under its current alias', async () => {
+    const {api, file} = network([studio], pinned);
+    await expect(findForSend(api, async () => null, pluginDir)).resolves.toEqual({
+      kind: 'pick',
+      devices: [studio],
+    });
+    expect(file().last).toEqual(studio);
+    expect(file().pins).toEqual({Mac: 'mac-fp', 'Studio Mac': 'mac-fp'});
+  });
+
+  test('Settings names the chosen receiver as it is named now', async () => {
+    const {api, file} = network([studio], pinned);
+    let view: ReactTestRenderer | undefined;
+    await act(async () => {
+      view = renderer.create(<App native={api} close={() => {}} />);
+    });
+    await act(async () => {});
+    expect(shownTexts(view!.root).join('\n')).toContain(copy.chosen('Studio Mac'));
+    expect(file().last).toEqual(studio);
+    view!.unmount();
   });
 });
 

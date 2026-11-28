@@ -139,6 +139,9 @@ public final class PinnedClientTest {
       server.stop(0);
     }
 
+    schemeSwitched(fingerprint);
+    describesTheCause();
+
     requiresClientCertificate(factory, certificate, fingerprint);
 
     // A receiver that accepts and never answers trips the read timeout, not a hang. Over http the
@@ -173,6 +176,75 @@ public final class PinnedClientTest {
       mute.close();
     }
   }
+
+  /**
+   * A receiver saved as https that now serves http, as the iPhone with LocalSend «Encryption» off
+   * does (#98): the pinned https POST fails as a plain IOException, never NoAnswer nor a changed
+   * identity, so the send reads it as unreachable and looks for the receiver again (`findAgain`);
+   * the http POST to the same port then arrives.
+   */
+  private static void schemeSwitched(String fingerprint) throws Exception {
+    com.sun.net.httpserver.HttpServer plain =
+        com.sun.net.httpserver.HttpServer.create(
+            new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+    plain.createContext(
+        "/api/localsend/v2/prepare-upload",
+        new HttpHandler() {
+          @Override
+          public void handle(HttpExchange exchange) throws java.io.IOException {
+            drain(exchange.getRequestBody());
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+          }
+        });
+    plain.start();
+    try {
+      String path = "://127.0.0.1:" + plain.getAddress().getPort() + "/api/localsend/v2/prepare-upload";
+      byte[] body = "{\"info\":{}}".getBytes("UTF-8");
+      try {
+        PinnedClient.post("https" + path, Collections.<String, String>emptyMap(), body, null,
+            fingerprint, null, 2000, 2000);
+        throw new AssertionError("https to an http receiver must fail");
+      } catch (java.io.IOException expected) {
+        check(!(expected instanceof SocketTimeoutException), "no timeout: " + expected);
+        check(!PinnedClient.noAnswer(expected), "the offer never arrived: " + expected);
+        check(!PinnedClient.identityChanged(expected), "not a changed identity: " + expected);
+        String line = PinnedClient.describe(expected);
+        check(line.startsWith(expected.getClass().getSimpleName() + ": "),
+            "the log line keeps the message, got " + line);
+      }
+      PinnedClient.Response sent =
+          PinnedClient.post("http" + path, Collections.<String, String>emptyMap(), body, null,
+              null, null, 2000, 2000);
+      check(sent.status == 204, "the http offer arrives, got " + sent.status);
+    } finally {
+      plain.stop(0);
+    }
+  }
+
+  /** The log line names each cause with its message, and never an upload's session or token. */
+  private static void describesTheCause() {
+    // A synthetic LAN address from its four parts.
+    String peer = String.join(".", "10", "0", "0", "5");
+    String stream = "unexpected end of stream on http://" + peer + ":53317/...";
+    String connect = "failed to connect to /" + peer + " (port 53317)";
+    java.io.IOException outer = new java.io.IOException(stream);
+    outer.initCause(new java.net.ConnectException(connect));
+    String line = PinnedClient.describe(outer);
+    check(line.equals("IOException: " + stream + " <- ConnectException: " + connect),
+        "every cause is named: " + line);
+    String upload = PinnedClient.describe(new java.io.IOException(
+        "for URL: http://" + peer + ":53317/api/localsend/v2/upload?sessionId=s&token=t"));
+    check(!upload.contains("sessionId") && !upload.contains("token"), "no session or token: " + upload);
+    check(PinnedClient.describe(new java.io.IOException()).equals("IOException"), "no message: class only");
+    StringBuilder longText = new StringBuilder();
+    for (int i = 0; i < 100; i++) {
+      longText.append("0123456789");
+    }
+    check(PinnedClient.describe(new java.io.IOException(longText.toString())).length()
+        == PinnedClient.MAX_DESCRIBE_CHARS, "a long message is cut");
+  }
+
 
   /**
    * LocalSend 1.18 requires a client certificate and names only its own as an authority (#98);

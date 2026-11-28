@@ -132,6 +132,25 @@ export function movedDevice(saved: Device | null, found: Device[]): Device | nul
     : readDevice(now);
 }
 
+/**
+ * The settings once a search finds the last pick, by its fingerprint, under a new alias (#98): the
+ * last pick takes the current name and address, so the next send and «Sends go to …» show the
+ * receiver as it is named now, and the new alias is pinned to the same fingerprint. Null when
+ * nothing was renamed, or when the new alias is already pinned to another receiver, which is never
+ * taken over. The old alias keeps its pin.
+ */
+export function renamed(settings: Settings, found: Device[]): Settings | null {
+  const last = settings.last;
+  const now = last && found.find(each => each.fingerprint === last.fingerprint);
+  if (!last || !now || now.alias === last.alias || checkPin(settings, now) === 'changed') {
+    return null;
+  }
+  const device = readDevice(now);
+  return device === null
+    ? null
+    : {...settings, pins: {...settings.pins, [device.alias]: device.fingerprint}, last: device};
+}
+
 /** True when two receivers are reached the same way: address, port and protocol. */
 export function sameAddress(a: Device, b: Device): boolean {
   return a.ip === b.ip && a.port === b.port && a.protocol === b.protocol;

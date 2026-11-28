@@ -218,6 +218,33 @@ public final class PinnedClient {
         });
   }
 
+  /** The longest failure text {@link #describe} gives; it also ends a cause loop. */
+  static final int MAX_DESCRIBE_CHARS = 380;
+
+  /**
+   * A failure for the log: each exception's class and message, its causes after it (#98). On the
+   * tablet a failed http send logged only `IOException`, with no cause to act on. A query string is
+   * cut, since an upload URL holds the session and its token.
+   */
+  public static String describe(Throwable error) {
+    StringBuilder text = new StringBuilder();
+    for (Throwable cause = error;
+        cause != null && text.length() < MAX_DESCRIBE_CHARS;
+        cause = cause.getCause()) {
+      if (text.length() > 0) {
+        text.append(" <- ");
+      }
+      text.append(cause.getClass().getSimpleName());
+      String message = cause.getMessage();
+      if (message != null && !message.isEmpty()) {
+        text.append(": ").append(message.replaceAll("\\?\\S*", "?..."));
+      }
+    }
+    return text.length() > MAX_DESCRIBE_CHARS
+        ? text.substring(0, MAX_DESCRIBE_CHARS)
+        : text.toString();
+  }
+
   /** True when `error`, or a cause of it, is {@link IdentityChanged}. */
   public static boolean identityChanged(Throwable error) {
     for (Throwable cause = error; cause != null; cause = cause.getCause()) {

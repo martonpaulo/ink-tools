@@ -38,6 +38,7 @@ import {working} from './src/working';
 import {
   ownFingerprint,
   loadSettings,
+  renamed,
   trusted,
   saveSettings,
   Settings,
@@ -232,6 +233,13 @@ function SettingsView({native, close}: {native: Relay; close: () => void}) {
         fingerprint: await ownFingerprint(native, current),
       });
       setDevices(found.ok ? found.value : []);
+      // The chosen receiver, renamed since, is named as it is now (#98); read again first, so a
+      // switch turned meanwhile is kept.
+      const fresh = found.ok ? renamed(await loadSettings(native), found.value) : null;
+      if (fresh !== null) {
+        setSettings(shown => (shown === null ? shown : {...shown, pins: fresh.pins, last: fresh.last}));
+        saveSettings(native, fresh);
+      }
     },
     [native],
   );

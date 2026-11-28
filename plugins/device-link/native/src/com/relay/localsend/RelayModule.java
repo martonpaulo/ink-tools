@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  * sn-plugin-lib 0.2.3 has no file writer. The receive half (#49): our v3 identity, the receiver,
  * and a queue of what arrives, which JS reads one item at a time and answers each offer of. Every call runs off the JS thread and
  * rejects with a text code (`IDENTITY`, `NO_ANSWER`, `TIMEOUT`, `IO`) that sn-adapter keeps as
- * `moduleCode`.
+ * `moduleCode`, and with {@link PinnedClient#describe} as its message.
  * Never logs a body, a token or a session id.
  */
 public final class RelayModule extends ReactContextBaseJavaModule {
@@ -482,6 +482,6 @@ public final class RelayModule extends ReactContextBaseJavaModule {
             : PinnedClient.noAnswer(error)
                 ? "NO_ANSWER"
                 : error instanceof SocketTimeoutException ? "TIMEOUT" : "IO";
-    promise.reject(code, error.getClass().getSimpleName());
+    promise.reject(code, PinnedClient.describe(error));
   }
 }
