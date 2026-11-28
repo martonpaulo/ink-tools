@@ -5,13 +5,14 @@
  */
 import { FONT_WEIGHTS, drawText, measureText } from './font';
 import { gridSize, latticeCell, outsideSlot, type Grid, type Lattice, type Side } from './grid';
-import { CELL_PRESETS_MM, PAGE_MM, PAGE_SIZE, TEXT_SIZE, mmToPx, type CellPreset, type Hand, type Orientation } from './look';
+import { CELL_FIT_STEP_MM, CELL_PRESETS_MM, PAGE_MM, PAGE_SIZE, TEXT_SIZE, mmToPx, type CellPreset, type Hand, type Orientation } from './look';
 import { createRaster, type Raster } from './raster';
 
 export interface PageSpec {
   orientation: Orientation;
   hand: Hand;
-  cellMm: CellPreset;
+  /** A preset, or a size `fitLargestCellMm` fitted between the smallest and the largest (#544). */
+  cellMm: number;
   lattice: Lattice;
   columns: number;
   rows: number;
@@ -58,7 +59,8 @@ const SIDES: readonly Side[] = ['top', 'left', 'bottom', 'right'];
 
 /** Places the grid, its clues and the side panel in the area above the footer, centred. */
 export function layoutPage(spec: PageSpec): PageLayout {
-  if (!CELL_PRESETS_MM.includes(spec.cellMm)) throw new Error(`the cell presets are ${CELL_PRESETS_MM.join(', ')} mm, not ${spec.cellMm}`);
+  const [least, largest] = [CELL_PRESETS_MM[0], CELL_PRESETS_MM[CELL_PRESETS_MM.length - 1]];
+  if (!(spec.cellMm >= least && spec.cellMm <= largest)) throw new Error(`a cell is ${least} to ${largest} mm, not ${spec.cellMm}`);
   const { width, height } = PAGE_SIZE[spec.orientation];
   const margin = mmToPx(PAGE_MM.margin);
   const bottom = mmToPx(PAGE_MM.bottom);
@@ -112,6 +114,27 @@ export function layoutPage(spec: PageSpec): PageLayout {
 export function fitCellMm(spec: Omit<PageSpec, 'cellMm'>): CellPreset {
   let error: unknown;
   for (const cellMm of [...CELL_PRESETS_MM].reverse()) {
+    try {
+      layoutPage({ ...spec, cellMm });
+      return cellMm;
+    } catch (e) {
+      if (!(e instanceof PageFitError)) throw e;
+      error = e;
+    }
+  }
+  throw error;
+}
+
+/**
+ * The largest cell, in steps of CELL_FIT_STEP_MM from the largest preset down to the smallest, at
+ * which the grid fits: for a grid whose values have two digits, where the next preset down leaves
+ * a handwritten number too little room (#544). Throws when even the smallest does not fit.
+ */
+export function fitLargestCellMm(spec: Omit<PageSpec, 'cellMm'>): number {
+  const steps = (mm: number) => Math.round(mm / CELL_FIT_STEP_MM);
+  let error: unknown;
+  for (let step = steps(CELL_PRESETS_MM[CELL_PRESETS_MM.length - 1]); step >= steps(CELL_PRESETS_MM[0]); step--) {
+    const cellMm = Number((step * CELL_FIT_STEP_MM).toFixed(1));
     try {
       layoutPage({ ...spec, cellMm });
       return cellMm;

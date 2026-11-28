@@ -31,6 +31,11 @@ export function pxToMm(px: number): number {
 /** The cell sizes a page offers: 7 mm is the least a handwritten digit needs, 15 mm fits candidates. */
 export const CELL_PRESETS_MM = [7, 10, 15] as const;
 export type CellPreset = (typeof CELL_PRESETS_MM)[number];
+/**
+ * The step of a fitted cell, between the smallest and the largest preset: a grid whose values have
+ * two digits takes the largest cell that fits, as a preset falls too far below it (#544).
+ */
+export const CELL_FIT_STEP_MM = 0.1;
 
 /** The step between the screen's 16 grey levels: 0x00, 0x11, ... 0xFF, so the panel never dithers. */
 export const GREY_STEP = 17;

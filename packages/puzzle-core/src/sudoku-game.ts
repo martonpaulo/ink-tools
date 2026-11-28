@@ -8,7 +8,7 @@ import { type CellRead, type CheckResult, type Recognize, checkCells, readCells,
 import { type InkStroke } from './check/cells';
 import { puzzleCode } from './code';
 import { drawCellText, drawRegions, drawSquareLattice } from './page/grid';
-import { createPage, drawFooter, fitCellMm, layoutPage, type FooterText, type PageLayout } from './page/layout';
+import { createPage, drawFooter, fitCellMm, fitLargestCellMm, layoutPage, type FooterText, type PageLayout } from './page/layout';
 import { type Hand, type Orientation } from './page/look';
 import { encodePng } from './page/png';
 import { type Raster } from './page/raster';
@@ -26,11 +26,15 @@ export interface SudokuPage {
   readonly raster: Raster;
 }
 
-/** The layout of a sudoku page: its square grid at the largest cell preset that fits the page. */
+/**
+ * The layout of a sudoku page: its square grid at the largest cell preset that fits the page, or,
+ * when its values have two digits (10 x 10 and larger), the largest cell that fits: a 16 x 16 fell
+ * from 10 mm to the 7 mm preset, too small for a handwritten «16» (#544).
+ */
 export function sudokuLayout(puzzle: Sudoku, orientation: Orientation, hand: Hand): PageLayout {
   const side = puzzle.shape.size;
   const spec = { orientation, hand, lattice: 'square' as const, columns: side, rows: side };
-  return layoutPage({ ...spec, cellMm: fitCellMm(spec) });
+  return layoutPage({ ...spec, cellMm: sudokuAlphabet(puzzle) === 'number' ? fitLargestCellMm(spec) : fitCellMm(spec) });
 }
 
 /** The box a cell is in, numbered row by row, for the thick region borders. */

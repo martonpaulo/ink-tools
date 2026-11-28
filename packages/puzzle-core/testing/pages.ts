@@ -35,6 +35,7 @@ import {
   generateNonogram,
   generateSlitherlink,
   drawStarBattlePage,
+  drawSudokuPage,
   generateStarBattle,
   generateSudoku,
   generateWordSearch,
@@ -97,6 +98,13 @@ export const SAMPLE_PAGES: readonly (readonly [name: string, draw: () => Raster]
     drawFooter(r, layout, { game: 'Sudoku', difficulty: 'Hard', code: puzzleCode(puzzle.id), rule: 'Put 1 to 9 once in each row, each column and each box.' });
     return r;
   }],
+  // A 16 x 16 sudoku at the largest cell that fits, not the 7 mm preset: room for a handwritten «16» (#544).
+  ['page-sudoku-16-fitted-portrait-right', () =>
+    drawSudokuPage(generateSudoku('P1', 16, 'easy'), {
+      orientation: 'portrait',
+      hand: 'right',
+      text: { game: 'Sudoku', difficulty: 'Easy', rule: 'Put 1 to 16 once in each row, each column and each box.' },
+    }).raster],
   ['page-light-up-10mm-portrait-right', () => drawLightUpPage(generateLightUp('P1', { width: 10, height: 10 }, 'medium'), { orientation: 'portrait', hand: 'right' }).raster],
   ['kakuro-10mm-portrait-right', () => drawKakuroPage(generateKakuro('P1', 12, 'medium'), { orientation: 'portrait', hand: 'right', cellMm: 10 }).raster],
   ['page-10mm-landscape-right', () => {

@@ -13,6 +13,7 @@ import {
   type Sudoku,
   type SudokuPageOptions,
 } from '../src';
+import { CELL_PRESETS_MM, pxToMm } from '../src/page/look';
 import { fakeRecognizer, write, writeNumber } from '../testing/ink';
 import { expectOnlyWrong } from '../testing/check';
 
@@ -75,6 +76,23 @@ describe('the sudoku page', () => {
     const blanked: Sudoku = { ...puzzle, solution: puzzle.solution.map(() => 0) };
     const pixels = (p: Sudoku) => Buffer.from(drawSudokuPage(p, OPTIONS).raster.pixels);
     expect(pixels(blanked).equals(pixels(puzzle))).toBe(true);
+  });
+
+  test('a grid of two-digit values takes the largest cell that fits, at least 9 mm for 16 x 16 (#544)', () => {
+    const cellMm = (size: number, orientation: 'portrait' | 'landscape') =>
+      pxToMm(drawSudokuPage(generateSudoku('G1', size, 'easy'), { ...OPTIONS, orientation }).layout.grid.cell);
+    expect(cellMm(16, 'portrait')).toBeGreaterThanOrEqual(9);
+    // 12 x 12 is computed the same way: past the 10 mm preset it fell to before.
+    expect(cellMm(12, 'portrait')).toBeGreaterThan(10);
+    for (const size of [10, 12, 16]) {
+      for (const orientation of ['portrait', 'landscape'] as const) {
+        const mm = cellMm(size, orientation);
+        expect(mm).toBeGreaterThanOrEqual(CELL_PRESETS_MM[0]);
+        expect(mm).toBeLessThanOrEqual(CELL_PRESETS_MM[CELL_PRESETS_MM.length - 1]);
+      }
+    }
+    // A one-digit grid keeps its preset.
+    expect((CELL_PRESETS_MM as readonly number[]).includes(Math.round(cellMm(9, 'portrait')))).toBe(true);
   });
 
   test.each(Object.keys(SUDOKU_SIZES).map(Number))('size %i fits a portrait and a landscape page', size => {
