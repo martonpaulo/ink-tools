@@ -4,7 +4,7 @@
  * through `insertImage`, which the host shows as its own floating selection, and is then lassoed
  * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`).
  */
-import {freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
+import {freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP, writableSize} from '@ink-tools/ink-core';
 import {fail, Result, TextBoxInput, TIMEOUT_CODE} from '@ink-tools/sn-adapter/official';
 import type {HeldState, Problem} from '@ink-tools/ui-kit';
 import {copy} from '../copy';
@@ -70,7 +70,7 @@ export type NoteHost = NoteFiles & {
 
 /**
  * The text box: half the page wide, centred, from 15% of the page down, as tall as its wrapped
- * lines and never past the page's bottom. With `after`, the bottom of the text received before
+ * lines and never past the page's bottom, the page bar's top. With `after`, the bottom of the text received before
  * on this page, it starts one line below it, or at the top again when it would not fit (#49).
  */
 export function textBox(page: Size, text: string, after: number | null = null): Rect {
@@ -81,9 +81,11 @@ export function textBox(page: Size, text: string, after: number | null = null): 
   const lines = text
     .split('\n')
     .reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)), 0);
+  // Never under the note's page bar (#577).
+  const floor = writableSize(page).height - LINE_HEIGHT;
   const below = after === null ? first : after + LINE_HEIGHT;
-  const top = below + lines * LINE_HEIGHT <= page.height - LINE_HEIGHT ? below : first;
-  const bottom = Math.min(page.height - LINE_HEIGHT, top + lines * LINE_HEIGHT);
+  const top = below + lines * LINE_HEIGHT <= floor ? below : first;
+  const bottom = Math.min(floor, top + lines * LINE_HEIGHT);
   return {left, top, right: left + width, bottom: Math.max(bottom, top + LINE_HEIGHT)};
 }
 
@@ -141,7 +143,7 @@ export function freeTextBox(
   }
   // An empty mark just above the box, so freeRect's first try is the box's own place.
   const mark = {...rect, top: rect.top - PLACE_GAP, bottom: rect.top - PLACE_GAP};
-  const moved = freeRect(mark, rect, page, occupied);
+  const moved = freeRect(mark, rect, writableSize(page), occupied);
   return moved ? {rect: moved, free: true} : {rect, free: false};
 }
 

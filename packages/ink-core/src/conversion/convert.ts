@@ -9,6 +9,7 @@
  * (#296).
  */
 import type {Rect, Size} from '../lasso';
+import {writableSize} from '../pageArea';
 import {
   edgeDistance,
   type EmrRange,
@@ -110,19 +111,22 @@ export type ConvertHost = {
 };
 
 /** The text box for `text` written where `word` was: from its top-left, one line high. */
-export function textBoxFor(text: string, word: Word, page: Size): TextBoxInput {
+export function textBoxFor(text: string, word: Word, pageSize: Size): TextBoxInput {
+  // Never under the note's page bar (#577).
+  const page = writableSize(pageSize);
   const fontSize = Math.max(MIN_FONT_SIZE, Math.round(word.letterHeight * FONT_PER_LETTER));
   const textWidth = Math.ceil([...text].length * fontSize * CHAR_WIDTH);
   // One font size more than the text needs, so the host never wraps the word [inference].
   // Whole pixels: the word's rect comes from converted EMR points and is fractional (#206).
   const boxWidth = Math.ceil(Math.max(word.rect.right - word.rect.left, textWidth)) + fontSize;
   const left = Math.max(0, Math.min(Math.round(word.rect.left), page.width - boxWidth));
-  const top = Math.max(0, Math.round(word.rect.top));
+  const line = Math.round(fontSize * LINE_SHARE);
+  const top = Math.max(0, Math.min(Math.round(word.rect.top), page.height - line));
   const rect: Rect = {
     left,
     top,
     right: Math.min(page.width, left + boxWidth),
-    bottom: Math.min(page.height, top + Math.round(fontSize * LINE_SHARE)),
+    bottom: Math.min(page.height, top + line),
   };
   return {text, rect, fontSize};
 }

@@ -35,7 +35,7 @@ type Picture = {width: number; height: number};
  */
 function belowRect(lasso: Rect, picture: Picture, page: Size): Rect | null {
   const below = lasso.bottom + PLACE_GAP;
-  const aboveRoom = Math.max(0, lasso.top - PLACE_GAP);
+  const aboveRoom = Math.max(0, Math.min(lasso.top, page.height) - PLACE_GAP);
   const belowRoom = Math.max(0, page.height - below);
   const fitWidth = Math.min(1, page.width / picture.width);
   let height = picture.height * fitWidth;
@@ -174,7 +174,7 @@ export function freeRect(
     }
     top = Math.max(...hits.map(hit => hit.bottom)) + PLACE_GAP;
   }
-  for (let bottom = lasso.top - PLACE_GAP; bottom - height >= 0; ) {
+  for (let bottom = Math.min(lasso.top, page.height) - PLACE_GAP; bottom - height >= 0; ) {
     const hits = occupied.filter(other => crosses(at(bottom - height), other));
     if (hits.length === 0) {
       return at(bottom - height);

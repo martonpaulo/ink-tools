@@ -1,5 +1,5 @@
 /** «Insert definition» in Lookup (#115): the text, its box, the failures and the opt-in button. */
-import {DefinitionResult, LassoPlace} from '@ink-tools/ink-core';
+import {DefinitionResult, LassoPlace, PAGE_BAR_PX} from '@ink-tools/ink-core';
 import {ok} from '@ink-tools/sn-adapter/official';
 import {
   BOX_WIDTH,
@@ -76,6 +76,16 @@ test('the box goes past a written line under the word, into free space (#152)', 
     occupied: [line],
   });
   expect(rect!.top).toBe(line.bottom + 24);
+});
+
+test('the box never reaches the note\'s page bar, for a word anywhere down the page (#577)', () => {
+  for (const top of [300, 1500, 2300, 2380, 2500]) {
+    const low = {...place, rect: {left: 372, top, right: 572, bottom: top + 80}};
+    const rect = boxRect(definitionText('maçã', found), low);
+    if (rect) {
+      expect(rect.bottom).toBeLessThanOrEqual(place.pageSize.height - PAGE_BAR_PX);
+    }
+  }
 });
 
 test('a press inserts the definition below the lasso and logs each step', async () => {

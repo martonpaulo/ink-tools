@@ -291,3 +291,22 @@ describe('inkUnderRect, the one ink-under rule (#168, #234)', () => {
     );
   });
 });
+
+describe('a word at or under the page bar (#577)', () => {
+  it.each(['below', 'beside', 'replace'] as const)('%s: nothing is placed into the bar, even above a word inside it', placement => {
+    for (const top of [2300, 2430, 2500]) {
+      const word = {left: 100, top, right: 300, bottom: top + 60};
+      const rect = placeRect(word, picture, page, placement);
+      if (rect) {
+        expect(rect.bottom).toBeLessThanOrEqual(floor);
+      }
+    }
+  });
+
+  it('the free place found above a word keeps clear of the bar too', () => {
+    const word = {left: 100, top: 2500, right: 300, bottom: 2560};
+    const blocked = [{left: 0, top: 0, right: 1920, bottom: 300}];
+    const rect = placeRect(word, picture, page, 'below', blocked);
+    expect(rect === null || rect.bottom <= floor).toBe(true);
+  });
+});

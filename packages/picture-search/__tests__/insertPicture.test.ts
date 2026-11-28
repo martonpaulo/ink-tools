@@ -18,6 +18,7 @@ import {
   unmeasured,
   wordKeptOptions as sharedWordKept,
 } from '../src/insert';
+import {PAGE_BAR_PX} from '@ink-tools/ink-core';
 import {resetSessionForTests} from '../src/storage';
 import {CALL_TIMEOUT_MS, logLines, startLog} from '../src/log/memory';
 import type {SearchResult} from '../src/types';
@@ -313,6 +314,28 @@ describe('insertPicture (#12)', () => {
     });
     expect((await insertPicture(result, 'soup', place)).ok).toBe(true);
     expect(PluginNoteAPI.insertImage).toHaveBeenCalled();
+  });
+
+  it('never places the picture under the note\'s page bar, below or above a word near the bottom (#577)', async () => {
+    (PluginCommAPI.createElement as jest.Mock).mockResolvedValue({
+      success: true,
+      result: {uuid: 'u'},
+    });
+    (PluginCommAPI.insertPageElements as jest.Mock).mockResolvedValue({
+      success: true,
+      result: true,
+    });
+    for (const top of [100, 1200, 2200, 2300]) {
+      (PluginCommAPI.insertPageElements as jest.Mock).mockClear();
+      const place = {
+        rect: {left: 100, top, right: 300, bottom: top + 60},
+        page: 3,
+        pageSize: {width: 1920, height: 2560},
+      };
+      expect((await insertPicture(result, 'soup', place)).ok).toBe(true);
+      const [elements] = (PluginCommAPI.insertPageElements as jest.Mock).mock.calls[0];
+      expect(elements[0].picture.rect.bottom).toBeLessThanOrEqual(2560 - PAGE_BAR_PX);
+    }
   });
 
   it('fails at place when insertImage answers false, and records nothing (#47)', async () => {

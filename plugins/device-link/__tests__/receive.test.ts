@@ -1,5 +1,5 @@
 /** One receive (#49): from the offer to the note, with a scripted module and note. */
-import {inkUnderRect} from '@ink-tools/ink-core';
+import {inkUnderRect, PAGE_BAR_PX} from '@ink-tools/ink-core';
 import {fail, ok} from '@ink-tools/sn-adapter/official';
 import {copy} from '../src/copy';
 import {refusedProblem} from '../src/permissions';
@@ -340,6 +340,38 @@ test('a second tap while receiving starts nothing and shows the running receive 
   expect(show).toHaveBeenCalledTimes(2);
   expect(calls.started).toHaveLength(1);
   expect(receiveState()).toBe('idle');
+});
+
+describe('a received text keeps clear of the note\'s page bar (#577)', () => {
+  const MANTA = {width: 1920, height: 2560};
+  test.each([
+    ['a long text', 'line\n'.repeat(120), null],
+    ['a text after one that ended near the bar', 'one', 2300],
+  ])('%s is inserted wholly above the bar', async (_name, preview, after) => {
+    const host = note({
+      pageSize: jest.fn(async () => ok(MANTA)),
+      occupied: jest.fn(async () => ok({rects: [], complete: true})),
+    });
+    if (after !== null) {
+      // The first text of the page ends at `after`; a second goes below it, or back to the top.
+      await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview: 'first\n'.repeat(60)}})]).api, host, 'Supernote');
+    }
+    await receiveOne(fakeRelay({}, [offer({t: {fileType: 'text/plain', preview}})]).api, host, 'Supernote');
+    const rects = (host.insertText as jest.Mock).mock.calls.map(call => call[0].rect);
+    expect(rects.length).toBeGreaterThan(0);
+    for (const rect of rects) {
+      expect(rect.bottom).toBeLessThanOrEqual(MANTA.height - PAGE_BAR_PX);
+    }
+  });
+});
+
+describe('a received text moved past ink stays above the page bar (#577)', () => {
+  test('ink from the top down to 2400 leaves no band above the bar: the box stays where it is, not under it', () => {
+    const page = {width: 1920, height: 2560};
+    const ink = [{left: 0, top: 0, right: 1920, bottom: 2400}];
+    const {rect} = freeTextBox(page, 'one', null, ink);
+    expect(rect.bottom).toBeLessThanOrEqual(page.height - PAGE_BAR_PX);
+  });
 });
 
 describe('a received text avoids the ink on the page (#199)', () => {

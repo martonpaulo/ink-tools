@@ -98,6 +98,12 @@ The Puzzles view opens a page inside `withPageLayout`, so «Check» reads the in
 page printed ([#573](https://github.com/martonpaulo/ink-tools/issues/573)). A change that moves a grid on the page adds a version to `PAGE_LAYOUT` in
 `src/page/layout.ts` and keeps the earlier ones.
 
+Every tool that places text or a picture on a page takes the area above the note's page bar from
+`ink-core`'s `PAGE_BAR_PX` and `writableSize`, and its test names the path
+([#577](https://github.com/martonpaulo/ink-tools/issues/577)): `placeRect` (Word Lookup, Lasso Actions),
+`textBoxFor` (Smart Pen's conversion), Device Link's received text and Puzzles' pictures. Image Editing and
+Smart Shapes only rewrite the person's own picture or stroke where it is.
+
 `ink-core`'s pinyin index (3.4 MB) is not exported from `index.ts`, so a plugin bundles it only
 when it imports `src/pinyin-data.ts` itself. `ink-core/scripts/build-pinyin-index.cjs` rebuilds it;
 `--check` fails when the committed file differs ([#129](https://github.com/martonpaulo/supernote-tools/issues/129)).

@@ -10,6 +10,7 @@ import {
   setLastConversion,
   DEFAULT_WORD_OPTIONS,
 } from '@ink-tools/ink-core/conversion';
+import {PAGE_BAR_PX} from '@ink-tools/ink-core';
 import {fakeTablet} from '../test-support/host';
 import {letter, stroke} from '../../../packages/ink-core/testing/ink';
 
@@ -180,6 +181,18 @@ test('the text box starts at the word, sized to its letters, inside the page', (
   expect(box.rect.right).toBeLessThanOrEqual(1404);
   expect(box.rect.top).toBe(100);
   expect(box.rect.bottom - box.rect.top).toBe(84);
+});
+
+test('the converted text box never reaches the note\'s page bar (#577)', () => {
+  const page = {width: 1404, height: 1872};
+  for (const top of [100, 1700, 1740, 1800]) {
+    const word = {
+      strokes: [],
+      rect: {left: 100, top, right: 140, bottom: top + 40},
+      letterHeight: 40,
+    };
+    expect(textBoxFor('não', word, page).rect.bottom).toBeLessThanOrEqual(page.height - PAGE_BAR_PX);
+  }
 });
 
 test('a stroke the page read gives another uuid is found by its bounds (#206)', () => {
