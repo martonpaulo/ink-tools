@@ -7,6 +7,13 @@ URL and SHA-256 ([#381](https://github.com/martonpaulo/ink-tools/issues/381)). T
 bundles no GPL code and no CC BY-SA data, so Wiktionary, kaikki.org, wordfreq's data, Lexique,
 OdeNet and the Hunspell dictionaries are not used.
 
+## Language packs
+
+`scripts/build_pack.py` builds one pack per language from Unicode CLDR (Unicode License v3),
+Tatoeba (CC BY 2.0 FR) and the wiktextract extraction of Wiktionary (CC BY-SA 4.0)
+([#484](https://github.com/martonpaulo/ink-tools/issues/484)). A pack is a release asset, never a
+file of this repository, and its manifest names each source file with its SHA-256 and licence.
+
 ## Tatoeba sentences
 
 The word frequencies of every list come from the [Tatoeba](https://tatoeba.org) sentence
