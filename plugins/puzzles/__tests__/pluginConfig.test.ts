@@ -28,3 +28,10 @@ test('the Back key module has one name in Java and TypeScript', () => {
 test('the plugin resolves @ink-tools/puzzle-core, where the games live', () => {
   expect(createRandom('G1').int(1000)).toBe(createRandom('G1').int(1000));
 });
+
+test('Metro watches ink-core, whose page bar height the page look reads (#577)', () => {
+  const {metro} = require('../../../packages/puzzle-core/plugin-config');
+  const folders: string[] = metro({}).watchFolders;
+  expect(folders.some(folder => folder.endsWith('/packages/ink-core'))).toBe(true);
+  expect(folders.some(folder => folder.endsWith('/packages/puzzle-core'))).toBe(true);
+});

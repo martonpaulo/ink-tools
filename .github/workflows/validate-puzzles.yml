@@ -4,9 +4,9 @@ name: Validate Puzzles
 on:
   push:
     branches: [main]
-    paths: ['plugins/puzzles/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/puzzle-core/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-puzzles.yml']
+    paths: ['plugins/puzzles/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/puzzle-core/**', 'packages/ink-core/src/pageArea.ts', 'scripts/plugin-version.cjs', '.github/workflows/validate-puzzles.yml']
   pull_request:
-    paths: ['plugins/puzzles/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/puzzle-core/**', 'scripts/plugin-version.cjs', '.github/workflows/validate-puzzles.yml']
+    paths: ['plugins/puzzles/**', 'packages/native-build/**', 'packages/ui-kit/**', 'packages/sn-adapter/**', 'packages/puzzle-core/**', 'packages/ink-core/src/pageArea.ts', 'scripts/plugin-version.cjs', '.github/workflows/validate-puzzles.yml']
   workflow_dispatch:
 
 permissions:

@@ -8,6 +8,10 @@
 export type Orientation = 'portrait' | 'landscape';
 /** The writing hand: the side panel goes on the other side, so the hand never covers it. */
 export type Hand = 'right' | 'left';
+// The page bar's height has one owner, ink-core's `PAGE_BAR_PX`, so the page look and the tools that
+// place on a page never drift apart (#577). A relative import: the plugins' Metro configs reach
+// ink-core's folder through `plugin-config.js`.
+import { PAGE_BAR_PX } from '../../../ink-core/src/pageArea';
 
 /** The Manta's page in pixels; a landscape page is the same page turned. */
 export const PAGE_SIZE = {
@@ -72,15 +76,15 @@ export const LINE_PX = {
 export const PAGE_MM = {
   margin: 8,
   /**
-   * The note's page bar covers the page's bottom 116 px [measured, Manta, 2026-11-27, #553]: from
-   * y 2444 of a 2560 px page, so the footer ends above it (`docs/supernote.md` › Page bar).
+   * The note's page bar covers the page's bottom `PAGE_BAR_PX` (116 px) [measured, Manta, 2026-11-27, #553]:
+   * from y 2444 of a 2560 px page, so the footer ends above it (`docs/supernote.md` › Page bar).
    */
-  pageBar: 9.82,
+  pageBar: pxToMm(PAGE_BAR_PX),
   /**
    * The bottom margin: the page bar and half a millimetre of paper above it; the footer's lowest
    * descender sits about 0.5 mm higher still, so no footer text hides under the bar (#553).
    */
-  bottom: 10.32,
+  bottom: pxToMm(PAGE_BAR_PX) + 0.5,
   /**
    * Paper kept clear above the page bar in layout 3, beyond the bar itself: the footer's rule line
    * sat 0.5 mm over the bar in layout 2, so the owner's photo showed it crowding the bar (#553).

@@ -1,3 +1,4 @@
+import { PAGE_BAR_PX } from '../../ink-core/src/pageArea';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { crc32, inflateSync } from 'zlib';
@@ -325,7 +326,7 @@ describe('the note\'s page bar (#553)', () => {
   });
 
   test('the bar is 116 px and the footer of every page size ends above it', () => {
-    expect(mmToPx(PAGE_MM.pageBar)).toBe(116);
+    expect(mmToPx(PAGE_MM.pageBar)).toBe(PAGE_BAR_PX);
     for (const orientation of ['portrait', 'landscape'] as const) {
       for (const cellMm of CELL_PRESETS_MM) {
         const spec: PageSpec = { orientation, hand: 'right', cellMm, lattice: 'square', columns: 6, rows: 6 };

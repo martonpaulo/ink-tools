@@ -14,7 +14,8 @@ const NAME = '@ink-tools/puzzle-core';
  */
 exports.metro = part => ({
   ...part,
-  watchFolders: [...(part.watchFolders || []), __dirname],
+  // ink-core's folder too: the page look reads the page bar's height from its `pageArea.ts` (#577).
+  watchFolders: [...(part.watchFolders || []), __dirname, path.join(__dirname, '..', 'ink-core')],
   resolver: {
     ...part.resolver,
     extraNodeModules: {...(part.resolver || {}).extraNodeModules, [NAME]: __dirname},

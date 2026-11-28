@@ -121,6 +121,7 @@
     {"path": "cli/inkctl/src/", "gates": ["boundaries"]},
     {"path": "packages/ui-kit/", "gates": ["account-sync", "lasso-actions", "device-link", "image-editing", "smart-pen", "ink-tools-probe", "puzzles"]},
     {"path": "packages/ink-core/", "gates": ["packages", "account-sync", "lasso-actions", "device-link", "image-editing", "smart-pen"]},
+    {"path": "packages/ink-core/src/pageArea.ts", "gates": ["puzzles"]},
     {"path": "packages/picture-search/", "gates": ["packages", "account-sync", "lasso-actions", "image-editing", "smart-pen"]},
     {"path": "packages/sync-core/", "gates": ["packages", "account-sync"]},
     {"path": "packages/puzzle-core/", "gates": ["packages", "puzzles"]},
