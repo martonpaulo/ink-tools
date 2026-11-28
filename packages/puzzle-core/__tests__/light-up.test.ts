@@ -5,6 +5,8 @@ import {
   digest,
   drawLightUpPage,
   generateLightUp,
+  lightUpFromCode,
+  newLightUp,
   parsePuzzleCode,
   puzzleCode,
   rateLightUp,
@@ -134,11 +136,45 @@ describe('the page and «Check»', () => {
     expect(result.solved).toBe(false);
   });
 
+  test('a circle as small as a dot is a bulb; a dot or a short dash is not', () => {
+    // A 3 mm circle on this 10 mm cell, a quarter of the cell across: as small as a dot's box.
+    const small = (i: number): InkStroke<number> => {
+      const [cx, cy] = at(i);
+      return { points: Array.from({ length: 17 }, (_, k) => ({ x: cx + grid.cell * 0.125 * Math.cos((k * Math.PI) / 8), y: cy + grid.cell * 0.125 * Math.sin((k * Math.PI) / 8) })), element: i };
+    };
+    const dash = (i: number): InkStroke<number> => {
+      const [cx, cy] = at(i);
+      return { points: [{ x: cx - grid.cell * 0.12, y: cy }, { x: cx + grid.cell * 0.12, y: cy + 2 }], element: i };
+    };
+    const result = checkLightUp(puzzle, layout, [...bulbs.slice(0, -2).map(circle), small(bulbs[bulbs.length - 2]), small(bulbs[bulbs.length - 1]), dot(empties[0]), dash(empties[1])]);
+    expect(result).toEqual({ wrong: [], right: bulbs, missing: [], solved: true });
+    expect(checkLightUp(puzzle, layout, [dash(bulbs[0])]).wrong).toEqual([bulbs[0]]);
+    // A small cross, as long for its box as a small circle, is still no bulb.
+    const smallCross = (i: number): InkStroke<number>[] => {
+      const [cx, cy] = at(i);
+      const r = grid.cell * 0.12;
+      return [{ points: [{ x: cx - r, y: cy - r }, { x: cx + r, y: cy + r }], element: i }, { points: [{ x: cx + r, y: cy - r }, { x: cx - r, y: cy + r }], element: i }];
+    };
+    expect(checkLightUp(puzzle, layout, smallCross(empties[0])).wrong).toEqual([]);
+    expect(checkLightUp(puzzle, layout, smallCross(bulbs[0])).wrong).toEqual([bulbs[0]]);
+  });
+
   test('a dot where a bulb belongs is wrong, and ink on a wall is ignored', () => {
     const wall = puzzle.walls.indexOf(true);
     const result = checkLightUp(puzzle, layout, [dot(bulbs[0]), circle(wall)]);
     expect(result.wrong).toEqual([bulbs[0]]);
     expect(result.right).toEqual([]);
     expect(result.missing).toEqual(bulbs.slice(1));
+  });
+});
+
+describe('lightUpFromCode (#395)', () => {
+  test('a code names the same Light Up again, made live or from the bank, and another game\'s code is refused', () => {
+    const live = generateLightUp('P1', { width: 7, height: 7 }, 'easy');
+    expect(lightUpFromCode(puzzleCode(live.id))).toEqual(live);
+    const banked = newLightUp('P1', { width: 12, height: 12 }, 'hard');
+    expect(puzzleCode(banked.id)).toMatch(/^LU-12X12-H-B/);
+    expect(lightUpFromCode(puzzleCode(banked.id))).toEqual(banked);
+    expect(() => lightUpFromCode('HI-8-E-7K2Q9X')).toThrow('not a Light Up code');
   });
 });

@@ -41,6 +41,11 @@ const GAMES = {
     pairs: ['12:easy', '12:hard'],
     make: (core, seed, size, band) => core.encodeHitori(core.generateHitori(seed, Number(size), band)),
   },
+  'light-up': {
+    constant: 'LIGHT_UP_BANK',
+    pairs: ['5x5:hard', '7x7:medium', '7x7:hard', '10x10:medium', '10x10:hard', '12x12:easy', '12x12:medium', '12x12:hard'],
+    make: (core, seed, size, band) => core.encodeLightUp(core.generateLightUp(seed, sizeOf(size), band)),
+  },
   'star-battle': {
     constant: 'STAR_BATTLE_BANK',
     pairs: [

@@ -11,16 +11,21 @@
  * needs probing (a cell whose one value breaks a rule once the direct rules run), `hard` when it
  * needs many probes. A grid that still needs a guess is never offered. Probing a probe (two deep)
  * was tried for `hard` and took seconds per grid on the Mac, too slow for the tablet.
+ *
+ * A new page of a slow size and band comes from `light-up-bank.ts` (#552): under `node --jitless`
+ * a 5 x 5 hard took up to 0.2 s, a 10 x 10 hard 4 s and a 12 x 12 hard over 5 s on the Mac.
  */
 
-import { puzzleCode, type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, puzzleCode, type Difficulty, type PuzzleId } from './code';
 import { classifyMark, marksByCell, type InkStroke } from './check/cells';
 import { FONT_WEIGHTS, drawCentredText } from './page/font';
 import { cellCenter, drawSquareLattice, shadeCells, type Cell } from './page/grid';
 import { createPage, drawFooter, fitCellMm, layoutPage, type PageLayout } from './page/layout';
 import { TEXT_SIZE, type CellPreset, type Hand, type Orientation } from './page/look';
 import type { Raster } from './page/raster';
+import { LIGHT_UP_BANK } from './light-up-bank';
 import { childSeed, createRandom, type Random } from './random';
+import { bankPair, findInBank, pickFromBank, type SeedBankEntry } from './seed-bank';
 
 export interface LightUpSize {
   width: number;
@@ -55,6 +60,11 @@ export const LIGHT_UP_BANDS: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 export const LIGHT_UP_MIN_SIDE = 5;
 /** shortcut: a hard 14 x 14 failed 7 of 20 seeds and took 1.2 s each on the Mac; raise it after a tablet timing. */
 export const LIGHT_UP_MAX_SIDE = 12;
+/**
+ * The sizes the Puzzles view offers: four, as binairo's and hitori's, so the difficulties below
+ * them stay on the screen; the smallest, the largest and two between, 7 the classic printed size.
+ */
+export const LIGHT_UP_SIDES: readonly number[] = [5, 7, 10, 12];
 
 const UNKNOWN = -1;
 const EMPTY = 0;
@@ -330,6 +340,50 @@ export function generateLightUp(seed: string, size: LightUpSize, difficulty: Dif
   throw new Error(`no ${difficulty} ${width} x ${height} Light Up from seed «${seed}» in ${LIGHT_UP_ATTEMPTS} attempts`);
 }
 
+/** A cell in a seed bank entry: `.` white, `#` a wall with no number, a digit a numbered wall. */
+const WHITE_CELL = '.';
+const BARE_WALL = '#';
+
+/** A seed bank entry's text (#552): each cell row by row as `.`, `#` or its number, then each cell as 1 for a bulb, joined by «/». */
+export function encodeLightUp(puzzle: Pick<LightUp, 'walls' | 'clues' | 'solution'>): string {
+  const cells = puzzle.walls.map((wall, i) => (!wall ? WHITE_CELL : (puzzle.clues[i] ?? BARE_WALL).toString()));
+  return [cells.join(''), puzzle.solution.map(bulb => (bulb ? '1' : '0')).join('')].join('/');
+}
+
+function lightUpOfEntry(entry: SeedBankEntry, width: number, height: number, difficulty: Difficulty): LightUp {
+  const [cellText, bulbText] = entry.text.split('/');
+  const cells = width * height;
+  if (cellText?.length !== cells || bulbText?.length !== cells) throw new RangeError(`a ${width} x ${height} Light Up entry has ${cells} cells and bulbs`);
+  const cellChars = [...cellText];
+  return {
+    id: { game: 'light-up', size: `${width}X${height}`, difficulty, seed: entry.seed },
+    width,
+    height,
+    walls: cellChars.map(ch => ch !== WHITE_CELL),
+    clues: cellChars.map(ch => (ch === WHITE_CELL || ch === BARE_WALL ? null : Number(ch))),
+    solution: [...bulbText].map(ch => ch === '1'),
+  };
+}
+
+/**
+ * The Light Up a new page shows: at a size and band in the bank, the entry the seed picks, ready
+ * at once and named by its own seed (#552); elsewhere `generateLightUp`'s, made live.
+ */
+export function newLightUp(seed: string, size: LightUpSize, difficulty: Difficulty): LightUp {
+  const { width, height } = size;
+  const entry = pickFromBank(LIGHT_UP_BANK, bankPair(`${width}x${height}`, difficulty), seed);
+  return entry ? lightUpOfEntry(entry, width, height, difficulty) : generateLightUp(seed, size, difficulty);
+}
+
+/** The Light Up a puzzle code names (`LU-7X7-M-7K2Q9X`), the same one every time (#395), banked or not. */
+export function lightUpFromCode(code: string): LightUp {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'light-up' || !/^\d+X\d+$/.test(id.size)) throw new RangeError(`«${code}» is not a Light Up code`);
+  const [width, height] = id.size.split('X').map(Number);
+  const entry = findInBank(LIGHT_UP_BANK, bankPair(`${width}x${height}`, id.difficulty), id.seed);
+  return entry ? lightUpOfEntry(entry, width, height, id.difficulty) : generateLightUp(id.seed, { width, height }, id.difficulty);
+}
+
 /** The bulbs beside a cell. */
 function bulbsBeside(width: number, height: number, bulbs: readonly boolean[], i: number): number {
   const r = Math.floor(i / width);
@@ -342,7 +396,7 @@ function bulbsBeside(width: number, height: number, bulbs: readonly boolean[], i
   return n;
 }
 
-export const LIGHT_UP_RULE = 'Draw a circle for each bulb: light every white cell, no bulb lights another.';
+export const LIGHT_UP_RULE = 'Circle bulbs to light every white cell; no bulb lights another; a number counts bulbs beside it.';
 
 export interface LightUpPageOptions {
   orientation: Orientation;
@@ -384,8 +438,25 @@ export interface LightUpCheck {
 }
 
 /**
- * «Check» from the ink, with no recognition: a circle or a filled cell is a bulb, a dot or a cross
- * marks a cell the player left without one. Ink on a wall is ignored.
+ * [inference] a small circle's ink runs at least this many times its own width; a dot's, a tap or a
+ * short dash, about once. A circle as small as a dot is still a bulb (interface audit of #395).
+ */
+const CIRCLE_MIN_RUN = 2.5;
+
+/** Whether dot-sized ink is a small closed loop, a bulb, rather than a dot or a small cross: a stroke that closes, and a run long for its box. */
+function smallCircle(strokes: readonly InkStroke[]): boolean {
+  const points = strokes.flatMap(stroke => stroke.points);
+  const width = Math.max(Math.max(...points.map(p => p.x)) - Math.min(...points.map(p => p.x)), Math.max(...points.map(p => p.y)) - Math.min(...points.map(p => p.y)));
+  let run = 0;
+  for (const { points: line } of strokes) for (let k = 1; k < line.length; k++) run += Math.hypot(line[k].x - line[k - 1].x, line[k].y - line[k - 1].y);
+  // A loop ends near where it began; a small cross's two lines, as long for their box, do not.
+  const closed = strokes.some(({ points: line }) => line.length > 2 && Math.hypot(line[line.length - 1].x - line[0].x, line[line.length - 1].y - line[0].y) <= width / 2);
+  return width > 0 && closed && run >= CIRCLE_MIN_RUN * width;
+}
+
+/**
+ * «Check» from the ink, with no recognition: a circle, however small, or a filled cell is a bulb;
+ * a dot or a cross marks a cell the player left without one. Ink on a wall is ignored.
  */
 export function checkLightUp<E>(puzzle: LightUp, layout: Pick<PageLayout, 'grid'>, strokes: readonly InkStroke<E>[]): LightUpCheck {
   const byCell = marksByCell(layout.grid, strokes);
@@ -394,7 +465,7 @@ export function checkLightUp<E>(puzzle: LightUp, layout: Pick<PageLayout, 'grid'
     if (puzzle.walls[i]) continue;
     const ink = byCell.get(i);
     const mark = ink ? classifyMark(layout.grid, i, ink) : 'empty';
-    const bulb = mark === 'shade' || mark === 'other';
+    const bulb = mark === 'shade' || mark === 'other' || (mark === 'dot' && smallCircle(ink!));
     if (bulb) (puzzle.solution[i] ? result.right : result.wrong).push(i);
     else if (puzzle.solution[i]) (mark === 'empty' ? result.missing : result.wrong).push(i);
   }

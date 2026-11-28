@@ -7,6 +7,8 @@ import { parsePuzzleCode, puzzleCode, type Difficulty, type PuzzleId } from '../
 import { KAKURO_BANK } from '../src/kakuro-bank';
 import { encodeHitori, generateHitori, HITORI_BANDS, HITORI_SIDES, hitoriFromCode, newHitori } from '../src/hitori';
 import { HITORI_BANK } from '../src/hitori-bank';
+import { LIGHT_UP_BANK } from '../src/light-up-bank';
+import { encodeLightUp, generateLightUp, LIGHT_UP_BANDS, LIGHT_UP_SIDES, lightUpFromCode, newLightUp } from '../src/light-up';
 import { encodeKakuro, generateKakuro, KAKURO_SIZES, kakuroFromCode, newKakuro } from '../src/kakuro';
 import { findInBank, type SeedBank } from '../src/seed-bank';
 import { SLITHERLINK_BANK } from '../src/slitherlink-bank';
@@ -106,6 +108,16 @@ const GAMES: Record<string, BankedGame> = {
     encode: made => encodeHitori(made as ReturnType<typeof generateHitori>),
     proved: ENTRIES,
   },
+  // Making a 12 x 12 hard Light Up again takes up to 0.5 s with the JIT, so a sample of each pair.
+  'light-up': {
+    bank: LIGHT_UP_BANK,
+    offered: squarePairs(LIGHT_UP_SIDES, LIGHT_UP_BANDS),
+    live: (seed, pair) => generateLightUp(seed, square(pair), bandOf(pair)),
+    fresh: (seed, pair) => newLightUp(seed, square(pair), bandOf(pair)),
+    fromCode: lightUpFromCode,
+    encode: made => encodeLightUp(made as ReturnType<typeof generateLightUp>),
+    proved: 6,
+  },
   // Making the whole star battle bank again takes about 25 s, so a sample of each pair.
   'star-battle': {
     bank: STAR_BATTLE_BANK,
@@ -128,6 +140,7 @@ describe('the seed banks (#552)', () => {
     expect(Object.keys(BRIDGES_BANK)).toContain('13x13:hard');
     expect(Object.keys(BINAIRO_BANK)).toContain('12:hard');
     expect(Object.keys(STAR_BATTLE_BANK)).toContain('10S2:hard');
+    expect(Object.keys(LIGHT_UP_BANK)).toContain('12x12:hard');
     for (const [game, pair] of banked) expect(GAMES[game].offered).toContain(pair);
   });
 

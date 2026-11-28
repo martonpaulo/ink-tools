@@ -15,6 +15,7 @@ import {HITORI} from './games/hitori';
 import {JIGSAW} from './games/jigsaw';
 import {KAKURO} from './games/kakuro';
 import {KILLER} from './games/killer';
+import {LIGHT_UP} from './games/lightUp';
 import {MAZE} from './games/maze';
 import {NONOGRAM} from './games/nonogram';
 import {SLITHERLINK} from './games/slitherlink';
@@ -43,6 +44,6 @@ export type Game = {
 };
 
 /** Every game of the list, in its order: the puzzles, then the pass-and-play boards. */
-export const PUZZLE_GAMES: readonly PuzzleGame[] = [MAZE, JIGSAW, SUDOKU, KILLER, CALCUDOKU, FUTOSHIKI, KAKURO, SLITHERLINK, BRIDGES, NONOGRAM, STAR_BATTLE, BINAIRO, HITORI, ...BOARDS];
+export const PUZZLE_GAMES: readonly PuzzleGame[] = [MAZE, JIGSAW, SUDOKU, KILLER, CALCUDOKU, FUTOSHIKI, KAKURO, SLITHERLINK, BRIDGES, NONOGRAM, STAR_BATTLE, BINAIRO, HITORI, LIGHT_UP, ...BOARDS];
 
 export const GAMES: readonly Game[] = PUZZLE_GAMES.map(game => puzzleEntry(game));

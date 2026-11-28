@@ -64,12 +64,13 @@ import {NONOGRAM} from '../../../plugins/puzzles/src/games/nonogram';
 import {STAR_BATTLE} from '../../../plugins/puzzles/src/games/starBattle';
 import {BINAIRO} from '../../../plugins/puzzles/src/games/binairo';
 import {HITORI} from '../../../plugins/puzzles/src/games/hitori';
+import {LIGHT_UP} from '../../../plugins/puzzles/src/games/lightUp';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, placedPageCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, drawLightUpPage, lightUpFromCode, placedPageCode, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -470,6 +471,25 @@ const hitoriInk = () => {
   return [...shaded.slice(0, -1), white[1]].map(hatch).concat([ring]);
 };
 const puzzlesHitori = (code: string | null, steps: string[] = []) => puzzlesGame(HITORI, hitoriInk, code, steps);
+/**
+ * The largest Light Up, a banked one (#395): a circle in every bulb cell but the last, one circle in
+ * a cell with no bulb, and a dot in the first cell left without one, as a player marks it.
+ */
+const LIGHT_UP_CODE = 'LU-12X12-H-B0';
+const lightUpInk = () => {
+  const puzzle = lightUpFromCode(LIGHT_UP_CODE);
+  const {grid} = drawLightUpPage(puzzle, {orientation: 'portrait', hand: 'right'}).layout;
+  const bulbs = puzzle.solution.flatMap((bulb, cell) => (bulb ? [cell] : []));
+  const empty = puzzle.walls.flatMap((wall, cell) => (wall || puzzle.solution[cell] ? [] : [cell]));
+  const centre = (cell: number) => cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
+  const ring = (cell: number) => {
+    const [cx, cy] = centre(cell);
+    return {points: Array.from({length: 25}, (_, i) => ({x: cx + grid.cell * 0.3 * Math.cos((i / 24) * 2 * Math.PI), y: cy + grid.cell * 0.3 * Math.sin((i / 24) * 2 * Math.PI)})), element: {}};
+  };
+  const [dx, dy] = centre(empty[1]);
+  return [...bulbs.slice(0, -1), empty[0]].map(ring).concat([{points: [{x: dx, y: dy}, {x: dx + 3, y: dy + 2}], element: {}}]);
+};
+const puzzlesLightUp = (code: string | null, steps: string[] = []) => puzzlesGame(LIGHT_UP, lightUpInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -544,6 +564,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-hitori-page', render: () => puzzlesHitori(HITORI_CODE)},
   {name: 'puzzles-hitori-check', render: () => puzzlesHitori(HITORI_CODE, ['Check'])},
   {name: 'puzzles-hitori-solution', render: () => puzzlesHitori(HITORI_CODE, ['Show Solution'])},
+  {name: 'puzzles-light-up', render: () => puzzlesLightUp(null)},
+  {name: 'puzzles-light-up-page', render: () => puzzlesLightUp(LIGHT_UP_CODE)},
+  {name: 'puzzles-light-up-check', render: () => puzzlesLightUp(LIGHT_UP_CODE, ['Check'])},
+  {name: 'puzzles-light-up-solution', render: () => puzzlesLightUp(LIGHT_UP_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

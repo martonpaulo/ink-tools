@@ -12,6 +12,7 @@ import {HITORI} from '../src/games/hitori';
 import {JIGSAW} from '../src/games/jigsaw';
 import {KAKURO} from '../src/games/kakuro';
 import {KILLER} from '../src/games/killer';
+import {LIGHT_UP} from '../src/games/lightUp';
 import {MAZE} from '../src/games/maze';
 import {NONOGRAM} from '../src/games/nonogram';
 import {SLITHERLINK} from '../src/games/slitherlink';
@@ -21,7 +22,7 @@ import {playCopy} from '../src/play/copy';
 import {offered, settle, type PuzzleGame} from '../src/play/puzzle';
 import {fakePages, HERE, mount, SEED} from '../testing/gameView';
 
-const SIZED: readonly PuzzleGame[] = [SUDOKU, CALCUDOKU, FUTOSHIKI, KAKURO, SLITHERLINK, BRIDGES, NONOGRAM, STAR_BATTLE, BINAIRO, HITORI];
+const SIZED: readonly PuzzleGame[] = [SUDOKU, CALCUDOKU, FUTOSHIKI, KAKURO, SLITHERLINK, BRIDGES, NONOGRAM, STAR_BATTLE, BINAIRO, HITORI, LIGHT_UP];
 const UNSIZED: readonly PuzzleGame[] = [MAZE, JIGSAW, KILLER];
 const SHAPE = {orientation: HERE.orientation, hand: 'right' as const};
 

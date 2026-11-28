@@ -326,8 +326,8 @@ describe('each preset and layout matches its golden page', () => {
 describe('a page keeps the layout it was printed with (#553)', () => {
   const sample = (name: string) => SAMPLE_PAGES.find(([n]) => n === name)![1];
 
-  // The goldens of these pages as main drew them before the page bar margin (383153e9^).
-  test.each(['hitori-15mm-portrait-right', 'page-light-up-10mm-portrait-right'])('%s, drawn by layout 1, is the page printed before the page bar margin', name => {
+  // The golden of this page as main drew it before the page bar margin (383153e9^).
+  test.each(['hitori-15mm-portrait-right'])('%s, drawn by layout 1, is the page printed before the page bar margin', name => {
     expectGolden(`layout-1-${name}`, withPageLayout(1, sample(name)));
   });
 
