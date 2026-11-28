@@ -8,6 +8,7 @@ import {
   deleteKeyWord,
   deletePageElements,
   getCurrentFilePath,
+  getCurrentPageNum,
   getElement,
   getNoteTotalPageNum,
   insertElements,
@@ -29,6 +30,7 @@ import type {Relay} from '../native';
 import {EDITOR_FOLDER, PAGE, type EditHost} from './operations';
 import type {PenGate} from './penGate';
 import type {TemplateHost} from './templates';
+import type {CurrentHost} from './current';
 
 /** Where inkctl writes the request: `ACTION_PLUGINS['device-link']` in cli/inkctl/src/inkctl. */
 export const EDITOR_ACTION_PATH = `${EDITOR_FOLDER}${ACTION_FILE}`;
@@ -42,9 +44,10 @@ export async function readEditorRequest(native: Relay): Promise<string | null> {
   return text.value;
 }
 
-export function deviceEditHost(pen: PenGate): EditHost & TemplateHost {
+export function deviceEditHost(pen: PenGate): EditHost & TemplateHost & CurrentHost {
   return {
     openNote: getCurrentFilePath,
+    currentPage: getCurrentPageNum,
     saveOpenNote: saveCurrentNote,
     pageCount: getNoteTotalPageNum,
     build: buildElement,

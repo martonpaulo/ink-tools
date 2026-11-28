@@ -41,6 +41,7 @@ import {placePendingOnPenUp, startBackgroundIfOn} from './src/receive/background
 import {working} from './src/working';
 import {editAction} from './src/editor/operations';
 import {templatesAction} from './src/editor/templates';
+import {currentAction} from './src/editor/current';
 import {deviceEditHost, readEditorRequest} from './src/editor/device';
 import {PenGate} from './src/editor/penGate';
 import {saveNoteAction} from './src/editor/save';
@@ -208,6 +209,6 @@ const editHost = deviceEditHost(pen);
 startActionChannel({
   plugin: 'device-link',
   read: () => readEditorRequest(relay()),
-  actions: {edit: editAction(editHost), 'save-note': saveNoteAction(editHost), templates: templatesAction(editHost)},
+  actions: {edit: editAction(editHost), 'save-note': saveNoteAction(editHost), templates: templatesAction(editHost), current: currentAction(editHost)},
   timers: nativeTimers('DeviceLinkTicks'),
 });
