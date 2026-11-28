@@ -63,12 +63,13 @@ import {BRIDGES} from '../../../plugins/puzzles/src/games/bridges';
 import {NONOGRAM} from '../../../plugins/puzzles/src/games/nonogram';
 import {STAR_BATTLE} from '../../../plugins/puzzles/src/games/starBattle';
 import {BINAIRO} from '../../../plugins/puzzles/src/games/binairo';
+import {HITORI} from '../../../plugins/puzzles/src/games/hitori';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -447,6 +448,27 @@ const puzzlesBridges = (code: string | null, steps: string[] = []) => puzzlesGam
 const puzzlesNonogram = (code: string | null, steps: string[] = []) => puzzlesGame(NONOGRAM, nonogramInk, code, steps);
 const puzzlesStarBattle = (code: string | null, steps: string[] = []) => puzzlesGame(STAR_BATTLE, starBattleInk, code, steps);
 const puzzlesBinairo = (code: string | null, steps: string[] = [], unread = false) => puzzlesGame(BINAIRO, binairoInk(unread), code, steps);
+/**
+ * The largest hitori, a banked one (#394): every cell to shade hatched but the last, one white cell
+ * hatched by mistake, and a circle round the first white cell, as a player keeps it white.
+ */
+const HITORI_CODE = 'HI-12-H-B0';
+const hitoriInk = () => {
+  const puzzle = hitoriFromCode(HITORI_CODE);
+  const {grid} = hitoriLayout(puzzle, {orientation: 'portrait', hand: 'right'});
+  const shaded = puzzle.solution.flatMap((black, cell) => (black ? [cell] : []));
+  const white = puzzle.solution.flatMap((black, cell) => (black ? [] : [cell]));
+  const at = (cell: number) => [grid.x + (cell % grid.columns) * grid.cell, grid.y + Math.floor(cell / grid.columns) * grid.cell] as const;
+  const hatch = (cell: number) => {
+    const [x, y] = at(cell);
+    const rows = Array.from({length: 8}, (_, i) => y + grid.cell * (0.12 + i * 0.11));
+    return {points: rows.flatMap(row => [{x: x + grid.cell * 0.12, y: row}, {x: x + grid.cell * 0.88, y: row}]), element: {}};
+  };
+  const [cx, cy] = cellCenter(grid, white[0] % grid.columns, Math.floor(white[0] / grid.columns));
+  const ring = {points: Array.from({length: 33}, (_, i) => ({x: cx + grid.cell * 0.38 * Math.cos((i / 32) * 2 * Math.PI), y: cy + grid.cell * 0.38 * Math.sin((i / 32) * 2 * Math.PI)})), element: {}};
+  return [...shaded.slice(0, -1), white[1]].map(hatch).concat([ring]);
+};
+const puzzlesHitori = (code: string | null, steps: string[] = []) => puzzlesGame(HITORI, hitoriInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -517,6 +539,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-binairo-check', render: () => puzzlesBinairo(BINAIRO_CODE, ['Check'])},
   {name: 'puzzles-binairo-check-unread', render: () => puzzlesBinairo(BINAIRO_CODE, ['Check'], true)},
   {name: 'puzzles-binairo-solution', render: () => puzzlesBinairo(BINAIRO_CODE, ['Show Solution'])},
+  {name: 'puzzles-hitori', render: () => puzzlesHitori(null)},
+  {name: 'puzzles-hitori-page', render: () => puzzlesHitori(HITORI_CODE)},
+  {name: 'puzzles-hitori-check', render: () => puzzlesHitori(HITORI_CODE, ['Check'])},
+  {name: 'puzzles-hitori-solution', render: () => puzzlesHitori(HITORI_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

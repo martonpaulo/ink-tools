@@ -5,6 +5,8 @@ import { BRIDGES_BANK } from '../src/bridges-bank';
 import { BRIDGES_BANDS, BRIDGES_SIDES, bridgesFromCode, encodeBridges, generateBridges, newBridges } from '../src/bridges';
 import { parsePuzzleCode, puzzleCode, type Difficulty, type PuzzleId } from '../src/code';
 import { KAKURO_BANK } from '../src/kakuro-bank';
+import { encodeHitori, generateHitori, HITORI_BANDS, HITORI_SIDES, hitoriFromCode, newHitori } from '../src/hitori';
+import { HITORI_BANK } from '../src/hitori-bank';
 import { encodeKakuro, generateKakuro, KAKURO_SIZES, kakuroFromCode, newKakuro } from '../src/kakuro';
 import { findInBank, type SeedBank } from '../src/seed-bank';
 import { SLITHERLINK_BANK } from '../src/slitherlink-bank';
@@ -93,6 +95,15 @@ const GAMES: Record<string, BankedGame> = {
     fresh: (seed, pair) => newBinairo(seed, sideOf(pair), bandOf(pair)),
     fromCode: binairoFromCode,
     encode: made => encodeBinairo(made as ReturnType<typeof generateBinairo>),
+    proved: ENTRIES,
+  },
+  hitori: {
+    bank: HITORI_BANK,
+    offered: HITORI_SIDES.flatMap(side => HITORI_BANDS.map(band => `${side}:${band}`)),
+    live: (seed, pair) => generateHitori(seed, sideOf(pair), bandOf(pair)),
+    fresh: (seed, pair) => newHitori(seed, sideOf(pair), bandOf(pair)),
+    fromCode: hitoriFromCode,
+    encode: made => encodeHitori(made as ReturnType<typeof generateHitori>),
     proved: ENTRIES,
   },
   // Making the whole star battle bank again takes about 25 s, so a sample of each pair.

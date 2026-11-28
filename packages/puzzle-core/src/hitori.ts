@@ -12,15 +12,20 @@
  * column, then the solver keeps only grids it finishes without a guess. The band comes from the
  * solve: `easy` when the basic rules finish it, `medium` when it also needs the pair rules, `hard`
  * when it also needs probing (a cell whose one value breaks a rule).
+ *
+ * A new page of a slow size and band comes from `hitori-bank.ts` (#552): a 12 x 12 easy or hard
+ * took up to 0.4 s under `node --jitless`, seconds on the tablet.
  */
 
 import { classifyMark, marksByCell, type InkStroke } from './check/cells';
-import { puzzleCode, type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, puzzleCode, type Difficulty, type PuzzleId } from './code';
+import { HITORI_BANK } from './hitori-bank';
 import { drawCellText, drawSquareLattice, type Grid } from './page/grid';
 import { createPage, drawFooter, fitCellMm, layoutPage, type PageLayout } from './page/layout';
 import { type CellPreset, type Hand, type Orientation } from './page/look';
 import { type Raster } from './page/raster';
 import { childSeed, createRandom, type Random } from './random';
+import { bankPair, findInBank, pickFromBank, type SeedBankEntry } from './seed-bank';
 
 export interface Hitori {
   id: PuzzleId;
@@ -35,6 +40,11 @@ export interface Hitori {
 export const HITORI_BANDS: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 export const HITORI_MIN_SIDE = 5;
 export const HITORI_MAX_SIDE = 12; // a 12 x 12 fits a portrait page at 10 mm; a number of two digits stays readable
+/**
+ * The sizes the Puzzles view offers: four, as binairo's, so the difficulties below them stay on
+ * the screen (interface audit of #394); the smallest, the largest and two between.
+ */
+export const HITORI_SIDES: readonly number[] = [5, 8, 10, 12];
 
 const UNKNOWN = -1;
 const WHITE = 0;
@@ -360,6 +370,43 @@ export function generateHitori(seed: string, size: number, difficulty: Difficult
     return { id: { game: 'hitori', size: String(size), difficulty, seed }, size, numbers, solution: rating.solution };
   }
   throw new Error(`no ${difficulty} ${size} x ${size} hitori from seed «${seed}» in ${HITORI_ATTEMPTS} attempts`);
+}
+
+/** A number's digit in a seed bank entry: one base-36 character, so 10 to 12 take one each. */
+const NUMBER_RADIX = 36;
+
+/** A seed bank entry's text (#552): each cell's number row by row, one base-36 digit, then each cell as 1 when shaded, joined by «/». */
+export function encodeHitori(puzzle: Pick<Hitori, 'numbers' | 'solution'>): string {
+  return [puzzle.numbers.map(n => n.toString(NUMBER_RADIX)).join(''), puzzle.solution.map(black => (black ? '1' : '0')).join('')].join('/');
+}
+
+function hitoriOfEntry(entry: SeedBankEntry, size: number, difficulty: Difficulty): Hitori {
+  const [numberText, shadeText] = entry.text.split('/');
+  if (numberText?.length !== size * size || shadeText?.length !== size * size) throw new RangeError(`a ${size} x ${size} hitori entry has ${size * size} numbers and cells`);
+  return {
+    id: { game: 'hitori', size: String(size), difficulty, seed: entry.seed },
+    size,
+    numbers: [...numberText].map(ch => parseInt(ch, NUMBER_RADIX)),
+    solution: [...shadeText].map(ch => ch === '1'),
+  };
+}
+
+/**
+ * The hitori a new page shows: at a size and band in the bank, the entry the seed picks, ready at
+ * once and named by its own seed (#552); elsewhere `generateHitori`'s, made live.
+ */
+export function newHitori(seed: string, size: number, difficulty: Difficulty): Hitori {
+  const entry = pickFromBank(HITORI_BANK, bankPair(size, difficulty), seed);
+  return entry ? hitoriOfEntry(entry, size, difficulty) : generateHitori(seed, size, difficulty);
+}
+
+/** The hitori a puzzle code names (`HI-8-M-7K2Q9X`), the same one every time (#394), banked or not. */
+export function hitoriFromCode(code: string): Hitori {
+  const id = parsePuzzleCode(code);
+  if (id.game !== 'hitori' || !/^\d+$/.test(id.size)) throw new RangeError(`«${code}» is not a hitori code`);
+  const size = Number(id.size);
+  const entry = findInBank(HITORI_BANK, bankPair(size, id.difficulty), id.seed);
+  return entry ? hitoriOfEntry(entry, size, id.difficulty) : generateHitori(id.seed, size, id.difficulty);
 }
 
 /** How the page is laid out: the orientation, the writing hand and, when given, the cell size. */

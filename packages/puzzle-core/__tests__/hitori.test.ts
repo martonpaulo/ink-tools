@@ -2,6 +2,8 @@ import { type InkPoint, type InkStroke } from '../src/check';
 import { parsePuzzleCode, puzzleCode } from '../src/code';
 import {
   checkHitori,
+  hitoriFromCode,
+  newHitori,
   countHitoriSolutions,
   drawHitoriPage,
   generateHitori,
@@ -195,5 +197,16 @@ describe('«Check» from the ink', () => {
     const puzzle = generateHitori('P1', 8, 'medium');
     const { grid } = hitoriLayout(generateHitori('P1', 9, 'medium'), { orientation: 'portrait', hand: 'right' });
     expect(() => checkHitori(puzzle, grid, [])).toThrow('9 x 9');
+  });
+});
+
+describe('hitoriFromCode (#394)', () => {
+  test('a code names the same hitori again, made live or from the bank, and another game\'s code is refused', () => {
+    const live = generateHitori('P1', 8, 'medium');
+    expect(hitoriFromCode(puzzleCode(live.id))).toEqual(live);
+    const banked = newHitori('P1', 12, 'hard');
+    expect(puzzleCode(banked.id)).toMatch(/^HI-12-H-B/);
+    expect(hitoriFromCode(puzzleCode(banked.id))).toEqual(banked);
+    expect(() => hitoriFromCode('BI-8-E-7K2Q9X')).toThrow('not a hitori code');
   });
 });

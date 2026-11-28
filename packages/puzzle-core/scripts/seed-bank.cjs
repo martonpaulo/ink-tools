@@ -36,6 +36,11 @@ const GAMES = {
     pairs: ['6:hard', '8:hard', '10:hard', '12:medium', '12:hard'],
     make: (core, seed, size, band) => core.encodeBinairo(core.generateBinairo(seed, Number(size), band)),
   },
+  hitori: {
+    constant: 'HITORI_BANK',
+    pairs: ['12:easy', '12:hard'],
+    make: (core, seed, size, band) => core.encodeHitori(core.generateHitori(seed, Number(size), band)),
+  },
   'star-battle': {
     constant: 'STAR_BATTLE_BANK',
     pairs: [
