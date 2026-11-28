@@ -42,6 +42,8 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  not, through Device Link's helper, with no screen tap (#312)
   note templates                 the tablet's page templates, through Device Link: system ones by
                                  name, the PNGs in MyStyle by full path; read-only (#451)
+  note current                   the note open on the tablet and its page on screen, counted from 1,
+                                 through Device Link; read-only (#320)
   lang get|set CODE|cycle        read or switch the handwriting language, everywhere on the device;
                                  cycle goes pt_BR, en_US, es_ES among the installed packs
   screen FILE.png                save what the screen shows
@@ -503,6 +505,7 @@ ACTION_FILE = "action.json"
 ACTION_MARK = "INKTOOLS action"
 ACTION_ANSWER = re.compile(re.escape(ACTION_MARK) + r" (?P<plugin>\S+) (?P<id>\S+) (?P<index>\d+)/(?P<count>\d+) (?P<chunk>.*)")
 ACTION_TIMEOUT = 60.0  # seconds: a sync pass reads the network and writes the tablet
+ACTION_TIMEOUT_HELP = "seconds for the helper's answer"
 ACTION_SYNC_MODULES = ("calendar", "todo")
 # The plugins with actions, by folder name: where each reads its request, and the actions it runs.
 ACTION_PLUGINS = {
@@ -516,7 +519,7 @@ ACTION_PLUGINS = {
     # to time out (#337: 540 strokes in one request made 440 KB and no answer).
     "device-link": {
         "folder": f"{SHARED_ROOT}/{REGISTRY['pluginhost.file-sandbox']['hiddenFolder']}/inktools-device-link",
-        "actions": ("edit", "save-note", "templates"),
+        "actions": ("edit", "save-note", "templates", "current"),
         "max_request_bytes": 64 * 1024,
     },
     # Smart Pen's folder in the hidden .data/plugin/ (its src/actions.ts ACTION_HOME, #298);
@@ -2976,6 +2979,19 @@ def command_note_templates(device: Device, args: argparse.Namespace):
     return data, "\n".join(lines)
 
 
+def command_note_current(device: Device, args: argparse.Namespace):
+    """The note open on the tablet and the page on screen, counted from 1 as the device shows it,
+    from Device Link's action `current` (#320), for Note Editor's Follow Tablet. With no note open
+    both are null. An answer with a note but no page index from 0 is a failure, never a page."""
+    answer = run_action(device, "device-link", "current", {}, args.timeout)
+    note, page = answer.get("openNote"), answer.get("page")
+    if note is None and page is None:
+        return {"note": None, "page": None}, "no note is open"
+    if not isinstance(note, str) or not note or isinstance(page, bool) or not isinstance(page, int) or page < 0:
+        raise Failure(EXIT_FAILED, "device_error", "Device Link answered no open note and page", logs_step("device-link"))
+    return {"note": note, "page": page + 1}, f"page {page + 1} of {note}"
+
+
 def lasso_answer(answer: dict) -> tuple[dict, str]:
     return answer, f"lassoed: {answer.get('rect')} {answer.get('counts')} in {answer.get('ms')} ms"
 
@@ -4965,11 +4981,12 @@ def build_parser() -> argparse.ArgumentParser:
     moved_page.add_argument("--template", help="the new page's system template; default: the page's own")
     digested = add(notes, "digest", command_note_digest)
     digested.add_argument("path", help="a saved note in Note/Tests/")
-    add(notes, "templates", command_note_templates).add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the helper's answer")
+    add(notes, "templates", command_note_templates).add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help=ACTION_TIMEOUT_HELP)
+    add(notes, "current", command_note_current).add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help=ACTION_TIMEOUT_HELP)
     edited = add(notes, "edit", command_note_edit, changes=True)
     edited.add_argument("path", help="the note, open or not")
     edited.add_argument("operations", help="a JSON file: a list of the Note Editor's operations")
-    edited.add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help="seconds for the helper's answer")
+    edited.add_argument("--timeout", type=float, default=ACTION_TIMEOUT, help=ACTION_TIMEOUT_HELP)
     for on_note in (rendered, pictured, texted, paged, moved_page, edited, digested):
         on_note.add_argument("--allow-notes", action="store_true", help="use a note outside Note/Tests/")
 

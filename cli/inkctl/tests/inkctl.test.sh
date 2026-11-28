@@ -1895,6 +1895,17 @@ action_line 'device-link ACTION_ID 1/1 {"ok":true,"action":"templates","system":
 check "an answer with no system template is a failure, never an empty list" "$(exit_and_pushes note templates)" "11"
 action_line 'device-link ACTION_ID 1/1 {"ok":true,"action":"templates","system":[{"name":"style_white"}],"custom":[{"name":"week"}]}' > "$files/action-answer"
 check "a custom template with no path is a failure" "$(exit_and_pushes note templates)" "11"
+
+# The open note and its page through Device Link's action current, read-only (#320).
+action_line "device-link ACTION_ID 1/1 {\"ok\":true,\"action\":\"current\",\"line\":\"DeviceLink: current: page 2\",\"openNote\":\"$root/Note/Tests/Round one.note\",\"page\":2}" > "$files/action-answer"
+result=$(run --read-only note current)
+check "note current runs under --read-only and prints the page from 1" "$?$(action_field "d['action'], d['args']")|$result" "0('current', {})|page 3 of $root/Note/Tests/Round one.note"
+check "note current in JSON answers the note and the page from 1" "$(run note current --json | field "['note'], d['page']")" "('$root/Note/Tests/Round one.note', 3)"
+check "note current presses nothing and reads no screen" "$(called 'input tap')$(called 'uiautomator')" "00"
+action_line 'device-link ACTION_ID 1/1 {"ok":true,"action":"current","openNote":null,"page":null}' > "$files/action-answer"
+check "with no note open, note current says so and answers null for both" "$(run note current)|$(run note current --json | field "['note'], d['page']")" "no note is open|(None, None)"
+action_line "device-link ACTION_ID 1/1 {\"ok\":true,\"action\":\"current\",\"openNote\":\"$root/Note/Tests/Round one.note\",\"page\":null}" > "$files/action-answer"
+check "an open note with no page is a failure, never page 1" "$(exit_and_pushes note current)" "11"
 action_line 'device-link ACTION_ID 1/1 {"ok":false,"code":1,"message":"getNoteSystemTemplates failed: -1 no list"}' > "$files/action-answer"
 run note templates >/dev/null 2>"$work/err"
 check "a failed list exits 1 with the helper's message" "$?$(grep -c 'getNoteSystemTemplates failed' "$work/err")" "11"
