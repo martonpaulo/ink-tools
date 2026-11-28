@@ -119,12 +119,23 @@ final class PageImages {
         missingTemplates[index] = missing
     }
 
+    /// How many earlier `show` calls keep their pages drawn: a zoom moves the visible pages through
+    /// pages that are not the ones it ends on, and a page dropped on the way drew again for seconds,
+    /// a grey placeholder meanwhile (#564).
+    static let retainedShows = 3
+
+    /// The pages of the last `retainedShows` calls of `show`, newest last.
+    @ObservationIgnored private var recentlyShown: [Set<Int>] = []
+
     /// Draws the pages in `visible` and one page on each side, and drops every other page's full
-    /// raster. A page on screen is never dropped, however many show at the smallest zoom (#319).
+    /// raster, but the pages of the last few calls (#564). A page on screen is never dropped,
+    /// however many show at the smallest zoom (#319).
     func show(_ visible: Set<Int>) async {
         guard let first = visible.min(), let last = visible.max() else { return }
         let kept = max(first - 1, 0)...min(last + 1, note.pages.count - 1)
-        for index in pages.keys where !kept.contains(index) && !keepsPages {
+        let held = recentlyShown.reduce(into: Set<Int>()) { $0.formUnion($1) }
+        recentlyShown = Array((recentlyShown + [visible]).suffix(Self.retainedShows))
+        for index in pages.keys where !kept.contains(index) && !held.contains(index) && !keepsPages {
             pages[index] = nil
         }
         for index in visible.sorted() + [first - 1, last + 1] where kept.contains(index) {

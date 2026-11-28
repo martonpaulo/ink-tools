@@ -57,8 +57,27 @@ import Testing
         }
     }
 
+    /// A zoom moves the visible pages through others before it ends on its page: the pages of the last
+    /// few `show` calls stay drawn, so the page it ends on is never a grey placeholder (#564); a page
+    /// far from the view for longer is dropped (#319).
+    @Test func aZoomKeepsThePageItCameFromDrawn() async throws {
+        let note = try Fixtures.note("content.note")
+        #expect(note.pages.count >= 4)
+        let pages = PageImages(note: note)
+        await pages.show([0])
+        await pages.show([3])
+        guard case .ready = pages.page(0) else {
+            Issue.record("page 0 was dropped on the first show away from it")
+            return
+        }
+        for _ in 0..<PageImages.retainedShows {
+            await pages.show([3])
+        }
+        if case .ready = pages.page(0) { Issue.record("page 0 stayed drawn after it left the last shows") }
+    }
+
     /// A page one render window drew stays drawn for the next window of the same note, so a fresh
-    /// window waits for no draw; the app still drops a page far from the view (#319).
+    /// window waits for no draw.
     @Test func aRenderKeepsTheDrawnPagesTheAppWouldDrop() async throws {
         let note = try Fixtures.note("content.note")
         #expect(note.pages.count >= 4)
@@ -66,7 +85,7 @@ import Testing
             let pages = PageImages(note: note)
             pages.keepsPages = keeps
             await pages.show([0])
-            await pages.show([3])
+            for _ in 0...PageImages.retainedShows { await pages.show([3]) }
             guard case .ready = pages.page(0) else {
                 #expect(!keeps, "page 0 was dropped though the renders keep pages")
                 continue
