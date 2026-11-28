@@ -71,18 +71,24 @@ final class NoteIndexer {
         let mine = generation
         let current = { mine == self.generation }
         let count = note.pages.count
-        let reading = (pages ?? Set(0..<count)).filter { $0 < count }.sorted()
+        var reading = (pages ?? Set(0..<count)).filter { $0 < count }.sorted()
+        var old = old
         // A refresh keeps showing the older index until the newer one is ready.
         if old == nil { state = .indexing(done: 0, of: reading.count) }
         let digest = await Self.digest(note.bytes)
         let languages = recognizer.languages
         if let stored = await Self.stored(store, digest: digest, languages: languages) {
             if current() { state = .ready(stored) }
-            return
+            // The pages read at Vision's fast level are read again while the stored index shows,
+            // so the accurate level replaces their words once it works on this Mac (#558).
+            guard !stored.fastPages.isEmpty, recognizer.readsAtItsLevel else { return }
+            reading = stored.fastPages.filter { $0 < count }.sorted()
+            old = stored
         }
         let kept = old.map { index in index.words.filter { !reading.contains($0.page) && $0.page < count } } ?? []
         var words = kept
         var readPages: Set<Int> = old.map { $0.pages.subtracting(reading).filter { $0 < count } } ?? []
+        var fastPages: Set<Int> = old.map { $0.fastPages.subtracting(reading).filter { $0 < count } } ?? []
         for (done, page) in reading.enumerated() {
             guard !Task.isCancelled, current() else {
                 if current() { state = .idle }
@@ -91,10 +97,11 @@ final class NoteIndexer {
             let result = await Self.read(note, page: page, recognizer: recognizer, pageImage: pageImage, logger: logger)
             words += NoteIndex.merged(tablet: result.tablet, mac: result.mac)
             if result.complete { readPages.insert(page) }
+            if result.fast { fastPages.insert(page) }
             if old == nil, current() { state = .indexing(done: done + 1, of: reading.count) }
         }
         guard current() else { return }
-        let built = NoteIndex(languages: languages, words: words, pages: readPages)
+        let built = NoteIndex(languages: languages, words: words, pages: readPages, fastPages: fastPages)
         await Self.save(built, to: store, digest: digest, logger: logger)
         if current() { state = .ready(built) }
     }
@@ -121,11 +128,12 @@ final class NoteIndexer {
         SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
     }
 
-    /// The tablet's words and the Mac's words of one page; `complete` is false when either failed.
+    /// The tablet's words and the Mac's words of one page; `complete` is false when either failed,
+    /// and `fast` true when the Mac read it at Vision's fast level (#558).
     @concurrent
     static func read(
         _ note: NoteFile, page: Int, recognizer: any PageRecognizer, pageImage: PageImage, logger: Logger
-    ) async -> (tablet: [IndexedWord], mac: [IndexedWord], complete: Bool) {
+    ) async -> (tablet: [IndexedWord], mac: [IndexedWord], complete: Bool, fast: Bool) {
         var complete = true
         var tablet: [IndexedWord] = []
         do {
@@ -140,10 +148,13 @@ final class NoteIndexer {
             logger.error("page \(page + 1, privacy: .public): \(String(describing: error), privacy: .public)")
         }
         var mac: [IndexedWord] = []
+        var fast = false
         do {
             if let image = try pageImage(note, page) {
-                mac = try await recognizer.words(in: image).map {
-                    IndexedWord(page: page, text: $0.text, box: $0.box, source: .mac)
+                let read = try await recognizer.read(image)
+                fast = read.fast
+                mac = read.words.map {
+                    IndexedWord(page: page, text: $0.text, box: $0.box, source: read.fast ? .macFast : .mac)
                 }
             } else {
                 complete = false
@@ -153,6 +164,6 @@ final class NoteIndexer {
             complete = false
             logger.error("page \(page + 1, privacy: .public) OCR: \(String(describing: error), privacy: .public)")
         }
-        return (tablet, mac, complete)
+        return (tablet, mac, complete, fast)
     }
 }

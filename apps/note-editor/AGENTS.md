@@ -28,7 +28,9 @@ A computer editor for one note at a time (owner, 2026-11-26; the feature list is
   strokes from its own copy, sends only the targets, joins a run of edits into one request and
   redraws only the edited page; an edit kind slower than the write-path round's ceiling on a page
   of 500 or more strokes stays out of the first release.
-- Mac OCR only reads and indexes: it never writes into the file.
+- Mac OCR only reads and indexes: it never writes into the file. It reads at Vision's accurate
+  level; on a Mac where that level fails it reads at the fast level and marks those words, which a
+  later opening reads again ([#558](https://github.com/martonpaulo/ink-tools/issues/558)).
 - Only Manta tones: the 16 screen greys and the pen colours of
   [`docs/supernote.md` › Greys and colours](../../docs/supernote.md#greys-and-colours). An inserted
   image is converted to Manta greys and shown as the tablet will show it; ink and text tools offer

@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import NoteEditorKit
+import Synchronization
 import Testing
 
 @testable import NoteEditor
@@ -124,8 +125,8 @@ struct NoteIndexTests {
     /// 898b8ec, #303), so the test runs on a real Mac only: the local gate.
     /// shortcut: skipped on GitHub's runner; run it there once its image compiles Vision's model.
     /// A real Mac whose Vision cannot load that model on any device, the CPU too, fails with
-    /// `e5rtError` 13 (`create_precompiled_compute_operation`, macOS 27.2.1, #558): the test records
-    /// that as a known issue and stops, so the gate checks the change and not the Mac's Vision state.
+    /// `e5rtError` 13 (`create_precompiled_compute_operation`, macOS 27.2.1) and reads at the fast
+    /// level instead (#558), so the words are found either way.
     @Test(
         .disabled(
             if: ProcessInfo.processInfo.environment["GITHUB_ACTIONS"] != nil,
@@ -136,16 +137,7 @@ struct NoteIndexTests {
         let note = try NoteFile(
             bytes: try NoteWriter.drawText(base, page: 0, text: "Quarterly harvest", in: rect, fontSize: 110))
         let image = try #require(try note.render(page: 0).cgImage())
-        var read: [(text: String, box: CGRect)]?
-        try await withKnownIssue(
-            "This Mac's Vision cannot load its accurate text model on any device (e5rtError, #558)",
-            isIntermittent: true
-        ) {
-            read = try await VisionRecognizer(preferred: ["en-US"]).words(in: image)
-        } matching: { issue in
-            issue.error.map { String(reflecting: $0).contains("e5rtError") } ?? false
-        }
-        guard let words = read else { return }
+        let words = try await VisionRecognizer(preferred: ["en-US"]).words(in: image)
         let harvest = try #require(words.first { IndexedWord.fold($0.text) == "harvest" }, "Vision read \(words)")
         let drawn = CGRect(x: rect.x, y: rect.y, width: rect.width, height: rect.height)
         #expect(drawn.contains(CGPoint(x: harvest.box.midX, y: harvest.box.midY)), "box \(harvest.box)")
@@ -286,5 +278,106 @@ struct NoteIndexRefreshTests {
         await text.refresh(note: written, changed: [2])
         #expect(text.search.matches.count == note.pages.count)
         #expect(text.index != nil)
+    }
+}
+
+/// A Mac whose Vision cannot load its accurate text model reads at the fast level, and the index
+/// reads those pages again at the accurate level later (#558).
+@MainActor
+struct FastLevelTests {
+    /// The error this Mac's Vision gives at the accurate level on every device (macOS 27.2.1).
+    struct AccurateModelFailed: Error {}
+
+    @Test func anAccurateFailureReadsAtTheFastLevelAndLaterPagesGoThereAtOnce() async throws {
+        let failed = Mutex(false)
+        let accurateTries = FakeRecognizer.Counter()
+        let first = try await VisionRecognizer.withFastFallback(failed: failed) {
+            accurateTries.add()
+            throw AccurateModelFailed()
+        } fast: {
+            "fast"
+        }
+        #expect(first.0 == "fast" && first.fast)
+        let second = try await VisionRecognizer.withFastFallback(failed: failed) {
+            accurateTries.add()
+            return "accurate"
+        } fast: {
+            "fast"
+        }
+        #expect(second.0 == "fast" && second.fast)
+        #expect(accurateTries.value == 1)
+
+        let working = Mutex(false)
+        let read = try await VisionRecognizer.withFastFallback(failed: working) {
+            "accurate"
+        } fast: {
+            "fast"
+        }
+        #expect(read.0 == "accurate" && !read.fast)
+
+        let cancelled = Mutex(false)
+        await #expect(throws: CancellationError.self) {
+            _ = try await VisionRecognizer.withFastFallback(failed: cancelled) { () -> String in
+                throw CancellationError()
+            } fast: {
+                "fast"
+            }
+        }
+        #expect(!cancelled.withLock { $0 })
+    }
+
+    @Test func fastWordsAreMarkedAndAnAccurateReadReplacesThem() async throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "fast-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let note = try NoteIndexTests.longNote(pages: 3)
+
+        let fast = LevelRecognizer(fast: true)
+        let first = NoteIndexer(store: NoteIndexStore(root: folder), recognizer: fast, pageImage: NoteIndexTests.blank)
+        await first.run(note: note)
+        guard case .ready(let read) = first.state else {
+            Issue.record("state \(first.state)")
+            return
+        }
+        #expect(read.fastPages == [0, 1, 2])
+        #expect(read.words.filter { $0.source != .tablet }.allSatisfy { $0.source == .macFast })
+
+        let accurate = LevelRecognizer(fast: false)
+        let second = NoteIndexer(
+            store: NoteIndexStore(root: folder), recognizer: accurate, pageImage: NoteIndexTests.blank)
+        await second.run(note: note)
+        guard case .ready(let again) = second.state else {
+            Issue.record("state \(second.state)")
+            return
+        }
+        #expect(accurate.calls.value == 3)
+        #expect(again.fastPages.isEmpty)
+        #expect(again.words.filter { $0.source == .mac }.count == 3)
+        #expect(!again.words.contains { $0.source == .macFast })
+
+        // Once replaced, a third opening reads nothing.
+        let third = LevelRecognizer(fast: false)
+        await NoteIndexer(store: NoteIndexStore(root: folder), recognizer: third, pageImage: NoteIndexTests.blank)
+            .run(note: note)
+        #expect(third.calls.value == 0)
+    }
+}
+
+/// One word per page, read at the fast level or at the recognizer's own.
+final class LevelRecognizer: PageRecognizer {
+    let fast: Bool
+    let languages = ["en"]
+    let calls = FakeRecognizer.Counter()
+
+    init(fast: Bool) {
+        self.fast = fast
+    }
+
+    func words(in image: CGImage) async throws -> [(text: String, box: CGRect)] {
+        try await read(image).words
+    }
+
+    func read(_ image: CGImage) async throws -> (words: [(text: String, box: CGRect)], fast: Bool) {
+        calls.add()
+        return ([(fast ? "w0rd" : "word", CGRect(x: 10, y: 10, width: 50, height: 20))], fast)
     }
 }

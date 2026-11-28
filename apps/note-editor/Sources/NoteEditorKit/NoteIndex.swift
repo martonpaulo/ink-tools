@@ -5,9 +5,10 @@ import Foundation
 
 /// One word on a page, with its box in page pixels from the top left of the upright page.
 public struct IndexedWord: Sendable, Equatable, Codable {
-    /// Who read the word: the tablet's own recognition, or the Mac's OCR.
+    /// Who read the word: the tablet's own recognition, the Mac's OCR, or the Mac's OCR at
+    /// Vision's fast level, which a later read at the accurate level replaces (#558).
     public enum Source: String, Sendable, Codable {
-        case tablet, mac
+        case tablet, mac, macFast
     }
 
     public let page: Int
@@ -33,7 +34,7 @@ public struct IndexedWord: Sendable, Equatable, Codable {
 /// Every word the Mac and the tablet read in one note, and which pages were read.
 public struct NoteIndex: Sendable, Equatable, Codable {
     /// Raised when the stored shape or the way words are read changes, so old caches rebuild.
-    public static let formatVersion = 1
+    public static let formatVersion = 2
 
     public let formatVersion: Int
     /// The recognition languages the Mac's OCR used, as language codes.
@@ -41,12 +42,15 @@ public struct NoteIndex: Sendable, Equatable, Codable {
     public let words: [IndexedWord]
     /// The pages, from 0, whose words are all read; a page that failed is left out.
     public let pages: Set<Int>
+    /// The pages, from 0, whose Mac words were read at Vision's fast level, to read again (#558).
+    public let fastPages: Set<Int>
 
-    public init(languages: [String], words: [IndexedWord], pages: Set<Int>) {
+    public init(languages: [String], words: [IndexedWord], pages: Set<Int>, fastPages: Set<Int> = []) {
         formatVersion = Self.formatVersion
         self.languages = languages
         self.words = words
         self.pages = pages
+        self.fastPages = fastPages
     }
 
     /// The share of a Mac word's box that a tablet word must cover to be the same word.
