@@ -44,7 +44,7 @@ export function lassoElements(rect: Rect): Promise<Result<boolean>> {
 
 /**
  * Deletes the lassoed elements (official docs, «deleteLassoElements»): only after the person's own
- * tap, for «In place of the word» (#70); `true` means they were deleted.
+ * tap; `true` means they were deleted.
  */
 export function deleteLassoElements(): Promise<Result<boolean>> {
   return attempt(() => PluginCommAPI.deleteLassoElements());

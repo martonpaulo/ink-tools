@@ -610,6 +610,20 @@ Rules that held on the owner's study sheets (2026-11-13) and the plugin screens:
   which does not save first, did not bring the element back either, after the other plugins' saves
   in the same session; so the old page state the insert drew from is one no save has refreshed
   [inference]. An erase and an unplaced paste through the save are still [unverified].
+- From which page state an insert without a save draws stays [inference]: the last state a save
+  wrote to the plugin side's page data, which the note app's own edits since then do not update
+  (the element a lasso Delete removed came back from it,
+  [#524](https://github.com/martonpaulo/ink-tools/issues/524)). It cannot be measured yet: the
+  plugin API reads the page only through `getElements`, which may answer from that same data, and
+  no device round has compared it with the file after an erase made with no save
+  [#536](https://github.com/martonpaulo/ink-tools/issues/536).
+- The plugin API reports no state for a selection the note app has pasted and not placed:
+  sn-plugin-lib 0.2.3's `PluginCommAPI`, `PluginNoteAPI`, `PluginFileAPI` and its `Element` model
+  name no paste, clipboard or floating selection; `getLassoRect`, `getLassoElements` and
+  `getLassoElementTypeCounts` answer for any lasso alike, and `Element.status` is documented only
+  as «Stroke status», with no values [official types, read 2026-11-28,
+  [#536](https://github.com/martonpaulo/ink-tools/issues/536)]. So no test can tell an insert on
+  an unplaced paste apart; the save-first write is the one guard.
 - Strokes Probe's `ink write` puts on a page, with no save after them, are lost when the hardware
   Back closes the note: a word written on a new note was gone after Back and a reopen, and the note
   app logged `onStop` and `onDestroy` with no `saveNoteData`. A Device Link helper insert, which

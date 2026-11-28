@@ -8,22 +8,18 @@ import {FileUtils, PluginCommAPI, PluginNoteAPI, PluginManager} from 'sn-plugin-
 import '../testing/profile';
 import {
   imageExtension,
-  insertBest,
   insertPicture as sharedInsert,
   type EarlyDownload,
   type InsertOptions,
   type LassoPlace,
   startEarlyDownload as sharedEarly,
   type Stop,
-  unmeasured,
-  wordKeptOptions as sharedWordKept,
 } from '../src/insert';
 import {closeLogFileForTests, resetSessionForTests} from '../src/storage';
 import {CALL_TIMEOUT_MS, logLines, startLog} from '../src/log/memory';
 import type {SearchResult} from '../src/types';
 import {
   knownKey,
-  TEST_COPY,
   TEST_PICTURES_DIR,
   testPictures,
   type TestPictures,
@@ -42,7 +38,6 @@ const insertPicture = (
   stop: Stop = () => null,
 ) => sharedInsert(pictures, picture, query, place, contour, options, early, stop);
 const startEarlyDownload = (picture: SearchResult) => sharedEarly(picture, pictures);
-const wordKeptOptions = () => sharedWordKept(pictures);
 
 const result: SearchResult = {
   id: 'openclipart:340609',
@@ -481,84 +476,6 @@ describe('the insert options from Settings (#70)', () => {
     const rect = placedAt();
     expect(rect.right - rect.left).toBe(480);
     expect(rect.bottom - rect.top).toBe(450);
-  });
-
-  it('deletes the word after the picture is placed at it, in place of the word', async () => {
-    expect(
-      (
-        await insertPicture(result, 'soup', place, false, {
-          width: 640,
-          placement: 'replace',
-          contour: false,
-        })
-      ).ok,
-    ).toBe(true);
-    expect(placedAt().top).toBe(200);
-    expect(remove).toHaveBeenCalledTimes(1);
-    expect(remove.mock.invocationCallOrder[0]).toBeGreaterThan(
-      insertElements.mock.invocationCallOrder[0],
-    );
-  });
-
-  it('lassoes the picture in place of the word once the word is deleted (#168)', async () => {
-    remove.mockResolvedValue({success: true, result: true});
-    const word = {...place, occupied: [{left: 110, top: 210, right: 290, bottom: 250}]};
-    await insertPicture(result, 'soup', word, false, {
-      width: 640,
-      placement: 'replace',
-      contour: false,
-    });
-    expect(PluginCommAPI.lassoElements).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the word when the insert fails or the picture is not at it', async () => {
-    const options = {
-      width: 640,
-      placement: 'replace' as const,
-      contour: false,
-    };
-    insertElements.mockResolvedValue({success: true, result: false});
-    (PluginNoteAPI.insertImage as jest.Mock).mockResolvedValue({
-      success: true,
-      result: false,
-    });
-    expect(
-      (await insertPicture(result, 'soup', place, false, options)).ok,
-    ).toBe(false);
-    // The host placed it with insertImage: not at the word.
-    (PluginNoteAPI.insertImage as jest.Mock).mockResolvedValue({
-      success: true,
-      result: true,
-    });
-    expect(
-      (await insertPicture(result, 'soup', place, false, options)).ok,
-    ).toBe(true);
-    expect(remove).not.toHaveBeenCalled();
-  });
-
-  it('Insert best picture never deletes the word, even in place of it (#106)', async () => {
-    pictures = testPictures({placement: 'replace'});
-    expect((await wordKeptOptions()).placement).toBe('below');
-    const inserted = await insertBest('soup', place, {
-      search: jest.fn().mockResolvedValue({
-        outcome: {
-          results: [result],
-          statuses: {},
-          sourceDown: false,
-          allFailed: false,
-        },
-        thumbDir: '/p',
-      }),
-      measure: jest.fn().mockResolvedValue(unmeasured([result])),
-      insert: insertPicture,
-      record: jest.fn().mockResolvedValue(null),
-      early: jest.fn().mockReturnValue(null),
-      options: wordKeptOptions,
-    }, TEST_COPY);
-    expect(inserted.ok).toBe(true);
-    // Below the word, as «Below» places it; the word stays.
-    expect(placedAt().top).toBeGreaterThanOrEqual(place.rect.bottom);
-    expect(remove).not.toHaveBeenCalled();
   });
 
   it('never deletes the word below or beside it', async () => {

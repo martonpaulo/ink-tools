@@ -1,7 +1,8 @@
 /**
  * Placement at the lassoed word (#109, from Ink2Pic #20, #39, #70): a Picture element just below
- * the word, never over it, inserted with insertPageElements; beside it, or in place of it, when
- * the person chose so. When anything fails, the caller falls back to the host's own placement.
+ * the word, never over it, inserted with insertPageElements, or beside it when the person chose so.
+ * No placement covers the word: «In place of the word» was removed (D106 A, #536). When anything
+ * fails, the caller falls back to the host's own placement.
  */
 import {
   loggerOf,
@@ -22,7 +23,7 @@ export const PLACE_GAP = 24;
 export const MIN_PLACE_BAND = 100;
 
 /** Where the picture goes, the person's setting; below the word is the default. */
-export type Placement = 'below' | 'replace' | 'beside';
+export type Placement = 'below' | 'beside';
 
 type Picture = {width: number; height: number};
 
@@ -61,25 +62,6 @@ function fitInto(picture: Picture, width: number, height: number): Picture {
 }
 
 /**
- * In place of the word: from the word's top-left corner, the handwriting the caller then deletes;
- * shrunk to the page. Null when less than MIN_PLACE_BAND is left below the word's top.
- */
-function inPlaceRect(lasso: Rect, picture: Picture, page: Size): Rect | null {
-  const room = page.height - lasso.top;
-  if (room < MIN_PLACE_BAND) {
-    return null;
-  }
-  const size = fitInto(picture, page.width, room);
-  const left = Math.max(0, Math.min(lasso.left, page.width - size.width));
-  return {
-    left,
-    top: lasso.top,
-    right: left + size.width,
-    bottom: lasso.top + size.height,
-  };
-}
-
-/**
  * Beside the word: to its right, top-aligned, else to its left when that side has more room;
  * shrunk into that band. Null when neither side has MIN_PLACE_BAND, so the caller places it below.
  */
@@ -112,27 +94,15 @@ export function isFree(rect: Rect, occupied: readonly Rect[]): boolean {
   return !occupied.some(other => crosses(rect, other));
 }
 
-/** True when `inner` lies wholly inside `outer`. */
-function inside(inner: Rect, outer: Rect): boolean {
-  return (
-    inner.left >= outer.left &&
-    inner.top >= outer.top &&
-    inner.right <= outer.right &&
-    inner.bottom <= outer.bottom
-  );
-}
-
 /**
  * Why a lasso of `rect` could take the person's ink, or null when it cannot (#168, #234): the
  * device's rect lasso selects every element inside the rect, strokes included, so a placed element
  * is lassoed only when the whole page was read and nothing else crosses its rect. A partial read
- * refuses, as Device Link learned (#152). Elements wholly inside `ignored` do not count: the
- * word's own strokes once it was deleted.
+ * refuses, as Device Link learned (#152).
  */
 export function inkUnderRect(
   rect: Rect,
   read: OccupiedRead | null,
-  ignored: Rect | null = null,
 ): string | null {
   if (read === null) {
     return "the page's ink is not known";
@@ -141,7 +111,7 @@ export function inkUnderRect(
     return "only part of the page's ink is known";
   }
   const others = read.rects.filter(
-    other => crosses(rect, other) && !(ignored && inside(other, ignored)),
+    other => crosses(rect, other),
   ).length;
   return others > 0 ? `${others} other elements in the rect` : null;
 }
@@ -200,7 +170,7 @@ function freeBelowRect(
 /**
  * The picture's rect for the person's placement; null when it fits nowhere near the word.
  * `occupied` holds the page's other strokes, pictures and text boxes (#152): below and beside
- * avoid them when a free place exists, else keep today's rect; `replace` covers the word on purpose.
+ * avoid them when a free place exists, else keep today's rect.
  */
 export function placeRect(
   lasso: Rect,
@@ -210,8 +180,6 @@ export function placeRect(
   occupied: readonly Rect[] = [],
 ): Rect | null {
   switch (placement) {
-    case 'replace':
-      return inPlaceRect(lasso, picture, page);
     case 'beside': {
       const beside = besideRect(lasso, picture, page);
       return beside && isFree(beside, occupied)

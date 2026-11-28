@@ -20,7 +20,6 @@ import {placeAtLasso} from './place';
 import {insertAsSticker, PICTURE_SVG_MESSAGE} from './sticker';
 import {inkUnderRect, type LassoPlace, type Placement} from '@ink-tools/ink-core';
 import {
-  deleteLassoElements,
   getLassoRect,
   lassoElements,
   Rect,
@@ -106,19 +105,6 @@ export type InsertOptions = {
    */
   sticker?: boolean;
 };
-
-/**
- * The options of «Insert best picture»: it never deletes the handwriting (#106), so «In place of
- * word» places the picture below it. Only a picture chosen in the grid replaces the word.
- */
-export async function wordKeptOptions(
-  store: PictureStore,
-): Promise<InsertOptions> {
-  const options = await store.options();
-  return options.placement === 'replace'
-    ? {...options, placement: 'below'}
-    : options;
-}
 
 /**
  * The size the picture is placed at: no wider than the chosen width, keeping its proportions. A
@@ -423,12 +409,11 @@ function sameRect(a: Rect, b: Rect): boolean {
 }
 
 /**
- * Why the note changed since the lasso was read, or null when it did not (#93): the page, and the
- * lasso rect when `rect`. A place without `recheck` comes from the view, which covers the note.
+ * Why the note changed since the lasso was read, or null when it did not (#93): the page, then
+ * the lasso rect. A place without `recheck` comes from the view, which covers the note.
  */
 async function noteChanged(
   place: LassoPlace | null,
-  rect: boolean,
 ): Promise<string | null> {
   if (!place?.recheck) {
     return null;
@@ -439,9 +424,6 @@ async function noteChanged(
   }
   if (page.value !== place.page) {
     return `the page changed from ${place.page} to ${page.value}`;
-  }
-  if (!rect) {
-    return null;
   }
   const lasso = await logged('getLassoRect', getLassoRect);
   if (!lasso.ok) {
@@ -457,14 +439,13 @@ async function noteChanged(
 /**
  * Leaves the placed picture lassoed, ready to move or resize (#73), while the view is still open:
  * the lasso the view opened with survives the view (brief section 10.5, TO TEST that this one
- * does too). With no view, only on the page the lasso was read on, and, unless the word was just
- * deleted, while the lasso is still the one read (#93). A failure is only logged: the picture
- * stays inserted.
+ * does too). With no view, only on the page the lasso was read on, while the lasso is still the
+ * one read (#93). A failure is only logged: the picture stays inserted. No insert deletes the
+ * word: «In place of the word» was removed (D106 A, #536).
  */
 async function lassoPlaced(
   rect: Rect | null,
   place: LassoPlace | null,
-  wordDeleted: boolean,
   store: PictureStore,
 ): Promise<void> {
   if (!rect) {
@@ -477,15 +458,13 @@ async function lassoPlaced(
   const ink = inkUnderRect(
     rect,
     place?.occupied ? {rects: place.occupied, complete: true} : null,
-    wordDeleted && place ? place.rect : null,
   );
   if (ink) {
     log(`lassoElements: skipped, ${ink}`);
     store.lassoSkipped?.();
     return;
   }
-  // A delete ends the lasso by design: then only the page is compared.
-  const changed = await noteChanged(place, !wordDeleted);
+  const changed = await noteChanged(place);
   if (changed) {
     log(`lassoElements: skipped, ${changed}`);
     return;
@@ -496,36 +475,6 @@ async function lassoPlaced(
   if (lassoed.ok && lassoed.value !== true) {
     log('lassoElements answered false: the picture is not lassoed');
   }
-}
-
-/**
- * «In place of the word» (#70): the lassoed handwriting is deleted only after the picture was
- * placed at the word, on the person's own tap with that setting on; logged. Whether the lasso
- * still holds the word after the insert is TO TEST on the device. With no view, only while the
- * page and the lasso rect are the ones read at the start (#93). A failure keeps the word. True
- * when the word was deleted.
- */
-async function deleteWord(
-  rect: Rect | null,
-  place: LassoPlace | null,
-): Promise<boolean> {
-  if (!rect) {
-    log('deleteLassoElements: skipped, the picture is not at the word');
-    return false;
-  }
-  const changed = await noteChanged(place, true);
-  if (changed) {
-    log(`deleteLassoElements: skipped, ${changed}; the strokes stay`);
-    return false;
-  }
-  const deleted = await logged(
-    'deleteLassoElements (in place of the word)',
-    () => deleteLassoElements(),
-  );
-  if (deleted.ok && deleted.value !== true) {
-    log('deleteLassoElements answered false: the word stays');
-  }
-  return deleted.ok && deleted.value === true;
 }
 
 export async function insertPicture(
@@ -561,14 +510,8 @@ export async function insertPicture(
   if (!inserted.ok) {
     return atStep('place', inserted);
   }
-  let wordDeleted = false;
-  if (place && chosen.placement === 'replace') {
-    at = Date.now();
-    wordDeleted = await deleteWord(inserted.value, place);
-    logTime('word delete', at);
-  }
   at = Date.now();
-  await lassoPlaced(inserted.value, place, wordDeleted, store);
+  await lassoPlaced(inserted.value, place, store);
   logTime('lasso', at);
   if (saved.value.record && store.record) {
     at = Date.now();

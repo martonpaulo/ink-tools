@@ -137,15 +137,6 @@ describe('placeRect in free space (#152)', () => {
 describe('the placement setting (#70)', () => {
   const word = {left: 100, top: 200, right: 300, bottom: 260};
 
-  it('goes in place of the word from its top-left corner', () => {
-    expect(placeRect(word, picture, page, 'replace')).toEqual({
-      left: 100,
-      top: 200,
-      right: 740,
-      bottom: 793,
-    });
-  });
-
   it('goes beside the word, to its right, top-aligned', () => {
     expect(placeRect(word, picture, page, 'beside')).toEqual({
       left: 300 + PLACE_GAP,
@@ -167,16 +158,6 @@ describe('the placement setting (#70)', () => {
     expect(placeRect(wide, picture, page, 'beside')).toEqual(
       placeRect(wide, picture, page, 'below'),
     );
-  });
-
-  it('gives no rect in place of a word at the very bottom', () => {
-    const low = {
-      left: 100,
-      top: 2560 - MIN_PLACE_BAND + 1,
-      right: 300,
-      bottom: 2559,
-    };
-    expect(placeRect(low, picture, page, 'replace')).toBeNull();
   });
 });
 
@@ -251,7 +232,6 @@ describe('placeAtLasso (#109)', () => {
 
 describe('inkUnderRect, the one ink-under rule (#168, #234)', () => {
   const placedRect = {left: 100, top: 100, right: 500, bottom: 400};
-  const word = {left: 120, top: 120, right: 300, bottom: 200};
   const stroke = {left: 150, top: 130, right: 250, bottom: 190};
   const far = {left: 900, top: 900, right: 1000, bottom: 1000};
 
@@ -268,14 +248,6 @@ describe('inkUnderRect, the one ink-under rule (#168, #234)', () => {
   test('a complete read lassoes only when nothing else crosses the rect', () => {
     expect(inkUnderRect(placedRect, {rects: [far], complete: true})).toBeNull();
     expect(inkUnderRect(placedRect, {rects: [stroke, far], complete: true})).toBe(
-      '1 other elements in the rect',
-    );
-  });
-
-  test("the deleted word's own strokes do not count, any other ink does", () => {
-    const outside = {left: 450, top: 350, right: 600, bottom: 450};
-    expect(inkUnderRect(placedRect, {rects: [stroke], complete: true}, word)).toBeNull();
-    expect(inkUnderRect(placedRect, {rects: [stroke, outside], complete: true}, word)).toBe(
       '1 other elements in the rect',
     );
   });

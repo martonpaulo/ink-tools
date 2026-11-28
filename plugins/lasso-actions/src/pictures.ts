@@ -60,7 +60,6 @@ import {
   SearchSettings,
   startEarlyDownload,
   thumbUri,
-  wordKeptOptions,
 } from './profile';
 import {LookupSettings, sourceOn} from './settings';
 
@@ -180,7 +179,7 @@ export function modeDeps(
   const sources = modeAdapters(mode, DEFAULT_ADAPTERS);
   // «Insert Sticker» pastes a sticker, «Insert Image» a picture (#35).
   const modeOptions = async () => ({
-    ...(await wordKeptOptions(LOOKUP_PICTURES)),
+    ...(await LOOKUP_PICTURES.options()),
     sticker: mode.sticker,
   });
   const search = async () =>

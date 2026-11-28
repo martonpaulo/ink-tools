@@ -168,7 +168,7 @@ export async function insertBest(
     }
     return LATE;
   }
-  // The word is never deleted here: «In place of word» places the picture below it (#106).
+  // The word is never deleted: no insert replaces it (D106 A, #536).
   const options = await deps.options();
   // As a contour drawing when its tile shows one, as a tap in the grid does (#66, #72).
   const inserted = await timed('insert', () =>
