@@ -83,7 +83,7 @@ describe('the Star Battle game (#392)', () => {
     const two = puzzleCode(newStarBattle(SEED, {side: 8, stars: 2}, 'hard').id);
     for (const [code, stars, size] of [[CODE, '1 star', playCopy.sizeLabel(5)], [two, '2 stars', playCopy.sizeLabel(8)]] as const) {
       const tree = await mount(STAR_BATTLE, fakePages({code}).pages);
-      expect(shownTexts(tree.root).some(text => text.includes(`${size}, ${stars}`))).toBe(true);
+      expect(shownTexts(tree.root).some(text => String(text).includes(`${size}, ${stars}`))).toBe(true);
     }
   });
 
