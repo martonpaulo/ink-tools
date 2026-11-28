@@ -208,6 +208,10 @@ function attributes(node: ReactTestRendererJSON): string {
   if (typeof props.nativeID === 'string') {
     parts.push(`data-kind="${escape(props.nativeID)}"`);
   }
+  // A view that lays out by its measured box: the renders measure it and call its onLayout (#548).
+  if (typeof props.onLayout === 'function') {
+    parts.push('data-layout');
+  }
   if (tappable(props) || node.type === 'TextInput') {
     parts.push('data-target');
   }
@@ -262,7 +266,11 @@ function element(node: HostNode, inText: boolean): string {
     case 'Image': {
       const source = props.source as {uri?: string} | undefined;
       const fit = String(props.resizeMode ?? 'cover');
-      return `<img class="image" ${attributes(node)} src="${escape(
+      // A picture sized by aspectRatio: the preview ignores it, the device lays it out at the
+      // leading edge, so the render rules name it (#576).
+      const flat = (StyleSheet.flatten(props.style as never) ?? {}) as {aspectRatio?: unknown};
+      const aspect = flat.aspectRatio !== undefined ? ' data-aspect' : '';
+      return `<img class="image"${aspect} ${attributes(node)} src="${escape(
         source?.uri ?? '',
       )}" style="${style}; object-fit: ${fit}" alt="">`;
     }

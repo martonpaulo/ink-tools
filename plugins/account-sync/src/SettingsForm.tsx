@@ -10,8 +10,7 @@
  * change goes through the sync-core rules.
  */
 import React, {useState} from 'react';
-import {View} from 'react-native';
-import {ActionRow, ChoiceList, RowGroup, SwitchRow} from '@ink-tools/ui-kit';
+import {ActionRow, ChoiceList, PagedColumn, RowGroup, SwitchRow} from '@ink-tools/ui-kit';
 import type {Choice} from '@ink-tools/ui-kit';
 import {
   BridgeSettings,
@@ -79,7 +78,8 @@ export function SettingsForm({
   ask = confirm,
 }: SettingsFormProps): React.JSX.Element {
   return (
-    <View>
+    // Its groups page with the native pager, never scroll (#548).
+    <PagedColumn>
       {MODULES.map(module => {
         const on = settings.modules[module];
         const name = copy[`module.${module}`];
@@ -158,7 +158,7 @@ export function SettingsForm({
           </React.Fragment>
         );
       })}
-    </View>
+    </PagedColumn>
   );
 }
 

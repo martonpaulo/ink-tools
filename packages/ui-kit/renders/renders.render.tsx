@@ -17,8 +17,12 @@ import {act} from 'react-test-renderer';
 import {metrics} from '@ink-tools/ui-kit';
 import {textStyles} from '../src/metrics';
 import {animationBreaks, toHtml, WINDOW, WINDOW_NAME} from './html';
-import {breaksOf, Measured, missingBarBreaks, Native, nativeBreaks, rawBreaks, scrollBreaks} from './rules';
-import {SCREENS, settle} from './screens';
+import {breaksOf, layoutBreaks, Measured, missingBarBreaks, Native, nativeBreaks, rawBreaks, scrollBreaks} from './rules';
+import {SCREENS as PLUGIN_SCREENS, settle} from './screens';
+import {KIT_SCREENS} from './kitScreens';
+import type {ReactTestRenderer} from 'react-test-renderer';
+
+const SCREENS = [...KIT_SCREENS, ...PLUGIN_SCREENS];
 
 /** The native sizes from the tokens (#272, #411): every text role's size, a screen's own title and the large glyphs. */
 const NATIVE: Native = {
@@ -70,6 +74,21 @@ const inPage = (file: string, name: string, args = '') =>
     .replace(`export function ${name}`, `function ${name}`)}; return ${name}(${args}); })()`;
 const MEASURE = inPage('measure-page.mjs', 'measurePage');
 const CONTRAST = inPage('contrast-check.mjs', 'contrastCheck', '{focusRings: false}');
+/** Each view's box that lays out by its measured box, in document order (#548). */
+const LAYOUT_BOXES = `[...document.querySelectorAll('[data-layout]')].map(el => {
+  const zoom = Number(getComputedStyle(document.getElementById('root')).zoom) || 1;
+  const r = el.getBoundingClientRect();
+  return {x: r.left / zoom, y: r.top / zoom, width: r.width / zoom, height: r.height / zoom};
+})`;
+/** Enough rounds for a paged list to measure its box, then its rows (#548). */
+const LAYOUT_ROUNDS = 8;
+/**
+ * The known breaks of the layout rules (#548, #576, #578) on screens another lane adopts the
+ * shared pieces on: each line stays until its screen is fixed, and the list only shrinks.
+ */
+const KNOWN: Record<string, string[]> = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'known-breaks.json'), 'utf8'),
+).screens;
 const SCROLL_TO_END =
   "document.querySelectorAll('[data-scroll]').forEach(el => { el.scrollTop = el.scrollHeight; })";
 
@@ -101,6 +120,31 @@ afterAll(async () => {
   jest.restoreAllMocks();
 });
 
+/**
+ * Lays the screen out as the device does (#548): the test renderer has no layout, so each view
+ * with an onLayout gets its box from Chromium, and the screen is drawn again until nothing moves.
+ */
+async function laidOut(tree: ReactTestRenderer) {
+  let json = tree.toJSON();
+  for (let round = 0; round < LAYOUT_ROUNDS; round++) {
+    await page.setContent(toHtml(json, scale), {waitUntil: 'load'});
+    const hosts = tree.root.findAll(node => typeof node.type === 'string' && typeof node.props.onLayout === 'function');
+    if (!hosts.length) {
+      break;
+    }
+    const boxes = await page.evaluate<{x: number; y: number; width: number; height: number}[]>(LAYOUT_BOXES);
+    await act(async () => {
+      hosts.forEach((host, index) => boxes[index] && host.props.onLayout({nativeEvent: {layout: boxes[index]}}));
+    });
+    const next = tree.toJSON();
+    if (JSON.stringify(next) === JSON.stringify(json)) {
+      break;
+    }
+    json = next;
+  }
+  return json;
+}
+
 it('renders every screen and finds no e-ink rule break (#80)', async () => {
   const report: Record<string, string[]> = {};
   /** Every target's box per screen, to compare a layout change before and after (#97). */
@@ -111,7 +155,7 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
       continue;
     }
     const tree = await screen.render();
-    const json = tree.toJSON();
+    const json = await laidOut(tree);
     await page.setContent(toHtml(json, scale), {waitUntil: 'load'});
     await page.screenshot({path: path.join(OUT, `${screen.name}.png`)});
     if (EVIDENCE) {
@@ -140,6 +184,7 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
       ...nativeBreaks(measured, NATIVE),
       ...(screen.notFullView ? [] : missingBarBreaks(measured)),
       ...rawBreaks(measured, screen.raw),
+      ...layoutBreaks(measured, metrics),
       ...contrast.failures.map(
         f => `contrast ${f.ratio}:1 under ${f.required}:1 for «${f.text ?? f.kind}»`,
       ),
@@ -161,9 +206,16 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
   }
   fs.writeFileSync(path.join(OUT, 'report.json'), `${JSON.stringify(report, null, 1)}\n`);
   fs.writeFileSync(path.join(OUT, 'geometry.json'), `${JSON.stringify(geometry, null, 1)}\n`);
-  const lines = Object.entries(report).flatMap(([name, found]) =>
-    found.map(line => `${name}: ${line}`),
-  );
+  // A known break is reported apart; one that no longer happens must leave the list (#548).
+  const known = new Set(Object.entries(KNOWN).flatMap(([name, found]) => found.map(line => `${name}: ${line}`)));
+  const all = Object.entries(report).flatMap(([name, found]) => found.map(line => `${name}: ${line}`));
+  const lines = [
+    ...all.filter(line => !known.has(line)),
+    ...[...known].filter(line => !all.includes(line)).map(line => `fixed, remove from known-breaks.json: ${line}`),
+  ];
+  if (known.size) {
+    process.stdout.write(`renders: ${known.size} known breaks wait in known-breaks.json\n`);
+  }
   process.stdout.write(
     `renders: ${SCREENS.length} screens in ${OUT}\n${lines.join('\n') || 'renders: no e-ink rule break'}\n`,
   );

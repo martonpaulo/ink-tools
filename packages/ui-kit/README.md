@@ -41,7 +41,22 @@ control under the touch target ([#93](https://github.com/martonpaulo/supernote-t
   (a `ListRow` with a trailing `Switch`), several independent on/off items are a `RowGroup`
   with their caption over one `SwitchRow` each, one value out of several is a `ChoiceList` (a
   `RowGroup` with one `ListRow` per value and its `Radio`), and a page opened from a row is a
-  `ListRow` with a `Chevron`. Rows that outgrow the screen scroll under the title bar.
+  `ListRow` with a `Chevron`. Nothing scrolls: rows that outgrow the space page with the native
+  `Pager` at the bottom, as the Supernote's own lists do, so no list ends inside a row and the
+  screen never redraws a moving list in its fast, faded mode (owner, 2026-11-28, superseding D108's
+  «More below» for such lists, [#548](https://github.com/martonpaulo/ink-tools/issues/548)). A list of same-family rows is a
+  `PagedList` (or a `ChoiceList` with `paged`), its caption and note on every page; a screen of
+  several groups is a `PagedColumn`, each group whole on its page. Either takes the space its
+  parent leaves, so a fixed part under it, such as a screen's main button, keeps its own room and
+  never lies over a row ([#578](https://github.com/martonpaulo/ink-tools/issues/578)). The renders fail a list that ends inside a row, rows that
+  scroll past their view and a control over a row.
+- An image shows in a `MediaFrame`: fitted at its own proportions and centred on both axes in the
+  space it is given. An `Image` sized by `aspectRatio` beside `flex` lands at the leading edge on the
+  device, so the renders fail it, and fail an image off-centre in its frame
+  ([#576](https://github.com/martonpaulo/ink-tools/issues/576)).
+- A choice row's radio ring ends where the list's lines end, `radioListTrailingMargin` from the
+  screen's edge, as the native list of radio rows draws it; the ring sits at the trailing edge of
+  its touch target, and the renders fail a ring off that end (owner D112, [#546](https://github.com/martonpaulo/ink-tools/issues/546)).
 - Three levels, as the native screens group them (owner, [#275](https://github.com/martonpaulo/ink-tools/issues/275);
   measured in [`native-catalog.md` › Lines](native-catalog.md#lines)): the caption (the subtitle's
   size in the context grey, at the bottom of its `captionHeight` box, no line under it), its rows of the native fixed
@@ -94,7 +109,9 @@ accents, each with a fixed role, never as the only cue:
 | `#ffffff` | paper |
 
 A grey that marks a state also changes a shape or a word: a selected toggle wears the selection border, a
-disabled control its label. Lighter greys than `#444444` never carry text a person must read; the
+disabled control its label. Every text keeps at least `textContrast`, 7:1, against what is behind
+it: the token test fails a text colour under it and the renders fail a drawn text under it (interface
+rule 3, [#575](https://github.com/martonpaulo/ink-tools/issues/575)). Lighter greys than `#444444` never carry text a person must read; the
 field's placeholder (`#595959`) is the one exception, at 7:1. A grey joins `metrics.ts` as a
 token when the first screen uses it, named by its role.
 

@@ -30,6 +30,24 @@ const base = require(path.join(HOST, 'jest.config'));
 const globalRoot = execFileSync('npm', ['root', '-g'], {encoding: 'utf8'}).trim();
 
 /**
+ * The owner's Mac keeps the Playwright copy in the main checkout's `.scratch/pw255/`; the renders
+ * gate (#548) finds it there from any worktree when NODE_PATH names none, so a gate run needs no
+ * variable of its own.
+ */
+const commonDir = (() => {
+  try {
+    return execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], {cwd: __dirname, encoding: 'utf8'}).trim();
+  } catch {
+    return null;
+  }
+})();
+const SHARED_COPY = commonDir && path.join(path.dirname(commonDir), '.scratch', 'pw255');
+if (!process.env.NODE_PATH && SHARED_COPY && fs.existsSync(path.join(SHARED_COPY, 'node_modules'))) {
+  process.env.NODE_PATH = path.join(SHARED_COPY, 'node_modules');
+  process.env.PLAYWRIGHT_BROWSERS_PATH ??= path.join(SHARED_COPY, 'browsers');
+}
+
+/**
  * shortcut: the cloud image keeps Playwright's Chromium in /opt/pw-browsers and sets
  * PLAYWRIGHT_BROWSERS_PATH only for root; upgrade when another machine shares a browser folder.
  */

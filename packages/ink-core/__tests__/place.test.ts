@@ -1,6 +1,7 @@
 import {
   inkUnderRect,
   MIN_PLACE_BAND,
+  PAGE_BAR_PX,
   PLACE_GAP,
   placeAtLasso,
   placeRect,
@@ -9,6 +10,8 @@ import {
 } from '../src';
 
 const page = {width: 1920, height: 2560};
+/** The bottom of what a tool may place on: above the note's page bar (#577). */
+const floor = 2560 - PAGE_BAR_PX;
 const picture = {width: 640, height: 593};
 
 function placed(...args: Parameters<typeof placeRect>): Rect {
@@ -46,10 +49,10 @@ describe('placeRect (#20, #39)', () => {
     const tall = {width: 640, height: 2000};
     const word = {left: 100, top: 1000, right: 300, bottom: 1100};
     const rect = placed(word, tall, page);
-    // Below: 2560 - 1124 = 1436 px of room, more than the 976 above.
+    // Below: 2444 - 1124 = 1320 px of room above the page bar, more than the 976 above.
     expect(rect.top).toBe(1100 + PLACE_GAP);
-    expect(rect.bottom).toBe(2560);
-    expect(rect.right - rect.left).toBe(Math.round((640 * 1436) / 2000));
+    expect(rect.bottom).toBe(floor);
+    expect(rect.right - rect.left).toBe(Math.round((640 * 1320) / 2000));
   });
 
   it('shrinks a picture wider than the page without distorting it', () => {
@@ -70,9 +73,17 @@ describe('placeRect (#20, #39)', () => {
       left: 100,
       top: 0,
       right: 300,
-      bottom: 2560 - PLACE_GAP - MIN_PLACE_BAND,
+      bottom: floor - PLACE_GAP - MIN_PLACE_BAND,
     };
-    expect(placed(edge, picture, page).bottom).toBe(2560);
+    expect(placed(edge, picture, page).bottom).toBe(floor);
+  });
+});
+
+describe('placeRect above the page bar (#577)', () => {
+  it.each(['below', 'beside', 'replace'] as const)('never reaches into the page bar (%s)', placement => {
+    const low = {left: 100, top: 2200, right: 300, bottom: 2260};
+    const rect = placeRect(low, {width: 640, height: 900}, page, placement);
+    expect(rect && rect.bottom).toBeLessThanOrEqual(floor);
   });
 });
 
@@ -172,7 +183,7 @@ describe('the placement setting (#70)', () => {
   it('gives no rect in place of a word at the very bottom', () => {
     const low = {
       left: 100,
-      top: 2560 - MIN_PLACE_BAND + 1,
+      top: floor - MIN_PLACE_BAND + 1,
       right: 300,
       bottom: 2559,
     };

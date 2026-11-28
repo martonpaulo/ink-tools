@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {View} from 'react-native';
 import {
+  PagedColumn,
   ChoiceList,
   useArmOnRoot,
   RowGroup,
@@ -120,7 +121,7 @@ function SettingsScreen({close}: {close: () => void}) {
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={close} />
       {/* The rows outgrow the Manta's height once every switch is a row of its own (#274). */}
-      <ScrollView style={styles.rows}>
+      <PagedColumn>
         {/*
           One switch per module (#306); an off module's rows leave the view, and none shows until
           the settings file is read, so the view never shrinks after it opens.
@@ -190,11 +191,7 @@ function SettingsScreen({close}: {close: () => void}) {
             ...(old.length > 0 ? [copy['settings.oldFiles'](old)] : []),
           ]}
         />
-      </ScrollView>
+      </PagedColumn>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  rows: {flex: 1},
-});

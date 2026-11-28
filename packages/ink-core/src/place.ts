@@ -12,6 +12,7 @@ import {
   type Size,
 } from './lasso';
 import type {Outcome} from './outcome';
+import {writableSize} from './pageArea';
 
 /** Space between the word and the picture, in page pixels. */
 export const PLACE_GAP = 24;
@@ -209,17 +210,19 @@ export function placeRect(
   placement: Placement = 'below',
   occupied: readonly Rect[] = [],
 ): Rect | null {
+  // Nothing goes under the note's page bar (#577).
+  const area = writableSize(page);
   switch (placement) {
     case 'replace':
-      return inPlaceRect(lasso, picture, page);
+      return inPlaceRect(lasso, picture, area);
     case 'beside': {
-      const beside = besideRect(lasso, picture, page);
+      const beside = besideRect(lasso, picture, area);
       return beside && isFree(beside, occupied)
         ? beside
-        : freeBelowRect(lasso, picture, page, occupied);
+        : freeBelowRect(lasso, picture, area, occupied);
     }
     case 'below':
-      return freeBelowRect(lasso, picture, page, occupied);
+      return freeBelowRect(lasso, picture, area, occupied);
   }
 }
 

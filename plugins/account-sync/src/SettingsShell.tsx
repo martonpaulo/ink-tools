@@ -7,7 +7,7 @@
  * the Needs state with the steps that connect the account (#256); each keeps the ×.
  */
 import React, {useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {ErrorView, metrics, Needs, shared, TitleBar} from '@ink-tools/ui-kit';
 import type {Problem} from '@ink-tools/ui-kit';
 import type {Result} from '@ink-tools/sn-adapter/official';
@@ -96,8 +96,8 @@ export function SettingsShell({
             : {label: copy['sync.button'], onPress: sync.onSyncNow})
         }
       />
-      {/* One group per module outgrows the Manta's height (#274). */}
-      <ScrollView style={styles.rows} contentContainerStyle={styles.gap}>
+      {/* One group per module outgrows the Manta's height (#274): the form pages its groups (#548). */}
+      <View style={[styles.rows, styles.gap]}>
         {state.kind === 'loading' && <Text style={shared.text}>{copy['settings.loading']}</Text>}
         {state.kind === 'ready' && state.notice && (
           <Text accessibilityRole="alert" style={shared.text}>
@@ -110,7 +110,7 @@ export function SettingsShell({
           </Text>
         )}
         {state.kind === 'ready' && renderForm?.(setConnecting)}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -127,6 +127,6 @@ export function connectProblem(provider: ProviderSignIn): Problem {
 
 const styles = StyleSheet.create({
   rows: {flex: 1},
-  /** The screen's own gap between its parts, kept inside the scroll. */
+  /** The screen's own gap between its parts. */
   gap: {gap: metrics.sectionGap},
 });

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {
   shared,
   TitleBar,
@@ -126,8 +126,8 @@ export default function App({
   return (
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={close} />
-      {/* One switch row per edit and per style outgrows the Manta's height (#274). */}
-      <ScrollView style={styles.rows}>
+      {/* One switch row per edit and per style outgrows the Manta's height (#274): they page (#548). */}
+      <View style={styles.rows}>
         <EditsForm
           settings={settings}
           onChange={next => {
@@ -135,7 +135,7 @@ export default function App({
             rememberSettings(next);
           }}
         />
-      </ScrollView>
+      </View>
     </View>
   );
 }

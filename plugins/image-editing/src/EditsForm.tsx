@@ -3,8 +3,7 @@
  * Styles grid (#133), each a ui-kit `SwitchRow` (#274) in its captioned `RowGroup` (#275), and the debug switch that saves each edit's input (#134), off by default.
  */
 import React from 'react';
-import {View} from 'react-native';
-import {RowGroup, SwitchRow} from '@ink-tools/ui-kit';
+import {PagedColumn, RowGroup, SwitchRow} from '@ink-tools/ui-kit';
 import {EDITS, RetouchSettings, setEdit, setStyle, STYLES} from './edits';
 import {copy} from './copy';
 import {setDebug} from './debug';
@@ -32,7 +31,8 @@ export function EditsForm({
       ),
     );
   return (
-    <View>
+    // Its groups page with the native pager, never scroll (#548).
+    <PagedColumn>
       <RowGroup caption={copy['settings.edits']}>
         {EDITS.map(edit => (
           <SwitchRow
@@ -60,6 +60,6 @@ export function EditsForm({
           onChange={toggleDebug}
         />
       </RowGroup>
-    </View>
+    </PagedColumn>
   );
 }

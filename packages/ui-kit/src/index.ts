@@ -21,7 +21,7 @@ export {ListRow} from './ListRow';
 export type {ListRowProps} from './ListRow';
 export {Switch} from './Switch';
 export type {SwitchProps} from './Switch';
-export {Radio} from './Radio';
+export {RADIO_RING_ID, Radio} from './Radio';
 export type {RadioProps} from './Radio';
 // A caption is drawn only by RowGroup, so no screen sets one apart from its rows (#275).
 export {CheckMark, Chevron} from './marks';
@@ -29,6 +29,11 @@ export {SearchField} from './SearchField';
 export type {SearchFieldProps} from './SearchField';
 export {Pager} from './Pager';
 export type {PagerProps} from './Pager';
+// A list of same-family rows pages, never scrolls (#548); a picture shows centred in its frame (#576).
+export {PAGED_LIST_ID, PagedColumn, PagedList} from './PagedList';
+export type {PagedColumnProps, PagedListProps} from './PagedList';
+export {MEDIA_FRAME_ID, MEDIA_ID, MediaFrame} from './MediaFrame';
+export type {MediaFrameProps} from './MediaFrame';
 export {IconButton} from './IconButton';
 // The one box for raw text: code, JSON and logs (#405).
 export {CODE_BLOCK_ID, CodeBlock, copyToClipboard} from './CodeBlock';

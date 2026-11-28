@@ -11,6 +11,7 @@ import {ListRow} from './ListRow';
 import {metrics} from './metrics';
 import {shared} from './styles';
 import {SectionCaption} from './marks';
+import {PagedList} from './PagedList';
 import {Radio} from './Radio';
 import {Switch} from './Switch';
 
@@ -157,6 +158,11 @@ export type ChoiceListProps<V> = {
   onChange: (value: V) => void;
   /** What explains the choice, under its last value (`RowGroup`'s note). */
   note?: string;
+  /**
+   * The list takes the space its parent leaves and pages its values with the native pager, so a
+   * long list never scrolls or ends inside a row (#548); for a screen whose one list is this one.
+   */
+  paged?: boolean;
 };
 
 /** The `nativeID` of a list of radio rows, which the render rules find it by (#299). */
@@ -172,21 +178,29 @@ export function ChoiceList<V>({
   value,
   onChange,
   note,
+  paged,
 }: ChoiceListProps<V>): React.JSX.Element {
+  const rows = choices.map(choice => (
+    <ListRow
+      key={choice.label}
+      title={choice.label}
+      // The whole row chooses, its label too, not only the radio at its end (#554).
+      onPress={() => onChange(choice.value)}
+      control={{role: 'radio', label: `${title}: ${choice.label}`, checked: choice.value === value}}
+      trailing={<Radio checked={choice.value === value} />}
+    />
+  ));
   return (
-    <View nativeID={RADIO_LIST_ID} style={styles.radioList}>
-      <RowGroup caption={title} note={note}>
-        {choices.map(choice => (
-          <ListRow
-            key={choice.label}
-            title={choice.label}
-            // The whole row chooses, its label too, not only the radio at its end (#554).
-            onPress={() => onChange(choice.value)}
-            control={{role: 'radio', label: `${title}: ${choice.label}`, checked: choice.value === value}}
-            trailing={<Radio checked={choice.value === value} />}
-          />
-        ))}
-      </RowGroup>
+    <View nativeID={RADIO_LIST_ID} style={[styles.radioList, paged && styles.pagedList]}>
+      {paged ? (
+        <PagedList caption={title} note={note}>
+          {rows}
+        </PagedList>
+      ) : (
+        <RowGroup caption={title} note={note}>
+          {rows}
+        </RowGroup>
+      )}
     </View>
   );
 }
@@ -194,6 +208,7 @@ export function ChoiceList<V>({
 const styles = StyleSheet.create({
   group: {marginBottom: metrics.sectionGap},
   radioList: {marginRight: metrics.radioListTrailingMargin - metrics.sideMargin},
+  pagedList: {flex: 1},
   separator: {height: metrics.separator, backgroundColor: metrics.ink},
   lightBox: {height: metrics.lightLine, overflow: 'hidden'},
   lightDashes: {

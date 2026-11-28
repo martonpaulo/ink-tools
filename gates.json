@@ -8,6 +8,7 @@
     {"name": "registry", "command": "python3 scripts/registry.py --root . && python3 -B -m unittest scripts/test_registry.py", "covers": "the registry of Supernote internals against registry/schema.json, its ratchet per level, and every file written from it, such as sn-adapter's descriptor.json (#294)"},
     {"name": "packages", "command": "cd packages && python3 ../scripts/npm_install.py && npm run validate", "covers": "sn-adapter (both tiers, against the SDK mock in sn-adapter/testing), sync-core, ink-core, puzzle-core's generators and word lists, with the word pipeline's tests (#380, #381) and picture-search's search, measures, file store, image module, memory log, settings store, device search, thumbnails, picks, twins and «Insert best picture» tests, and the JVM tests of picture-search's and sn-adapter's Java (#254), picture-search's layer boundaries and its DRY ratchet (#288); ui-kit and the rest of picture-search run in the plugin gates the rules below map their folders to (#93, #125, #142)"},
     {"name": "account-sync", "command": "cd plugins/account-sync && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Account Sync plugin, the ui-kit package's lint and tests, and the type check of the renders in packages/ui-kit/renders (#288)"},
+    {"name": "renders", "command": "cd plugins/account-sync && python3 ../../scripts/npm_install.py && npm run renders", "covers": "every plugin screen rendered as the Manta shows it and checked against the e-ink and native rules of packages/ui-kit/renders/rules.ts (#80, #411), with the screen-layout rules of the owner's 2026-11-28 sweep: no list that ends inside a row or scrolls its rows (#548), no control over a row (#578), no image off-centre or sized by aspectRatio (#576), each radio at its list's end (#546) and no text under the contrast floor (#575); a known break of a screen another lane fixes stays in known-breaks.json, which only shrinks"},
     {"name": "image-editing", "command": "cd plugins/image-editing && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Image Editing plugin and its JVM tests (#136)"},
     {"name": "lasso-actions", "command": "cd plugins/lasso-actions && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Word Lookup plugin"},
     {"name": "device-link", "command": "cd plugins/device-link && python3 ../../scripts/npm_install.py && npm run validate", "covers": "the Device Link plugin"},
@@ -32,6 +33,9 @@
   ],
   "rules": [
     {"path": "*.md", "gates": ["docs", "license"]},
+    {"path": "packages/ui-kit/", "gates": ["renders"]},
+    {"path": "plugins/*/App.tsx", "gates": ["renders"]},
+    {"path": "plugins/*/src/", "gates": ["renders"]},
     {"path": "LICENSE", "gates": ["license"]},
     {"path": "scripts/license_check.py", "gates": ["license"]},
     {"path": "scripts/test_license_check.py", "gates": ["license"]},

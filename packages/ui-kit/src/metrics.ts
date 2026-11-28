@@ -116,6 +116,8 @@ export const metrics = {
   loadingRayStroke: RATIO.loadingRayStroke.value,
   /** The code block's height as a share of the window's: about half the screen (#405). */
   codeBlockHeight: RATIO.codeBlockHeight.value,
+  /** The contrast floor of every text against what is behind it (#575). */
+  textContrast: RATIO.textContrast.value,
 
   ink: COLOUR.ink.value,
   paper: COLOUR.paper.value,

@@ -78,9 +78,76 @@ export function measurePage() {
       };
     });
 
+  // The box that clips an element: its nearest ancestor that hides what runs past it, such as a
+  // scroll view, a paged list or the screen, so a row cut at its list's end is found (#548, #578).
+  const clipOf = (el) => {
+    for (let e = el.parentElement; e; e = e.parentElement) {
+      const style = getComputedStyle(e);
+      if (style.overflowY !== 'visible' || style.overflowX !== 'visible') {
+        return boxOf(e.getBoundingClientRect());
+      }
+    }
+    return undefined;
+  };
   const rows = [...document.querySelectorAll(ROW)]
     .filter(shown)
+    .map(el => ({name: nameOf(el), box: boxOf(el.getBoundingClientRect()), clip: clipOf(el)}));
+
+  // Each scroll view whose content runs past its end, with the list rows inside it (#548).
+  const scrolled = [...document.querySelectorAll('[data-scroll]')]
+    .filter(el => shown(el) && !el.closest(CODE) && el.scrollHeight > el.clientHeight + 1)
+    .map(el => ({name: `scroll view «${nameOf(el)}»`, rows: el.querySelectorAll(ROW).length}));
+
+  // ui-kit's MediaFrame and its picture (#576), and every picture sized by aspectRatio instead.
+  const media = [...document.querySelectorAll('[data-kind="media"]')]
+    .filter(shown)
+    .map(el => ({
+      name: nameOf(el),
+      box: boxOf(el.getBoundingClientRect()),
+      frame: boxOf(el.closest('[data-kind="media-frame"]').getBoundingClientRect()),
+    }));
+  const looseImages = [...document.querySelectorAll('img[data-aspect]')]
+    .filter(shown)
     .map(el => ({name: nameOf(el), box: boxOf(el.getBoundingClientRect())}));
+
+  // Each radio's ring and the end of its list of radio rows (#546).
+  const rings = [...document.querySelectorAll('[data-kind="radio-ring"]')]
+    .filter(el => shown(el) && el.closest('[data-kind="radio-list"]'))
+    .map(el => ({
+      name: nameOf(el.closest('[data-kind="list-row"]') ?? el),
+      box: boxOf(el.getBoundingClientRect()),
+      list: boxOf(el.closest('[data-kind="radio-list"]').getBoundingClientRect()),
+    }));
+
+  // A text's contrast against the colour painted behind it, opacity included (#575).
+  const rgba = (value) => {
+    const n = (value.match(/-?[\d.]+/g) || []).map(Number);
+    return [n[0] || 0, n[1] || 0, n[2] || 0, n.length > 3 ? n[3] : 1];
+  };
+  const luminance = ([r, g, b]) => {
+    const channel = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  };
+  const behind = (el) => {
+    for (let e = el; e; e = e.parentElement) {
+      const colour = rgba(getComputedStyle(e).backgroundColor);
+      if (colour[3] > 0) {
+        return colour;
+      }
+    }
+    return [255, 255, 255, 1];
+  };
+  const contrastOf = (el) => {
+    const back = behind(el);
+    const fore = rgba(getComputedStyle(el).color);
+    let alpha = fore[3];
+    for (let e = el; e; e = e.parentElement) {
+      alpha *= Number(getComputedStyle(e).opacity);
+    }
+    const mixed = [0, 1, 2].map(i => fore[i] * alpha + back[i] * (1 - alpha));
+    const [high, low] = [luminance(mixed), luminance(back)].sort((x, y) => y - x);
+    return Math.round(((high + 0.05) / (low + 0.05)) * 100) / 100;
+  };
 
   // ui-kit's section caption box, by its SECTION_CAPTION_ID (#416).
   const captions = [...document.querySelectorAll('[data-kind="section-caption"]')]
@@ -143,7 +210,9 @@ export function measurePage() {
         within,
         scroll: scrollOf(el),
         bar: inBar(el),
+        // A disabled control's text is exempt, as interface rule 3 and WCAG 1.4.3 say (#575).
+        contrast: el.closest('[aria-disabled="true"]') ? undefined : contrastOf(el),
       };
     });
-  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows, captions, radioLists};
+  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows, captions, radioLists, scrolled, media, looseImages, rings};
 }

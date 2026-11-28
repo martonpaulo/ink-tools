@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {View} from 'react-native';
 import {
+  PagedColumn,
   Choice,
   ChoiceList,
   RowGroup,
@@ -119,11 +120,11 @@ function Settings({
       <TitleBar title={copy.title} onClose={close} />
       {/*
         The groups own the space above them, so they sit in a container with none (#275); it
-        scrolls, since the rows outgrow the Nomad's window and the turned Manta's (#284). Until the
+        pages, since the rows outgrow the Nomad's window and the turned Manta's (#284, #548). Until the
         settings file is read the view shows only its title.
       */}
       {settings && (
-        <ScrollView style={styles.rows}>
+        <PagedColumn>
           <RowGroup caption={copy['settings.modules']} note={problem}>
             {MODULES.map(row => (
               <SwitchRow
@@ -204,12 +205,8 @@ function Settings({
               </RowGroup>
             </>
           )}
-        </ScrollView>
+        </PagedColumn>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  rows: {flex: 1},
-});

@@ -1,7 +1,14 @@
-/** The native radio button (#273, #272): an ink ring, with a filled dot when chosen, in a touch target, at the native sizes. */
+/**
+ * The native radio button (#273, #272): an ink ring, with a filled dot when chosen, in a touch
+ * target, at the native sizes. The ring sits at its target's trailing edge, so a choice row's ring
+ * ends where the row's lines end, as the native list of radio rows draws it (owner D112, #546).
+ */
 import React from 'react';
 import {Pressable, StyleSheet, View} from 'react-native';
 import {metrics} from './metrics';
+
+/** The `nativeID` of the radio's ring, which the render rules find it by (#546). */
+export const RADIO_RING_ID = 'radio-ring';
 
 export type RadioProps = {
   checked: boolean;
@@ -18,7 +25,7 @@ export function Radio({checked, onPress, accessibilityLabel}: RadioProps): React
   if (!onPress) {
     return (
       <View style={styles.target} importantForAccessibility="no-hide-descendants">
-        <View style={styles.ring}>{checked && <View testID="radio-dot" style={styles.dot} />}</View>
+        <View nativeID={RADIO_RING_ID} style={styles.ring}>{checked && <View testID="radio-dot" style={styles.dot} />}</View>
       </View>
     );
   }
@@ -29,7 +36,7 @@ export function Radio({checked, onPress, accessibilityLabel}: RadioProps): React
       accessibilityState={{checked}}
       style={styles.target}
       onPress={onPress}>
-      <View style={styles.ring}>{checked && <View testID="radio-dot" style={styles.dot} />}</View>
+      <View nativeID={RADIO_RING_ID} style={styles.ring}>{checked && <View testID="radio-dot" style={styles.dot} />}</View>
     </Pressable>
   );
 }
@@ -39,7 +46,7 @@ const styles = StyleSheet.create({
     minWidth: metrics.touchTarget,
     minHeight: metrics.touchTarget,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
   ring: {
     width: metrics.radioSize,

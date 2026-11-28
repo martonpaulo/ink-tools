@@ -37,6 +37,8 @@ export type Measured = {
   texts: {
     name: string;
     text: string;
+    /** Its contrast against the colour behind it; none for a disabled control's text (#575). */
+    contrast?: number;
     fontSize: number;
     glyphs: Box;
     within: {name: string; box: Box}[];
@@ -55,12 +57,23 @@ export type Measured = {
   /** Every visible title bar, by its box. */
   bars: {name: string; box: Box}[];
   /** Every visible ui-kit list row, by its box (#411). */
-  rows: {name: string; box: Box}[];
+  rows: {name: string; box: Box; clip?: Box}[];
   /** Every visible section caption's box, ui-kit's `SECTION_CAPTION_ID` (#416). */
   captions: {name: string; box: Box}[];
   /** Every visible list of radio rows, ui-kit's `RADIO_LIST_ID` (#299). */
   radioLists: {name: string; box: Box}[];
+  /** Each scroll view whose content runs past its end, outside the code block, with its list rows (#548). */
+  scrolled?: {name: string; rows: number}[];
+  /** Each image in ui-kit's MediaFrame, with the frame's box (#576). */
+  media?: {name: string; box: Box; frame: Box}[];
+  /** Each image sized by `aspectRatio`, which the device lays out at the leading edge (#576). */
+  looseImages?: {name: string; box: Box}[];
+  /** Each radio's ring, with the box of its list of radio rows (#546). */
+  rings?: {name: string; box: Box; list: Box}[];
 };
+
+/** The limits of the screen-layout rules (#548, #575, #576, #578). */
+export type LayoutLimits = {textContrast: number};
 
 /** A rendered edge may land a fraction of a unit off; a real break is larger. */
 const TOLERANCE = 0.5;
@@ -301,4 +314,73 @@ export function firstCaptionBreaks({bars, captions, rows, texts}: Measured): str
       ? [`caption «${first.name}» starts ${Math.round(off)} units off the title bar's bottom: its box starts at the bar`]
       : [];
   });
+}
+
+/** The WCAG contrast of two colours, `#rrggbb` or `rgb(r, g, b)`, rounded to two places (#575). */
+export function contrastRatio(a: string, b: string): number {
+  const channels = (colour: string) =>
+    colour.startsWith('#')
+      ? [1, 3, 5].map(i => parseInt(colour.slice(i, i + 2), 16))
+      : (colour.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+  const luminance = (colour: string) => {
+    const [r, g, b] = channels(colour).map(v => {
+      const c = v / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return Math.round(((high + 0.05) / (low + 0.05)) * 100) / 100;
+}
+
+/**
+ * The screen-layout rules (owner, 2026-11-28): a list of rows pages and never ends inside a row
+ * (#548), a control fixed under a list never lies over a row (#578), an image sits centred in its
+ * ui-kit MediaFrame and none is sized by aspectRatio (#576), a choice row's radio ends at its list's end
+ * as the native one does (owner D112, #546), and no text falls under the contrast floor (#575).
+ * Measured before any scroll: a scroll view's rows are judged as the person first sees them.
+ */
+export function layoutBreaks(measured: Measured, {textContrast}: LayoutLimits): string[] {
+  const found: string[] = [];
+  for (const row of measured.rows) {
+    if (row.clip && overlap(row.box, row.clip) && outside(row.box, row.clip)) {
+      found.push(`list ends inside row «${row.name.slice(0, 40)}»: page the list with ui-kit's PagedList (#548)`);
+    }
+  }
+  for (const scroll of measured.scrolled ?? []) {
+    if (scroll.rows > 0) {
+      found.push(`${scroll.name} scrolls past its end, holding ${scroll.rows} rows: page them with ui-kit's PagedList or PagedColumn (#548)`);
+    }
+  }
+  for (const target of measured.targets) {
+    if (target.bar || target.inRow || target.kind === 'list-row') {
+      continue;
+    }
+    const under = measured.rows.find(row => overlap(target.box, row.box) && !sameBox(target.box, row.box));
+    if (under) {
+      found.push(`«${target.name}» lies over row «${under.name.slice(0, 40)}»: keep fixed controls under the list (#578)`);
+    }
+  }
+  for (const {name, box, frame} of measured.media ?? []) {
+    const across = Math.abs(box.left - frame.left - (frame.right - box.right));
+    const down = Math.abs(box.top - frame.top - (frame.bottom - box.bottom));
+    if (across > 2 * TOLERANCE || down > 2 * TOLERANCE) {
+      found.push(`image «${name}» sits off-centre in its frame, ${Math.round(across)} across and ${Math.round(down)} down (#576)`);
+    }
+  }
+  for (const image of measured.looseImages ?? []) {
+    found.push(`image «${image.name}» sizes its box by aspectRatio, which the device lays out at the leading edge: show it in ui-kit's MediaFrame (#576)`);
+  }
+  for (const ring of measured.rings ?? []) {
+    const off = ring.list.right - ring.box.right;
+    if (Math.abs(off) > TOLERANCE) {
+      found.push(`radio of «${ring.name.slice(0, 40)}» ends ${Math.round(off)} units before its list's end (#546)`);
+    }
+  }
+  for (const text of measured.texts) {
+    if (text.contrast !== undefined && text.contrast + 0.005 < textContrast) {
+      found.push(`text «${text.text.slice(0, 60)}» is ${text.contrast}:1, under the floor ${textContrast}:1 (#575)`);
+    }
+  }
+  return found;
 }
