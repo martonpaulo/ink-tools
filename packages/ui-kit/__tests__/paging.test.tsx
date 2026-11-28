@@ -37,6 +37,14 @@ describe('paginate', () => {
     ]);
   });
 
+  it('moves a group row to the next page with its last one, never leaving that one alone (#594)', () => {
+    // Greedy paging would put three rows on page 1 and the fourth alone on page 2.
+    expect(paginate([inGroup(80), inGroup(80), inGroup(80), inGroup(80)], 50 + 3 * 80 + 2 + 60, 60)).toEqual([
+      {from: 0, to: 2},
+      {from: 2, to: 4},
+    ]);
+  });
+
   it('gives a part taller than a page a page of its own', () => {
     expect(paginate([row(500), row(80)], 300, 60)).toEqual([
       {from: 0, to: 1},
@@ -113,7 +121,7 @@ describe('PagedList', () => {
     expect(shown).toEqual(['Sample 1', 'Sample 2', 'Sample 3']);
     const next = tree.root.find(node => node.props.accessibilityLabel === 'Next page' && node.props.onPress);
     await act(async () => next.props.onPress());
-    expect(texts(tree).filter(text => text.startsWith('Sample '))).toEqual(['Sample 4', 'Sample 5', 'Sample 6']);
+    expect(texts(tree).filter(text => text.startsWith('Sample '))).toEqual(['Sample 4', 'Sample 5']);
   });
 });
 
