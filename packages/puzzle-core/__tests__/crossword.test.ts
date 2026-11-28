@@ -12,7 +12,7 @@ import {
 } from '../src/crossword';
 import { drawCrosswordPage, type CrosswordPageText } from '../src/crossword-page';
 import { type InkStroke, type ReadText } from '../src/check';
-import { FONT_WEIGHTS, measureText, pageText } from '../src/page/font';
+import { FONT_WEIGHTS, foldAccents, measureText, pageText } from '../src/page/font';
 import { cellCenter, type Grid } from '../src/page/grid';
 import { layoutPage } from '../src/page/layout';
 import { assertNativeGreys } from '../src/page/raster';
@@ -177,10 +177,14 @@ describe('checkCrossword', () => {
 
 describe('pageText', () => {
   test.each([
-    ['Épouse du roi', 'Epouse du roi'],
-    ['Macht den Kaffee süß', 'Macht den Kaffee suss'],
+    ['Épouse du roi', 'Épouse du roi'],
+    ['Macht den Kaffee süß', 'Macht den Kaffee süß'],
     ['Niño', 'Niño'],
   ])('%s is drawn as %s', (text, drawn) => {
     expect(pageText(text)).toBe(drawn);
+  });
+
+  test('foldAccents drops accents and writes ß as ss (the grid letters of a word)', () => {
+    expect(foldAccents('Épouse süß')).toBe('Epouse suss');
   });
 });

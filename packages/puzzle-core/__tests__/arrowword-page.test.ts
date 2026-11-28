@@ -65,8 +65,8 @@ describe('wrapClue', () => {
     expect(() => wrapClue('Unbreakableword', 60, 35)).toThrow('wider than its clue cell');
   });
 
-  test('a clue with letters the page font lacks is drawn with them folded, as in the crossword', () => {
-    expect(fitClue('Félin für Öl', grid.cell, grid.cell / 2)).toEqual(['Felin fur', 'Ol']);
+  test('a clue keeps its accents, as in the crossword (#455)', () => {
+    expect(fitClue('Félin für Öl', grid.cell, grid.cell / 2)).toEqual(['Félin für', 'Öl']);
     const accented = { ...puzzle, slots: puzzle.slots.map((slot, i) => (i === 0 ? { ...slot, clue: 'Ação ß' } : slot)) };
     expect(() => drawArrowword(createPage(layout), grid, accented)).not.toThrow();
   });

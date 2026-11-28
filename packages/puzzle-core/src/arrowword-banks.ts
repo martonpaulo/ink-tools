@@ -13,7 +13,7 @@ import es from '../clues/arrowword-es.json';
 import fr from '../clues/arrowword-fr.json';
 import pt from '../clues/arrowword-pt.json';
 import { type ClueBank, type ClueEntry } from './arrowword';
-import { pageText } from './page/font';
+import { foldAccents } from './page/font';
 import { type WordLanguage, type WordList } from './words';
 import { WORD_LISTS } from './words-data';
 
@@ -48,7 +48,7 @@ export function reviewedClueBank(language: WordLanguage): ClueBank | null {
 
 /** The clue's words in grid letters: folded, upper case, split at every other character. */
 function clueWords(clue: string): string[] {
-  return pageText(clue.toUpperCase()).split(/[^A-ZÑ]+/).filter(Boolean);
+  return foldAccents(clue.toUpperCase()).split(/[^A-ZÑ]+/).filter(Boolean);
 }
 
 /**

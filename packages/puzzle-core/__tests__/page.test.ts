@@ -476,7 +476,15 @@ describe('the layout', () => {
 
 describe('text', () => {
   test('a character outside the page font is refused', () => {
-    expect(() => drawText(createRaster(100, 100), 'É', 10, 50, { size: 40, weight: 400, tone: 'ink' })).toThrow('has no «É»');
+    expect(() => drawText(createRaster(100, 100), 'Ω', 10, 50, { size: 40, weight: 400, tone: 'ink' })).toThrow('has no «Ω»');
+  });
+
+  test.each(['regular', 'bold'] as const)('every letter of Portuguese, Spanish, German and French text draws in the %s weight (#455)', name => {
+    const letters = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæçèéêëìíîïñòóôõöøùúûüýÿœŒ«»';
+    const weight = name === 'bold' ? 700 : 400;
+    for (const letter of letters) {
+      expect(() => drawText(createRaster(100, 100), letter, 10, 50, { size: 40, weight, tone: 'ink' })).not.toThrow();
+    }
   });
 });
 

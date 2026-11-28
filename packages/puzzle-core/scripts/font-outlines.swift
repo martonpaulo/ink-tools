@@ -12,8 +12,10 @@ import Foundation
 
 let fontPath = "design/fonts/Figtree[wght].ttf"
 let weights: [Int] = [400, 700]
-/// Printable ASCII, the Spanish grid letter and the footer's separators.
-let characters: [Character] = (32...126).map { Character(UnicodeScalar($0)!) } + ["Ñ", "ñ", "·", "×", "–"]
+/// Printable ASCII, the footer's separators, and the letters and quotes of Portuguese, Spanish,
+/// German and French text: Latin-1's À to ÿ (without the division sign), œ, Œ, « and » (#455).
+let accented: [Character] = (0xC0...0xFF).filter { $0 != 0xF7 && $0 != 0xD7 }.map { Character(UnicodeScalar($0)!) } + ["œ", "Œ", "«", "»"]
+let characters: [Character] = (32...126).map { Character(UnicodeScalar($0)!) } + ["·", "×", "–"] + accented
 /// Segments per curve: enough that a 180 px given shows no corner.
 let quadSegments = 6
 let cubicSegments = 8
