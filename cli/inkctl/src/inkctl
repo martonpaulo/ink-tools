@@ -52,7 +52,7 @@ snapshot, and coordinates only as the last resort. Every command takes --json.
                                  turns pages to an element
   click TARGET                   press an element: @eN from the last snapshot, id:X, desc:X, text:X
   wait activity|file|element X   wait for a condition instead of sleeping (--timeout SECONDS)
-  sandbox todoist|google create|list|clean
+  sandbox todoist|google|icloud create|list|clean
                                  the test project in Todoist or test calendar in Google, named
                                  «teste ink-tools»: make it, list what it holds, or delete it;
                                  nothing else in the account is read or changed
@@ -4586,7 +4586,7 @@ def command_google_login(device, args: argparse.Namespace):
     return data, text
 
 
-# Test sandboxes (#297): one Todoist project and one Google calendar named SANDBOX_NAME, for device
+# Test sandboxes (#297, #566): one Todoist project, one Google calendar and one iCloud calendar named SANDBOX_NAME, for device
 # rounds. Every call finds the object by that exact name and touches nothing else; every write is
 # read back. Standing yes: docs/decisions.md, 2026-11-25.
 SANDBOX_NAME = SERVICES["testObjectName"]
@@ -4705,7 +4705,115 @@ class GoogleSandbox:
         self.call("DELETE", f"/calendars/{urllib.parse.quote(found['id'], safe='')}")
 
 
-SANDBOXES = {"todoist": TodoistSandbox, "google": GoogleSandbox}
+ICLOUD_SIGN_IN_ACCOUNT = "ACCOUNT_SYNC_ICLOUD_SIGN_IN"
+DAV = "DAV:"
+CALDAV = "urn:ietf:params:xml:ns:caldav"
+HTTP_UNAUTHORIZED = 401
+
+
+def propfind(props: str) -> str:
+    """A PROPFIND body asking for `props`, written with the `d:` (DAV) and `c:` (CalDAV) prefixes."""
+    return f'<d:propfind xmlns:d="{DAV}" xmlns:c="{CALDAV}"><d:prop>{props}</d:prop></d:propfind>'
+
+
+def dav_call(method: str, url: str, sign_in: str, body: str = "", depth: str | None = None) -> tuple[int, bytes]:
+    """One CalDAV call with Basic credentials (RFC 7617); they never reach the output."""
+    import base64
+
+    headers = {"Authorization": "Basic " + base64.b64encode(sign_in.encode()).decode(), "Content-Type": "application/xml; charset=utf-8"}
+    if depth is not None:
+        headers["Depth"] = depth
+    request = urllib.request.Request(url, data=body.encode() if body else None, method=method, headers=headers)
+    path = urllib.parse.urlsplit(url).path
+    try:
+        with urllib.request.urlopen(request, timeout=API_TIMEOUT) as answer:
+            return answer.status, answer.read()
+    except urllib.error.HTTPError as refused:
+        raise Failure(
+            EXIT_FAILED, "api_refused", f"iCloud refused {method} {path} (HTTP {refused.code})",
+            cause="the stored sign-in is wrong or expired" if refused.code == HTTP_UNAUTHORIZED else "",
+            next_step=f"store `<Apple ID>:<app-specific password>` in the Keychain item {KEYCHAIN_SERVICE} / {ICLOUD_SIGN_IN_ACCOUNT}" if refused.code == HTTP_UNAUTHORIZED else "",
+            extra={"status": refused.code},
+        ) from None
+    except (urllib.error.URLError, OSError) as lost:
+        raise Failure(EXIT_FAILED, "network_error", f"iCloud did not answer: {lost}", cause="iCloud could not be reached", next_step="check the Mac's network, then run the same command") from None
+
+
+def dav_responses(raw: bytes) -> list:
+    """The `response` elements of a 207 Multi-Status answer."""
+    try:
+        return ElementTree.fromstring(raw).findall(f"{{{DAV}}}response")
+    except ElementTree.ParseError:
+        raise Failure(EXIT_FAILED, "api_refused", "iCloud answered with no readable XML") from None
+
+
+def xml_text(value: str) -> str:
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+class ICloudSandbox:
+    """The CalDAV test calendar (#566): found by its display name in the calendar home, as RFC 4791 and
+    RFC 6764 discover it: the principal from the server root, then its calendar-home-set."""
+
+    service = "iCloud"
+    kind = "calendar"
+
+    def __init__(self):
+        self.sign_in = stored_secret(ICLOUD_SIGN_IN_ACCOUNT, "iCloud sign-in")
+        if ":" not in self.sign_in:
+            raise Failure(EXIT_NOT_FOUND, "not_found", f"the Keychain item {KEYCHAIN_SERVICE} / {ICLOUD_SIGN_IN_ACCOUNT} is not <Apple ID>:<app-specific password>")
+        self.home = self.calendar_home()
+
+    def href(self, base: str, prop: str, body: str) -> str:
+        """The first `href` inside `prop` of a Depth 0 PROPFIND on `base`, as an absolute URL."""
+        _status, raw = dav_call("PROPFIND", base, self.sign_in, body, depth="0")
+        for response in dav_responses(raw):
+            found = response.find(f".//{prop}/{{{DAV}}}href")
+            if found is not None and found.text:
+                return urllib.parse.urljoin(base, found.text.strip())
+        raise Failure(EXIT_FAILED, "api_refused", f"iCloud named no {prop.split('}')[-1]}")
+
+    def calendar_home(self) -> str:
+        root = SERVICES["icloudCalDav"]
+        principal = self.href(root, f"{{{DAV}}}current-user-principal", propfind("<d:current-user-principal/>"))
+        return self.href(principal, f"{{{CALDAV}}}calendar-home-set", propfind("<c:calendar-home-set/>"))
+
+    def find(self) -> list[dict]:
+        body = propfind("<d:displayname/><d:resourcetype/>")
+        _status, raw = dav_call("PROPFIND", self.home, self.sign_in, body, depth="1")
+        rows = []
+        for response in dav_responses(raw):
+            name = response.findtext(f".//{{{DAV}}}displayname")
+            calendar = response.find(f".//{{{DAV}}}resourcetype/{{{CALDAV}}}calendar") is not None
+            href = response.findtext(f"{{{DAV}}}href")
+            if calendar and href and name == SANDBOX_NAME:
+                rows.append({"id": urllib.parse.urljoin(self.home, href.strip()), "name": name})
+        return rows
+
+    def create(self) -> dict:
+        url = urllib.parse.urljoin(self.home, f"{uuid.uuid4()}/")
+        body = (f'<c:mkcalendar xmlns:d="{DAV}" xmlns:c="{CALDAV}"><d:set><d:prop><d:displayname>{xml_text(SANDBOX_NAME)}</d:displayname>'
+                f'<c:supported-calendar-component-set><c:comp name="VEVENT"/></c:supported-calendar-component-set></d:prop></d:set></c:mkcalendar>')
+        dav_call("MKCALENDAR", url, self.sign_in, body)
+        return {"id": url, "name": SANDBOX_NAME}
+
+    def items(self, found: dict) -> list[dict]:
+        body = (f'<c:calendar-query xmlns:d="{DAV}" xmlns:c="{CALDAV}"><d:prop><c:calendar-data/></d:prop>'
+                f'<c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT"/></c:comp-filter></c:filter></c:calendar-query>')
+        _status, raw = dav_call("REPORT", found["id"], self.sign_in, body, depth="1")
+        rows = []
+        for response in dav_responses(raw):
+            data = response.findtext(f".//{{{CALDAV}}}calendar-data") or ""
+            # An unfolded SUMMARY line is enough for a list: RFC 5545 folds only lines over 75 octets.
+            title = next((line.split(":", 1)[1] for line in data.splitlines() if line.startswith("SUMMARY")), "")
+            rows.append({"id": urllib.parse.urljoin(found["id"], (response.findtext(f"{{{DAV}}}href") or "").strip()), "title": title})
+        return rows
+
+    def remove(self, found: dict) -> None:
+        dav_call("DELETE", found["id"], self.sign_in)
+
+
+SANDBOXES = {"todoist": TodoistSandbox, "google": GoogleSandbox, "icloud": ICloudSandbox}
 
 
 def google_access_token(client: dict, refresh: str) -> str:

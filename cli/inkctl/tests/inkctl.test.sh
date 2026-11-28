@@ -2351,7 +2351,7 @@ rm -f "$work/real-browser-reached" "$client"
 
 # Test sandboxes (#297): a fake Todoist and Google, answering in the APIs' recorded shapes.
 cat > "$work/apis.py" <<'PY'
-import http.server, json, os, sys, urllib.parse
+import base64, http.server, json, os, re, sys, urllib.parse
 root = sys.argv[1]
 state = {
     "projects": [{"id": "p-inbox", "name": "Inbox"}, {"id": "p-old", "name": "teste ink-tools old"}],
@@ -2359,6 +2359,39 @@ state = {
     "calendars": [{"id": "primary-SYNTHETIC@example.test", "summary": "Primary"}],
     "events": {},
 }
+# A fake iCloud CalDAV server under /dav (#566): the root names the principal, the principal its
+# calendar home, and the home lists its calendars, as RFC 4791 and RFC 6764 discover them.
+SIGN_IN = "Basic " + base64.b64encode(b"sample-SYNTHETIC@example.test:app-SYNTHETIC-password").decode()
+dav_calendars = {"/dav/home/work/": "Work", "/dav/home/old/": "teste ink-tools old"}
+dav_events = {"/dav/home/work/": ["Do not touch"]}
+def multi(responses):
+    return ('<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">'
+            + "".join(responses) + "</d:multistatus>").encode()
+def row(href, props):
+    return f"<d:response><d:href>{href}</d:href><d:propstat><d:prop>{props}</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>"
+def dav(call, method, path, body):
+    """The status and XML of one CalDAV call."""
+    open(f"{root}/dav-calls", "a").write(f"{method} {path} {call.headers.get('Depth')} {call.headers.get('Authorization') == SIGN_IN}\n")
+    if call.headers.get("Authorization") != SIGN_IN:
+        return 401, b""
+    if method == "PROPFIND" and path == "/dav/":
+        return 207, multi([row(path, "<d:current-user-principal><d:href>/dav/principal/</d:href></d:current-user-principal>")])
+    if method == "PROPFIND" and path == "/dav/principal/":
+        return 207, multi([row(path, "<c:calendar-home-set><d:href>/dav/home/</d:href></c:calendar-home-set>")])
+    if method == "PROPFIND" and path == "/dav/home/":
+        rows = [row(path, "<d:displayname>Home</d:displayname><d:resourcetype><d:collection/></d:resourcetype>")]
+        rows += [row(href, f"<d:displayname>{name}</d:displayname><d:resourcetype><d:collection/><c:calendar/></d:resourcetype>") for href, name in dav_calendars.items()]
+        return 207, multi(rows)
+    if method == "MKCALENDAR" and path.startswith("/dav/home/") and path not in dav_calendars:
+        dav_calendars[path] = re.search(r"<d:displayname>(.*?)</d:displayname>", body).group(1)
+        dav_events[path] = ["Sample event"]
+        return 201, b""
+    if method == "REPORT" and path in dav_calendars:
+        return 207, multi([row(f"{path}e{index}.ics", f"<c:calendar-data>BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nSUMMARY:{title}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n</c:calendar-data>") for index, title in enumerate(dav_events.get(path, []))])
+    if method == "DELETE" and path in dav_calendars:
+        del dav_calendars[path]
+        return 204, b""
+    return 404, b""
 serial = [0]
 def new_id(prefix):
     serial[0] += 1
@@ -2378,6 +2411,12 @@ class Api(http.server.BaseHTTPRequestHandler):
         body = json.loads(raw) if self.headers.get("Content-Type") == "application/json" else raw.decode()
         open(f"{root}/api-calls", "a").write(f"{self.command} {self.path} {self.headers.get('Authorization')}\n")
         path, method = split.path, self.command
+        if path.startswith("/dav/"):
+            status, xml = dav(self, method, path, body)
+            self.send_response(status)
+            self.send_header("Content-Length", str(len(xml)))
+            self.end_headers()
+            return self.wfile.write(xml)
         if path == "/token":
             form = dict(urllib.parse.parse_qsl(body))
             if form.get("grant_type") != "refresh_token" or form.get("refresh_token") != "1//SYNTHETIC-refresh":
@@ -2414,7 +2453,7 @@ class Api(http.server.BaseHTTPRequestHandler):
             state["calendars"] = [row for row in state["calendars"] if row["id"] != cid]
             return self.answer(204)
         return self.answer(404, {"error": "not found"})
-    do_GET = do_POST = do_DELETE = handle_call
+    do_GET = do_POST = do_DELETE = do_PROPFIND = do_MKCALENDAR = do_REPORT = handle_call
     def log_message(self, *ignored):
         pass
 server = http.server.HTTPServer(("127.0.0.1", 0), Api)
@@ -2428,10 +2467,11 @@ trap 'kill "$api_pid" 2>/dev/null; rm -rf "$work"' EXIT
 # timing-independent: a poll with a deadline for the fake API server's port file.
 for _ in $(seq 50); do [ -f "$work/api-port" ] && break; sleep 0.1; done
 api="http://127.0.0.1:$(cat "$work/api-port")"
-python3 -c 'import json,sys; s=json.load(open(sys.argv[1])); s["todoistApi"]=sys.argv[2]+"/todoist"; s["googleCalendarApi"]=sys.argv[2]+"/google"; json.dump(s, open(sys.argv[3], "w"))' "$repo_root/../../packages/sync-core/src/services.json" "$api" "$work/services.json"
+python3 -c 'import json,sys; s=json.load(open(sys.argv[1])); s["todoistApi"]=sys.argv[2]+"/todoist"; s["googleCalendarApi"]=sys.argv[2]+"/google"; s["icloudCalDav"]=sys.argv[2]+"/dav/"; json.dump(s, open(sys.argv[3], "w"))' "$repo_root/../../packages/sync-core/src/services.json" "$api" "$work/services.json"
 export INKCTL_SERVICES="$work/services.json"
 printf 'todoist-SYNTHETIC-token' > "$KEYCHAIN/ACCOUNT_SYNC_TODOIST_TOKEN"
 printf '1//SYNTHETIC-refresh' > "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_REFRESH_TOKEN"
+printf 'sample-SYNTHETIC@example.test:app-SYNTHETIC-password' > "$KEYCHAIN/ACCOUNT_SYNC_ICLOUD_SIGN_IN"
 printf '{"installed": {"client_id": "client-SYNTHETIC.apps.example.test", "client_secret": "client-secret-SYNTHETIC", "auth_uri": "https://accounts.example.test/auth", "token_uri": "%s/token"}}' "$api" > "$KEYCHAIN/ACCOUNT_SYNC_GOOGLE_OAUTH_CLIENT"
 check "sandbox todoist list finds none at first" "$(run sandbox todoist list --json | field "['sandboxes']")" "[]"
 output=$(run sandbox todoist create --json)
@@ -2446,6 +2486,18 @@ check "sandbox todoist clean again removes nothing" "$(run sandbox todoist clean
 check "sandbox google create makes the calendar" "$(run sandbox google create --json | field "['created'],d['name']")" "(True, 'teste ink-tools')"
 check "sandbox google uses a refreshed access token" "$(grep -c '^POST /google/calendars Bearer access-SYNTHETIC$' "$work/api-calls")" "1"
 check "sandbox google clean removes only the test calendar" "$(run sandbox google clean --json | field "['removed']") $(grep -c 'primary-SYNTHETIC' "$work/api-calls")" "['c-2@group.calendar.google.com'] 0"
+check "sandbox icloud list finds none at first" "$(run sandbox icloud list --json | field "['sandboxes']")" "[]"
+check "sandbox icloud create makes the calendar" "$(run sandbox icloud create --json | field "['created'],d['name']")" "(True, 'teste ink-tools')"
+check "sandbox icloud create sends MKCALENDAR into the calendar home" "$(grep -c '^MKCALENDAR /dav/home/[0-9a-f-]*/ None True$' "$work/dav-calls")" "1"
+check "sandbox icloud create twice makes one calendar" "$(run sandbox icloud create --json | field "['created']") $(grep -c '^MKCALENDAR' "$work/dav-calls")" "False 1"
+check "sandbox icloud list reads the calendar's events" "$(run sandbox icloud list --json | expression "[(r['name'], [i['title'] for i in r['items']]) for r in d['sandboxes']]")" "[('teste ink-tools', ['Sample event'])]"
+check "sandbox icloud clean removes only the test calendar" "$(run sandbox icloud clean --json | expression "len(d['removed'])") $(grep -c -e '^DELETE /dav/home/work/' -e '^DELETE /dav/home/old/' -e '^REPORT /dav/home/work/' "$work/dav-calls")" "1 0"
+check "sandbox icloud clean again removes nothing" "$(run sandbox icloud clean)" "icloud: calendar «teste ink-tools»: none to remove"
+check "every iCloud call sent the stored sign-in" "$(grep -c -v ' True$' "$work/dav-calls")" "0"
+printf 'sample-SYNTHETIC@example.test:wrong-SYNTHETIC-password' > "$KEYCHAIN/ACCOUNT_SYNC_ICLOUD_SIGN_IN"
+run sandbox icloud list --json >"$work/out" 2>/dev/null
+check "a refused iCloud sign-in names the Keychain item" "$? $(field "['error'],d['status']" < "$work/out") $(grep -c ACCOUNT_SYNC_ICLOUD_SIGN_IN "$work/out")" "1 ('api_refused', 401) 1"
+check "no iCloud password reaches the output" "$(grep -c -e app-SYNTHETIC-password -e wrong-SYNTHETIC-password "$work/out")" "0"
 touch "$work/api-refuses"
 run sandbox google create --json >"$work/out" 2>/dev/null
 check "a token without the scope names the sign-in" "$? $(field "['error'],d['next'],d['status']" < "$work/out")" "1 ('api_refused', 'inkctl google login', 403)"
