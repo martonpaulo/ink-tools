@@ -49,7 +49,7 @@ final class Prefs {
     store.edit().putFloat(PLACE_X, x).putFloat(PLACE_Y, y).apply();
   }
 
-  /** Back to the default place, the top trailing corner. */
+  /** Back to the default place, low on the trailing edge, clear of the note toolbar (#587). */
   void clearPlace() {
     store.edit().remove(PLACE_X).remove(PLACE_Y).apply();
   }

@@ -15,8 +15,8 @@ Two surfaces ship in one build:
 
 - **A, the floating button** (`OverlayService`): a box that shows the active language (`PT`, `EN`,
   `ES`); one tap moves to the next, a long press opens the app's screen, a drag moves it
-  ([#244](https://github.com/martonpaulo/ink-tools/issues/244)). It starts at the top trailing
-  corner. A drag ends against the nearest screen edge, fully on screen, `space` from it ([#415](https://github.com/martonpaulo/ink-tools/issues/415)), keeping its place along
+  ([#244](https://github.com/martonpaulo/ink-tools/issues/244)). It starts low on the trailing
+  edge, clear of the note toolbar at any of its four places ([#587](https://github.com/martonpaulo/ink-tools/issues/587)). A drag ends against the nearest screen edge, fully on screen, `space` from it ([#415](https://github.com/martonpaulo/ink-tools/issues/415)), keeping its place along
   that edge (`ButtonPlace.snap`, also applied when a saved place is read, so an older middle or
   off-screen place snaps; no animation, [#275](https://github.com/martonpaulo/ink-tools/issues/275)). The place is saved as fractions of the screen so it stays on an edge
   when the screen turns (`ButtonGesture`, `ButtonPlace`); Settings' «Reset Button Position» puts it
