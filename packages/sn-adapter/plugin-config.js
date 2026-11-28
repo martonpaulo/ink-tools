@@ -54,7 +54,7 @@ exports.jestSdkMock = path.join(__dirname, 'testing', 'sn-plugin-lib.ts');
 exports.jestModuleNameMapper = {
   [`^${NAME}$`]: path.join(__dirname, 'src'),
   [`^${NAME}/official$`]: path.join(__dirname, 'src', 'official'),
-  [`^${NAME}/registry$`]: path.join(__dirname, 'src', 'registry.generated'),
+  [`^${NAME}/registry$`]: path.join(__dirname, 'registry'),
   [`^${NAME}/actions$`]: path.join(__dirname, 'src', 'official', 'actions'),
   [`^${NAME}/buttons$`]: path.join(__dirname, 'src', 'official', 'buttonValues'),
 };

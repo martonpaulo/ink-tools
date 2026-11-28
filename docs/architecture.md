@@ -126,7 +126,7 @@ The owner's rules for keeping each part replaceable (2026-11-14):
   (`cli/inkctl/README.md`), the `off` field of the registry, whose review date fails the
   `registry` gate once passed, and the compatibility table: a device round copies the run's
   `~/.cache/inkctl/watch/<fingerprint>.json` into `registry/watch/`, and
-  `python3 scripts/registry.py --write` writes `docs/compatibility.md` from every file there. Prior art: [`research/2026-11-architecture-prior-art.md`](research/2026-11-architecture-prior-art.md).
+  `python3 scripts/registry.py --write` writes `docs/compatibility.md` from every file there. The plugins tell a user with neither the Helper nor `inkctl` ([#492](https://github.com/martonpaulo/ink-tools/issues/492)): at start, Device Link, Image Editing, Smart Pen, Lasso Actions and Puzzles read the kill switch of the items they use (`sn-adapter`'s `brokenFeatures`, each plugin's `src/firmware.ts`) and show ui-kit's `firmwareProblem` as a Needs state naming the feature and what still works; with every item on, nothing shows. Prior art: [`research/2026-11-architecture-prior-art.md`](research/2026-11-architecture-prior-art.md).
 - **No fallback for a Supernote internal.** A broken internal stops its module and says so; it never
   takes a hidden second path. Outside services may keep a second source, such as the offline then
   online dictionary or a second translator (owner, 2026-11-25).

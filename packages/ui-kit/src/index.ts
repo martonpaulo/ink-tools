@@ -38,3 +38,4 @@ export {ActionRow, ChoiceList, RADIO_LIST_ID, RowGroup, SwitchGroup, SwitchRow} 
 export type {ActionRowProps, Choice, ChoiceListProps, RowGroupProps, SwitchRowProps} from './SettingRows';
 export type {IconButtonProps, IconKind} from './IconButton';
 export type {ErrorViewProps, NeedsProps} from './ProblemView';
+export {FIRMWARE_REASON, firmwareProblem, holdFirmwareNotice} from './firmwareProblem';

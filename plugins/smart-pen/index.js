@@ -20,6 +20,7 @@ import {
   unregisterButton,
 } from '@ink-tools/sn-adapter/official';
 import {Buttons, converterFor} from './src/modules/text/buttons';
+import {checkFirmware} from './src/firmware';
 import {
   DEVICE_CONVERT,
   DEVICE_LASSO,
@@ -137,3 +138,6 @@ initPlugin()
   })
   .then(applySettings)
   .catch(error => log(`start: ${String(error)}`));
+
+// A firmware update that turned a feature off is told once, at start (#492).
+checkFirmware().catch(error => log(`firmware check: ${String(error)}`));

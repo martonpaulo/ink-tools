@@ -13,6 +13,11 @@ import {
   requestPermission,
 } from '@ink-tools/sn-adapter/official';
 import {
+  brokenFeatures,
+  REGISTRY_ITEMS,
+  type RegistryItem,
+} from '@ink-tools/sn-adapter/registry';
+import {
   Chevron,
   ErrorView,
   ListRow,
@@ -20,11 +25,13 @@ import {
   Needs,
   RowGroup,
   shared,
+  firmwareProblem,
   TitleBar,
   useBackKey,
   type Problem,
 } from '@ink-tools/ui-kit';
 import {copy} from './copy';
+import {STILL_WORKS, WATCH} from './firmware';
 import {GAMES, type Game} from './games';
 import {
   CHECK_FAILED,
@@ -48,6 +55,8 @@ export type PuzzlesViewProps = {
   close?: () => void;
   ports?: RequirementPorts;
   games?: readonly Game[];
+  /** The registry's items; tests pass fakes (#492). */
+  items?: readonly RegistryItem[];
 };
 
 type Screen =
@@ -61,12 +70,29 @@ export function PuzzlesView({
   close = () => closePluginView(),
   ports = DEVICE_PORTS,
   games = GAMES,
+  items = REGISTRY_ITEMS,
 }: PuzzlesViewProps): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>({kind: 'list'});
   const list = useCallback(() => setScreen({kind: 'list'}), []);
+  /** The game list, or the Needs state when a Supernote update turned a feature off (#492). */
+  const start = useCallback(() => {
+    setScreen({kind: 'list'});
+    brokenFeatures(WATCH, items, line => console.log(`Puzzles: ${line}`)).then(
+      broken => {
+        const problem = firmwareProblem(broken, STILL_WORKS);
+        if (problem !== null) {
+          setScreen({kind: 'needs', problem});
+        }
+      },
+      error => console.log(`Puzzles: firmware check failed: ${String(error)}`),
+    );
+  }, [items]);
+  useEffect(() => {
+    start();
+  }, [start]);
   // The view outlives a close, so each press starts at the game list, never on the screen the last
   // one ended on, such as a solution (device round, #386); `src/toolbar.ts` lets the press reach here (#539).
-  useEffect(() => onButtonEvent(list), [list]);
+  useEffect(() => onButtonEvent(start), [start]);
 
   /** Checks what `game` needs, then opens it, or shows the Needs or Error state that stops it. */
   const open = useCallback(

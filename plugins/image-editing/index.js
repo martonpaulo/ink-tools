@@ -11,6 +11,7 @@ import {
   startButtonQueue,
 } from '@ink-tools/sn-adapter/official';
 import {registerEditorButton} from './src/buttons';
+import {checkFirmware} from './src/firmware';
 import {openEditor} from './src/editor';
 import {EDITOR_BUTTON_ID, EDITOR_TOOLBAR_ID} from './src/edits';
 
@@ -42,3 +43,8 @@ const listening = startButtonQueue(id => {
 if (!listening.ok) {
   console.error(`Retouch: button listener failed: ${listening.message}`);
 }
+
+// A firmware update that turned a feature off is told once, at start (#492).
+checkFirmware().catch(error => {
+  console.error(`Retouch: firmware check: ${error.message}`);
+});

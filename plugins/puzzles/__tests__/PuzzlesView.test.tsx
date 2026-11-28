@@ -12,6 +12,7 @@ import App from '../App';
 import {copy} from '../src/copy';
 import type {Game} from '../src/games';
 import type {RequirementPorts} from '../src/requirements';
+import {STILL_WORKS, WATCH} from '../src/firmware';
 import {onToolbarPress, PUZZLES_ID} from '../src/toolbar';
 
 const READ = 'plugin.permission.FILE:READ';
@@ -164,4 +165,29 @@ test('a new press of the toolbar button starts at the game list, never where the
   expect(show).toHaveBeenCalledTimes(1);
   expect(shownTexts(tree.root)).toContain('Test game');
   expect(shownTexts(tree.root)).not.toContain('Playing');
+});
+
+const itemsWith = (off: string | null) =>
+  WATCH.map(entry => ({
+    id: entry.item,
+    level: 5 as const,
+    impact: 'user' as const,
+    owner: 'ui-kit',
+    probe: null,
+    unprobed: 'synthetic',
+    active: 'synthetic',
+    off,
+  }));
+
+test('a feature a Supernote update turned off opens the view on a plain Needs notice (#492)', async () => {
+  const tree = await mount({ports: fakePorts(new Set()), games: [game()], items: itemsWith('reviewed until 2026-12-31')});
+  expect(state(tree, 'needs')).toHaveLength(1);
+  expect(shownTexts(tree.root)).toContain(`${WATCH[0].feature} is turned off`);
+  expect(shownTexts(tree.root).join(' ')).toContain(STILL_WORKS);
+});
+
+test('with every item on, the view opens on the game list and shows nothing extra (#492)', async () => {
+  const tree = await mount({ports: fakePorts(new Set()), games: [game()], items: itemsWith(null)});
+  expect(state(tree, 'needs')).toHaveLength(0);
+  expect(shownTexts(tree.root)).toContain('Test game');
 });

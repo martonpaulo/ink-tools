@@ -36,6 +36,7 @@ import {
 import {startTextSend} from './src/send/textSession';
 import {startPick} from './src/send/pickSession';
 import {relay} from './src/native';
+import {checkFirmware} from './src/firmware';
 import {ensurePermissions, logPermissions} from './src/permissions';
 import {runReceive} from './src/receive/session';
 import {placePendingOnPenUp, startBackgroundIfOn} from './src/receive/background';
@@ -56,6 +57,11 @@ function report(what, result) {
 }
 
 initPlugin().then(result => report('init', result));
+
+// A firmware update that turned a feature off is told once, at start (#492).
+initPlugin()
+  .then(() => checkFirmware())
+  .catch(error => console.error(`Relay: firmware check failed: ${error.message}`));
 
 // Each launch logs what the host holds; each tap asks for what is missing (#163).
 logPermissions().catch(error =>

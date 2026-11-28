@@ -15,6 +15,7 @@ import {DEFINE_BUTTON_ID, defineLasso} from './src/definition';
 import {SUMMARY_BUTTON_ID, summaryLasso} from './src/summary';
 import {CHOOSE_BUTTON_ID, MODES, TRANSLATIONS} from './src/modes';
 import {pictureLasso} from './src/pictures';
+import {checkFirmware} from './src/firmware';
 import {warmRanking} from '@ink-tools/picture-search';
 import {syncModules} from './src/modules';
 import {headingLevel} from './src/headings/buttons';
@@ -130,3 +131,8 @@ setTimeout(() => {
     console.error(`Lookup: warm-up: ${error.message}`);
   }
 }, 0);
+
+// A firmware update that turned a feature off is told once, at start (#492).
+checkFirmware().catch(error => {
+  console.error(`Lookup: firmware check: ${error.message}`);
+});
