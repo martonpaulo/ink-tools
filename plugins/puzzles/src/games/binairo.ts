@@ -20,7 +20,7 @@ import {
   type Difficulty,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const binairoCopy = {
   title: 'Binairo',
@@ -67,6 +67,6 @@ export const BINAIRO: PuzzleGame = {
       initial: BINAIRO_BANDS[0],
     },
   ],
-  create: (choices, seed, shape) => board(newBinairo(seed, Number(choices.size), choices.band as Difficulty), shape),
+  create: (choices, seed, shape) => drawn(newBinairo(seed, Number(choices.size), choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(binairoFromCode(code), shape),
 };

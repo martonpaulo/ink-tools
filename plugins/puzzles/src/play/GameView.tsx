@@ -30,7 +30,7 @@ import type {Game, GameViewProps} from '../games';
 import {playCopy} from './copy';
 import {devicePages, type Here, type PagePorts} from './pages';
 import {deviceKept, type KeptChoices} from './kept';
-import {offered, recalled, settle, type Choices, type GamePage, type PageShape, type Puzzle, type PuzzleGame, type Verdict} from './puzzle';
+import {clock, offered, recalled, settle, type Choices, type GamePage, type PageShape, type Puzzle, type PuzzleGame, type Verdict} from './puzzle';
 
 /** A fresh seed for each new puzzle: 40 bits, eight characters of the code's alphabet. */
 const SEED_RANGE = 2 ** 40;
@@ -180,14 +180,19 @@ export function GameView({
       if (!here.ok) {return failed(playCopy['error.here'], retry, here.message);}
       let board: GamePage;
       let png: Uint8Array;
+      const started = clock();
+      let made: number;
       try {
-        const made = game.create(choices, seed(), shapeOf(here.value));
+        const created = game.create(choices, seed(), shapeOf(here.value));
         // Its background's name says the layout it is drawn by, so the page opens by it later (#553).
-        board = {...made, code: placedPageCode(made.code)};
+        board = {...created, code: placedPageCode(created.code)};
+        made = clock();
         png = encodePng(board.page);
       } catch (error) {
         return failed(playCopy['error.add'], retry, String(error));
       }
+      // Each step's time apart, so a device round reads drawing and encoding without the generator (#379).
+      pages.log(`${game.id}: ${addTimes(board, made - started, clock() - made)}`);
       // The view closes first: the note reload of a successful insert can end this JavaScript, and a
       // view left open then stays frozen on Loading over a dead bridge (device round, #386). The note
       // shows the new page after the current one; only a failure opens the view again, on its Error.
@@ -361,6 +366,19 @@ function Ready({
       {!board && thisPage}
     </View>
   );
+}
+
+/**
+ * The log line of one «Add Page»'s times (#379): making the puzzle, drawing its page and encoding
+ * the PNG, each apart, in whole milliseconds. A page whose drawing was not timed says so.
+ */
+function addTimes(page: GamePage, createMs: number, encodeMs: number): string {
+  const ms = (value: number) => `${Math.round(value)} ms`;
+  const made =
+    page.drawMs === undefined
+      ? `generate and draw ${ms(createMs)}`
+      : `generate ${ms(createMs - page.drawMs)}, draw ${ms(page.drawMs)}`;
+  return `timed ${page.code}: ${made}, encode ${ms(encodeMs)}`;
 }
 
 /** A page picture the note never gets: the marks of «Check», or the solution. */

@@ -20,7 +20,7 @@ import {
   type Hitori,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const hitoriCopy = {
   title: 'Hitori',
@@ -63,6 +63,6 @@ export const HITORI: PuzzleGame = {
       initial: HITORI_BANDS[0],
     },
   ],
-  create: (choices, seed, shape) => board(newHitori(seed, Number(choices.size), choices.band as Difficulty), shape),
+  create: (choices, seed, shape) => drawn(newHitori(seed, Number(choices.size), choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(hitoriFromCode(code), shape),
 };

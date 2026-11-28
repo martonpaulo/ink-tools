@@ -17,7 +17,7 @@ import {
   type Difficulty,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const calcudokuCopy = {
   title: 'Calcudoku',
@@ -63,6 +63,6 @@ export const CALCUDOKU: PuzzleGame = {
       initial: 'easy',
     },
   ],
-  create: (choices, seed, shape) => board(generateCalcudoku(seed, Number(choices.size), choices.band as Difficulty), shape),
+  create: (choices, seed, shape) => drawn(generateCalcudoku(seed, Number(choices.size), choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(calcudokuFromCode(code), shape),
 };

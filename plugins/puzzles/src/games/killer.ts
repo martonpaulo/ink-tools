@@ -16,7 +16,7 @@ import {
   type KillerSudoku,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const killerCopy = {
   title: 'Killer Sudoku',
@@ -55,6 +55,6 @@ export const KILLER: PuzzleGame = {
       initial: BANDS[0],
     },
   ],
-  create: (choices, seed, shape) => board(generateKiller(seed, choices.band as Difficulty), shape),
+  create: (choices, seed, shape) => drawn(generateKiller(seed, choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(killerFromCode(code), shape),
 };

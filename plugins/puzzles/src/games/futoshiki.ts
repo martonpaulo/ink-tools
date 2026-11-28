@@ -15,7 +15,7 @@ import {
   type Futoshiki,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const futoshikiCopy = {
   title: 'Futoshiki',
@@ -59,6 +59,6 @@ export const FUTOSHIKI: PuzzleGame = {
       initial: 'easy',
     },
   ],
-  create: (choices, seed, shape) => board(generateFutoshiki(seed, Number(choices.size), choices.band as Difficulty), shape),
+  create: (choices, seed, shape) => drawn(generateFutoshiki(seed, Number(choices.size), choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(futoshikiFromCode(code), shape),
 };

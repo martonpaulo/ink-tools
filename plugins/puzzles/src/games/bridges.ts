@@ -19,7 +19,7 @@ import {
   type Difficulty,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const bridgesCopy = {
   title: 'Bridges',
@@ -65,7 +65,7 @@ export const BRIDGES: PuzzleGame = {
   ],
   create: (choices, seed, shape) => {
     const side = Number(choices.size);
-    return board(newBridges(seed, {width: side, height: side}, choices.band as Difficulty), shape);
+    return drawn(newBridges(seed, {width: side, height: side}, choices.band as Difficulty), made => board(made, shape));
   },
   open: (code, shape) => board(bridgesFromCode(code), shape),
 };

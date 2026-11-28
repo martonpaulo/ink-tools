@@ -17,7 +17,7 @@ import {
   type JigsawSudoku,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const jigsawCopy = {
   title: 'Jigsaw Sudoku',
@@ -53,6 +53,6 @@ export const JIGSAW: PuzzleGame = {
       initial: JIGSAW_BANDS[0],
     },
   ],
-  create: (choices, seed, shape) => board(generateJigsawSudoku(seed, choices.band as Difficulty), shape),
+  create: (choices, seed, shape) => drawn(generateJigsawSudoku(seed, choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(jigsawFromCode(code), shape),
 };

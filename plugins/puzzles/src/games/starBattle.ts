@@ -22,7 +22,7 @@ import {
   type StarBattle,
 } from '@ink-tools/puzzle-core';
 import {playCopy} from '../play/copy';
-import type {PageShape, Puzzle, PuzzleGame} from '../play/puzzle';
+import {drawn, type PageShape, type Puzzle, type PuzzleGame} from '../play/puzzle';
 
 export const starBattleCopy = {
   title: 'Star Battle',
@@ -85,6 +85,6 @@ export const STAR_BATTLE: PuzzleGame = {
     },
   ],
   create: (choices, seed, shape) =>
-    board(newStarBattle(seed, {side: Number(choices.size), stars: Number(choices.stars) as 1 | 2}, choices.band as Difficulty), shape),
+    drawn(newStarBattle(seed, {side: Number(choices.size), stars: Number(choices.stars) as 1 | 2}, choices.band as Difficulty), made => board(made, shape)),
   open: (code, shape) => board(starBattleFromCode(code), shape),
 };
