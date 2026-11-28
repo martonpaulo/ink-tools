@@ -16,6 +16,8 @@ import path from 'path';
 import {act} from 'react-test-renderer';
 import {metrics} from '@ink-tools/ui-kit';
 import {textStyles} from '../src/metrics';
+import {NEXT_PAGE_LABEL} from '../src/controlsCopy';
+import {PAGED_LIST_ID} from '../src/PagedList';
 import {animationBreaks, toHtml, WINDOW, WINDOW_NAME} from './html';
 import {breaksOf, layoutBreaks, Measured, missingBarBreaks, Native, nativeBreaks, rawBreaks, scrollBreaks} from './rules';
 import {SCREENS as PLUGIN_SCREENS, settle} from './screens';
@@ -89,6 +91,8 @@ const LAYOUT_ROUNDS = 8;
 const KNOWN: Record<string, string[]> = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'known-breaks.json'), 'utf8'),
 ).screens;
+/** The pages of one screen the renders turn to, at most (#548). */
+const MAX_PAGES = 6;
 const SCROLL_TO_END =
   "document.querySelectorAll('[data-scroll]').forEach(el => { el.scrollTop = el.scrollHeight; })";
 
@@ -197,6 +201,25 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
       await page.screenshot({path: path.join(OUT, `${screen.name}-end.png`)});
       report[screen.name].push(
         ...scrollBreaks(await page.evaluate<Measured>(MEASURE)),
+      );
+    }
+    // Every later page of a paged list, checked as the first (#548): its next arrow pressed.
+    for (let shown = 2; shown <= MAX_PAGES; shown++) {
+      const next = tree.root
+        .findAll(node => node.props.testID === PAGED_LIST_ID)
+        .flatMap(list =>
+          list.findAll(node => node.props.accessibilityLabel === NEXT_PAGE_LABEL && typeof node.props.onPress === 'function' && !node.props.disabled),
+        )[0];
+      if (!next) {
+        break;
+      }
+      await act(async () => next.props.onPress());
+      const turned = await laidOut(tree);
+      await page.setContent(toHtml(turned, scale), {waitUntil: 'load'});
+      await page.screenshot({path: path.join(OUT, `${screen.name}-p${shown}.png`)});
+      const later = await page.evaluate<Measured>(MEASURE);
+      report[screen.name].push(
+        ...[...breaksOf(later, metrics), ...nativeBreaks(later, NATIVE), ...layoutBreaks(later, metrics)].map(line => `page ${shown}: ${line}`),
       );
     }
     await act(async () => {

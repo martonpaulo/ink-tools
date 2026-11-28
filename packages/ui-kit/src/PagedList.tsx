@@ -1,22 +1,24 @@
 /**
  * Lists and screens that page instead of scrolling, as the Supernote's own lists do (owner,
  * 2026-11-28, superseding D108's «More below» for lists of same-family items, #548): what fits the
- * space the parent gives, whole, then the native `Pager` at the bottom when more pages follow.
- * Nothing scrolls, so the e-ink screen never redraws a list in its fast, faded mode (#575), and
- * nothing ends inside a row or under a fixed control (#578).
+ * space the parent gives, whole, then the native `Pager` under it when more pages follow. Nothing
+ * scrolls, so the e-ink screen never redraws a list in its fast, faded mode (#575), and nothing
+ * ends inside a row or under a fixed control (#578).
  *
- * - `PagedList`: rows of one family under one caption, the caption and note on every page.
- * - `PagedColumn`: a screen's parts, such as several `RowGroup`s, kept whole, one page after another.
+ * - `PagedColumn`: a screen's parts, one page after another. A `RowGroup` taller than a page goes
+ *   on over several pages, its caption and note on each, so every row stays reachable.
+ * - `PagedList`: rows of one family under one caption: a `PagedColumn` of one `RowGroup`.
  *
- * Both measure before they page: the first layout draws every part, invisible, in the box; each
- * part's height and the box's give the pages, which the next layout draws. Where nothing lays out,
- * as in a unit test, every part stays drawn, so a test still finds each row.
+ * It measures before it pages: the first layout draws every part, invisible, in its box, and each
+ * row's, group's and part's height gives the pages. Each shown part goes on reporting its height,
+ * so a part that grows or appears pages again; one not measured yet counts as a native row.
+ * Where nothing lays out, as in a unit test, every part stays drawn, so a test still finds it.
  */
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {LayoutChangeEvent, StyleSheet, View} from 'react-native';
 import {metrics} from './metrics';
 import {Pager} from './Pager';
-import {RowGroup} from './SettingRows';
+import {RowGroup, RowGroupProps} from './SettingRows';
 
 /** The `nativeID` of a paged list or column, which the render rules find it by (#548). */
 export const PAGED_LIST_ID = 'paged-list';
@@ -24,24 +26,36 @@ export const PAGED_LIST_ID = 'paged-list';
 /** A layout unit's fraction a drawn edge may be off by. */
 const TOLERANCE = 0.5;
 
-/** One page: the parts from `from` up to, not including, `to`. */
+/** One page: the units from `from` up to, not including, `to`. */
 export type PageRange = {from: number; to: number};
 
 /**
- * The pages of parts of `heights` in `room`: each page holds `chrome` (a caption, a note, a line)
- * and its parts with `gap` between two; when one page cannot hold them all, every page keeps
- * `pager` for the pager. A part taller than a page gets a page of its own.
+ * What a page is made of: a part drawn whole, or one row of a `RowGroup`, which costs its
+ * group's caption, note and lines (`chrome`) on each page the group shows on, and the light line
+ * (`gap`) between two of its rows.
  */
-export function paginate(heights: readonly number[], room: number, chrome: number, gap: number, pager: number): PageRange[] {
-  const tall = (from: number, to: number) =>
-    chrome + heights.slice(from, to).reduce((sum, h) => sum + h, 0) + gap * Math.max(0, to - from - 1);
-  if (tall(0, heights.length) <= room + TOLERANCE) {
-    return [{from: 0, to: heights.length}];
+export type Unit = {height: number; group?: {key: string; chrome: number; gap: number}};
+
+/** The height of `units` on one page. */
+function pageHeight(units: readonly Unit[]): number {
+  return units.reduce((sum, unit, i) => {
+    const joined = unit.group && units[i - 1]?.group?.key === unit.group.key;
+    return sum + unit.height + (unit.group ? (joined ? unit.group.gap : unit.group.chrome) : 0);
+  }, 0);
+}
+
+/**
+ * The pages of `units` in `room`: one page when everything fits with no pager, else as many units
+ * as fit beside `pager` on each page, at least one; a unit taller than a page gets one of its own.
+ */
+export function paginate(units: readonly Unit[], room: number, pager: number): PageRange[] {
+  if (pageHeight(units) <= room + TOLERANCE) {
+    return [{from: 0, to: units.length}];
   }
   const pages: PageRange[] = [];
-  for (let from = 0; from < heights.length; ) {
+  for (let from = 0; from < units.length; ) {
     let to = from + 1;
-    while (to < heights.length && tall(from, to + 1) + pager <= room + TOLERANCE) {
+    while (to < units.length && pageHeight(units.slice(from, to + 1)) + pager <= room + TOLERANCE) {
       to += 1;
     }
     pages.push({from, to});
@@ -50,89 +64,135 @@ export function paginate(heights: readonly number[], room: number, chrome: numbe
   return pages;
 }
 
-type Measure = {
-  /** The box's height, once laid out. */
-  room: number | null;
-  /** Each part's height, by its key, once laid out: a part shown or hidden keeps the others'. */
-  heights: Record<string, number>;
-  /** The whole drawn height of the parts with their chrome, once laid out. */
-  whole: number | null;
-};
+type Group = {key: string; props: RowGroupProps};
+type Item = {key: string; node: React.ReactNode; group?: Group};
 
 /**
- * The parts as a flat list with their keys: a fragment's children are parts of their own, as a
- * group a setting shows or hides is written as a fragment; `false`, `null` and `undefined` leave.
+ * The units of `children` with their keys: a fragment's parts are parts of their own, as a group
+ * a setting shows or hides is written as a fragment; a `RowGroup` with rows gives one unit per
+ * row; `false`, `null` and `undefined` leave.
  */
-export function partsOf(children: React.ReactNode, prefix = ''): {key: string; part: React.ReactNode}[] {
-  return React.Children.toArray(children).flatMap((child, index) => {
+export function partsOf(children: React.ReactNode, prefix = ''): Item[] {
+  return React.Children.toArray(children).flatMap((child, index): Item[] => {
     const key = `${prefix}${React.isValidElement(child) && child.key !== null ? child.key : index}`;
-    if (React.isValidElement(child) && child.type === React.Fragment) {
+    if (!React.isValidElement(child)) {
+      return [{key, node: child}];
+    }
+    if (child.type === React.Fragment) {
       return partsOf((child.props as {children?: React.ReactNode}).children, `${key}/`);
     }
-    return [{key, part: child}];
+    if (child.type === RowGroup) {
+      const props = child.props as RowGroupProps;
+      const rows = React.Children.toArray(props.children);
+      if (rows.length > 0) {
+        const group = {key, props};
+        return rows.map((row, i) => ({
+          key: `${key}/${React.isValidElement(row) && row.key !== null ? row.key : i}`,
+          node: row,
+          group,
+        }));
+      }
+    }
+    return [{key, node: child}];
   });
 }
 
-/** The pages of the parts with `keys`, from their measured heights; null until every height is known. */
-function usePages(keys: readonly string[], chromeOf: (m: Measure, sum: number) => number, gap: number) {
-  const [measure, setMeasure] = useState<Measure>({room: null, heights: {}, whole: null});
-  const [page, setPage] = useState(1);
-  const changed = (a: number | null | undefined, b: number) => a === null || a === undefined || Math.abs(a - b) > TOLERANCE;
-  const onBox = (event: LayoutChangeEvent) => {
-    const next = event.nativeEvent.layout.height;
-    setMeasure(m => (changed(m.room, next) ? {...m, room: next} : m));
-  };
-  const onWhole = (event: LayoutChangeEvent) => {
-    const next = event.nativeEvent.layout.height;
-    setMeasure(m => (changed(m.whole, next) ? {...m, whole: next} : m));
-  };
-  const onPart = (key: string) => (event: LayoutChangeEvent) => {
-    const next = event.nativeEvent.layout.height;
-    setMeasure(m => (changed(m.heights[key], next) ? {...m, heights: {...m.heights, [key]: next}} : m));
-  };
-  const heights = keys.map(key => measure.heights[key]);
-  const known = measure.room !== null && measure.whole !== null && heights.every(h => h !== undefined);
-  let pages: PageRange[] | null = null;
-  if (known) {
-    const sizes = heights as number[];
-    const sum = sizes.reduce((total, h) => total + h, 0);
-    pages = paginate(sizes, measure.room as number, chromeOf(measure, sum), gap, metrics.touchTarget);
-  }
-  const current = pages ? Math.min(page, pages.length) : 1;
-  return {pages, current, setPage, onBox, onWhole, onPart};
+/** The heights measured so far, by key: the box, a unit, or a group's whole drawn height. */
+type Heights = Record<string, number>;
+const BOX = 'box';
+const wholeOf = (group: string) => `group:${group}`;
+
+/** Each item as a unit, from what was measured, else the native row and group sizes. */
+function unitsOf(items: readonly Item[], heights: Heights): Unit[] {
+  return items.map(item => {
+    const height = heights[item.key] ?? metrics.rowHeight;
+    if (!item.group) {
+      return {height};
+    }
+    const {key, props} = item.group;
+    const rows = items.filter(other => other.group?.key === key);
+    const whole = heights[wholeOf(key)];
+    const sum = rows.reduce((total, row) => total + (heights[row.key] ?? metrics.rowHeight), 0);
+    const gap = metrics.lightLine;
+    // The caption, the note, the solid line and the gap under it: the group less its rows and lines.
+    const chrome =
+      whole === undefined
+        ? (props.caption !== undefined ? metrics.captionHeight : 0) + metrics.separator + metrics.sectionGap
+        : whole - sum - gap * (rows.length - 1);
+    return {height, group: {key, chrome, gap}};
+  });
 }
 
-/** The parts, each in a view that reports its height. */
-const measured = (parts: {key: string; part: React.ReactNode}[], onPart: (key: string) => (event: LayoutChangeEvent) => void) =>
-  parts.map(({key, part}) => (
-    <View key={key} onLayout={onPart(key)}>
-      {part}
-    </View>
-  ));
-/** The parts of one page, keyed. */
-const shownOf = (parts: {key: string; part: React.ReactNode}[], range: PageRange) =>
-  parts.slice(range.from, range.to).map(({key, part}) => <React.Fragment key={key}>{part}</React.Fragment>);
+/** Draws `items`, each in a view that reports its height, rows of one group in one `RowGroup`. */
+function drawn(items: readonly Item[], all: readonly Item[], measure: (key: string) => (event: LayoutChangeEvent) => void) {
+  const out: React.ReactNode[] = [];
+  for (let i = 0; i < items.length; ) {
+    const item = items[i];
+    if (!item.group) {
+      out.push(
+        <View key={item.key} onLayout={measure(item.key)}>
+          {item.node}
+        </View>,
+      );
+      i += 1;
+      continue;
+    }
+    const {key, props} = item.group;
+    let end = i;
+    while (end < items.length && items[end].group?.key === key) {
+      end += 1;
+    }
+    const rows = items.slice(i, end);
+    const whole = rows.length === all.filter(other => other.group?.key === key).length;
+    out.push(
+      // A whole group reports its drawn height, from which its caption and note are known.
+      <View key={`${key}@${rows[0].key}`} onLayout={whole ? measure(wholeOf(key)) : undefined}>
+        <RowGroup caption={props.caption} note={props.note}>
+          {rows.map(row => (
+            <View key={row.key} onLayout={measure(row.key)}>
+              {row.node}
+            </View>
+          ))}
+        </RowGroup>
+      </View>,
+    );
+    i = end;
+  }
+  return out;
+}
 
-function Pages({
-  pages,
-  current,
-  setPage,
-  onBox,
-  children,
-}: {
-  pages: PageRange[] | null;
-  current: number;
-  setPage: (page: number) => void;
-  onBox: (event: LayoutChangeEvent) => void;
-  children: React.ReactNode;
-}): React.JSX.Element {
+export type PagedColumnProps = {
+  /** The screen's parts, such as `RowGroup`s; a group taller than a page goes on over pages. */
+  children?: React.ReactNode;
+};
+
+/** A screen's parts, one page after another (#548). */
+export function PagedColumn({children}: PagedColumnProps): React.JSX.Element {
+  const items = partsOf(children);
+  const [heights, setHeights] = useState<Heights>({});
+  const [page, setPage] = useState(1);
+  // Once paged, a part shown later is measured where it shows, so the page never goes blank.
+  const pagedOnce = useRef(false);
+  const measure = (key: string) => (event: LayoutChangeEvent) => {
+    const next = event.nativeEvent.layout.height;
+    setHeights(old => (old[key] !== undefined && Math.abs(old[key] - next) <= TOLERANCE ? old : {...old, [key]: next}));
+  };
+  const room = heights[BOX];
+  const groups = [...new Set(items.flatMap(item => (item.group ? [item.group.key] : [])))];
+  const unmeasured =
+    items.some(item => heights[item.key] === undefined) || groups.some(key => heights[wholeOf(key)] === undefined);
+  const first = room === undefined || (!pagedOnce.current && unmeasured);
+  const pages = first ? null : paginate(unitsOf(items, heights), room, metrics.touchTarget);
+  if (pages) {
+    pagedOnce.current = true;
+  }
+  const current = pages ? Math.min(page, pages.length) : 1;
+  const range = pages ? pages[current - 1] : {from: 0, to: items.length};
   return (
-    <View nativeID={PAGED_LIST_ID} testID={PAGED_LIST_ID} style={styles.box} onLayout={onBox}>
-      {/* Until it is measured, the page is drawn invisible: a guessed page would flash on e-ink. */}
-      <View style={[styles.content, !pages && styles.measuring]}>
-        {children}
-        {pages && pages.length > 1 && <Pager page={current} total={pages.length} onPage={setPage} />}
-      </View>
+    <View nativeID={PAGED_LIST_ID} testID={PAGED_LIST_ID} style={styles.box} onLayout={measure(BOX)}>
+      <View style={[styles.content, first && styles.measuring]}>{drawn(items.slice(range.from, range.to), items, measure)}</View>
+      {/* Outside the clipped part, so a page that runs long still shows its pager. */}
+      {pages && pages.length > 1 && <Pager page={current} total={pages.length} onPage={setPage} />}
     </View>
   );
 }
@@ -148,43 +208,19 @@ export type PagedListProps = {
 
 /** Rows of one family under one caption, paged (#548). */
 export function PagedList({caption, children, note}: PagedListProps): React.JSX.Element {
-  const rows = partsOf(children);
-  // The group's caption, note and lines: its drawn height less its rows and the lines between them.
-  const chromeOf = (m: Measure, sum: number) => (m.whole as number) - sum - metrics.lightLine * Math.max(0, rows.length - 1);
-  const {pages, current, setPage, onBox, onWhole, onPart} = usePages(rows.map(r => r.key), chromeOf, metrics.lightLine);
-  const range = pages ? pages[current - 1] : {from: 0, to: rows.length};
   return (
-    <Pages pages={pages} current={current} setPage={setPage} onBox={onBox}>
-      <View onLayout={pages ? undefined : onWhole}>
-        <RowGroup caption={caption} note={note}>
-          {pages ? shownOf(rows, range) : measured(rows, onPart)}
-        </RowGroup>
-      </View>
-    </Pages>
-  );
-}
-
-export type PagedColumnProps = {
-  /** The screen's parts, such as `RowGroup`s, each kept whole on one page. */
-  children?: React.ReactNode;
-};
-
-/** A screen's parts, one page after another, for a screen that is more than one list (#548). */
-export function PagedColumn({children}: PagedColumnProps): React.JSX.Element {
-  const parts = partsOf(children);
-  const {pages, current, setPage, onBox, onWhole, onPart} = usePages(parts.map(p => p.key), () => 0, 0);
-  const range = pages ? pages[current - 1] : {from: 0, to: parts.length};
-  return (
-    <Pages pages={pages} current={current} setPage={setPage} onBox={onBox}>
-      <View onLayout={pages ? undefined : onWhole}>{pages ? shownOf(parts, range) : measured(parts, onPart)}</View>
-    </Pages>
+    <PagedColumn>
+      <RowGroup caption={caption} note={note}>
+        {children}
+      </RowGroup>
+    </PagedColumn>
   );
 }
 
 const styles = StyleSheet.create({
   // The space the parent leaves, never more: a fixed part under it keeps its own room (#578).
-  box: {flex: 1, overflow: 'hidden'},
-  // The pager at the bottom of the box, as the native lists put it.
-  content: {flexGrow: 1, justifyContent: 'space-between'},
+  box: {flex: 1},
+  // The page's parts, clipped to the room the pager leaves.
+  content: {flex: 1, overflow: 'hidden'},
   measuring: {opacity: 0},
 });

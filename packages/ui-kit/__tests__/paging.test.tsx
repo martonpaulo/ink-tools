@@ -13,21 +13,32 @@ import {paginate, partsOf} from '../src/PagedList';
 const noop = () => {};
 const NAMES = Array.from({length: 7}, (_, i) => `Sample ${i + 1}`);
 
+const row = (height: number) => ({height});
+const inGroup = (height: number) => ({height, group: {key: 'g', chrome: 50, gap: 1}});
+
 describe('paginate', () => {
   it('keeps every part on one page when they fit with no pager', () => {
-    expect(paginate([80, 80, 80], 300, 50, 1, 60)).toEqual([{from: 0, to: 3}]);
+    expect(paginate([row(80), row(80), row(80)], 300, 60)).toEqual([{from: 0, to: 3}]);
   });
 
   it('pages whole parts, keeping room for the pager on every page', () => {
-    expect(paginate([80, 80, 80, 80, 80], 300, 50, 0, 60)).toEqual([
+    expect(paginate([row(80), row(80), row(80), row(80), row(80)], 250, 60)).toEqual([
       {from: 0, to: 2},
       {from: 2, to: 4},
       {from: 4, to: 5},
     ]);
   });
 
+  it('splits a group taller than a page into rows, its caption and note on each page', () => {
+    // Each page holds the group's 50 of caption and note, two rows of 80 and the line between.
+    expect(paginate([inGroup(80), inGroup(80), inGroup(80), inGroup(80)], 50 + 161 + 60, 60)).toEqual([
+      {from: 0, to: 2},
+      {from: 2, to: 4},
+    ]);
+  });
+
   it('gives a part taller than a page a page of its own', () => {
-    expect(paginate([500, 80], 300, 0, 0, 60)).toEqual([
+    expect(paginate([row(500), row(80)], 300, 60)).toEqual([
       {from: 0, to: 1},
       {from: 1, to: 2},
     ]);
@@ -35,17 +46,25 @@ describe('paginate', () => {
 });
 
 describe('partsOf', () => {
-  it('opens fragments and leaves out what draws nothing', () => {
+  it('opens fragments and groups, and leaves out what draws nothing', () => {
     const parts = partsOf([
       <Text key="a">a</Text>,
       false,
       <React.Fragment key="f">
         <Text key="b">b</Text>
         {null}
-        <Text key="c">c</Text>
+        <RowGroup key="g" caption="G">
+          <ListRow key="r1" title="1" />
+          <ListRow key="r2" title="2" />
+        </RowGroup>
       </React.Fragment>,
     ]);
-    expect(parts.map(p => p.key)).toEqual(['.$a', '.$f/.$b', '.$f/.$c']);
+    expect(parts.map(p => [p.key, p.group?.key ?? null])).toEqual([
+      ['.$a', null],
+      ['.$f/.$b', null],
+      ['.$f/.$g/.$r1', '.$f/.$g'],
+      ['.$f/.$g/.$r2', '.$f/.$g'],
+    ]);
   });
 });
 

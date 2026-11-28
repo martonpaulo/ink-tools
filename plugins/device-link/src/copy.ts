@@ -53,7 +53,7 @@ export const copy = {
   receiveInBackground: 'Receive in the background',
   receiveInBackgroundHint: 'Takes what LocalSend sends while the tablet is awake.',
   receiveInBackgroundNote:
-    'You do not need to open Receive. Each text or picture goes into the open note, or waits for the next note you write in. Stop turns it off.',
+    'You do not need to open Receive. Each text or image goes into the open note, or waits for the next note you write in. Stop turns it off.',
   /** A background receive that failed (#289): the switch now reads off, and this says why. */
   backgroundStopped: (why: string) => `Receiving in the background stopped: ${why}`,
   insertFailed: 'Could not add it to the note',

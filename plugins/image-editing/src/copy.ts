@@ -24,7 +24,7 @@ export const copy = {
   'editor.edits': 'Edit',
   'editor.pen': 'Draw with the pen',
   'editor.back': 'Go back',
-  'editor.page': 'Every picture on the page',
+  'editor.page': 'Every image on the page',
   /** Erase erases each stroke when the pen lifts, and Done keeps them (#278). */
   'editor.drawErase':
     'Draw over the part to erase. It is erased when you lift the pen. Press Done to keep the changes.',

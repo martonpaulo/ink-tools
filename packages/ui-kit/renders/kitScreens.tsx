@@ -5,9 +5,12 @@
  */
 import React from 'react';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {Button, ChoiceList, ListRow, MediaFrame, PagedList, RowGroup, shared, TitleBar} from '@ink-tools/ui-kit';
 import type {ScreenRender} from './screens';
+import {EditsForm as ImageEditsForm} from '../../../plugins/image-editing/src/EditsForm';
+import {defaultSettings as imageEditingDefaults} from '../../../plugins/image-editing/src/edits';
+import {copy as imageEditingCopy} from '../../../plugins/image-editing/src/copy';
 
 async function mount(element: React.ReactElement): Promise<ReactTestRenderer> {
   let tree!: ReactTestRenderer;
@@ -69,9 +72,24 @@ function Picture({width, height}: {width: number; height: number}): React.JSX.El
   );
 }
 
+/** Image Editing's Settings: one group of every edit, taller than a page, then two more (#548). */
+function ImageEditingSettings(): React.JSX.Element {
+  return (
+    <View style={shared.screen}>
+      <TitleBar title={imageEditingCopy.title} onClose={noop} />
+      <View style={styles.fill}>
+        <ImageEditsForm settings={imageEditingDefaults} onChange={noop} />
+      </View>
+    </View>
+  );
+}
+
 export const KIT_SCREENS: ScreenRender[] = [
+  {name: 'image-editing-settings', render: () => mount(<ImageEditingSettings />)},
   {name: 'ui-kit-paged-list', render: () => mount(<LongList />)},
   {name: 'ui-kit-paged-choices', render: () => mount(<LongChoices />)},
   {name: 'ui-kit-media-wide', render: () => mount(<Picture width={1600} height={600} />)},
   {name: 'ui-kit-media-tall', render: () => mount(<Picture width={1920} height={2560} />)},
 ];
+
+const styles = StyleSheet.create({fill: {flex: 1}});

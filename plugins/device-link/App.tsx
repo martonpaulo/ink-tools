@@ -336,6 +336,8 @@ export function SettingsForm({
         <Text style={shared.text}>{copy.noDevice}</Text>
       ) : (
         <ChoiceList
+          // Any number of receivers: the values page above the button, never run under it (#548).
+          paged
           title={copy.listedFirst}
           choices={devices.map(device => ({
             value: device.fingerprint,

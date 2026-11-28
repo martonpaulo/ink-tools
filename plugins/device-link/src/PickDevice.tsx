@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import {View} from 'react-native';
-import {ListRow, RowGroup, shared, TitleBar} from '@ink-tools/ui-kit';
+import {ListRow, PagedList, shared, TitleBar} from '@ink-tools/ui-kit';
 import {copy} from './copy';
 import {Device} from './localsend/protocol';
 
@@ -32,8 +32,9 @@ export function PickDevice({
   /** Absent while a send runs: the rows show, and a tap does nothing. */
   onPick?: (device: Device) => void;
 }) {
+  // Any number of receivers: the rows page with the native pager, never run off the screen (#548).
   return (
-    <RowGroup caption={copy.devices}>
+    <PagedList caption={copy.devices}>
       {devices.map(device => (
         <ListRow
           key={device.fingerprint}
@@ -42,7 +43,7 @@ export function PickDevice({
           onPress={onPick ? () => onPick(device) : undefined}
         />
       ))}
-    </RowGroup>
+    </PagedList>
   );
 }
 

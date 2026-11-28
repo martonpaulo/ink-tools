@@ -7,7 +7,7 @@ export const copy = {
   'settings.modules': 'Modules',
   'module.lookup': 'Lookup',
   'module.lookupNote':
-    'Lasso a handwritten word and insert a picture, a definition, a summary or a translation for it.',
+    'Lasso a handwritten word and insert an image, a definition, a summary or a translation for it.',
   'module.headings': 'Headings',
   'module.headingsNote':
     'Lasso a handwritten line and make it a heading of level 1 to 4, moved to the left margin.',
