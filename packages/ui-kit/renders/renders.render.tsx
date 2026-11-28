@@ -19,7 +19,7 @@ import {textStyles} from '../src/metrics';
 import {NEXT_PAGE_LABEL} from '../src/controlsCopy';
 import {PAGED_LIST_ID} from '../src/PagedList';
 import {animationBreaks, toHtml, WINDOW, WINDOW_NAME} from './html';
-import {breaksOf, layoutBreaks, Measured, missingBarBreaks, Native, nativeBreaks, rawBreaks, scrollBreaks} from './rules';
+import {breaksOf, emptyPageBreaks, layoutBreaks, Measured, missingBarBreaks, Native, nativeBreaks, rawBreaks, scrollBreaks} from './rules';
 import {SCREENS as PLUGIN_SCREENS, settle} from './screens';
 import {KIT_SCREENS} from './kitScreens';
 import type {ReactTestRenderer} from 'react-test-renderer';
@@ -205,6 +205,8 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
       );
     }
     // Every later page of a paged list, checked as the first (#548): its next arrow pressed.
+    // Each page's room and use are kept, to find a page left mostly empty (#594).
+    const usage = [...(measured.pagedPages ?? []).slice(0, 1)];
     for (let shown = 2; shown <= MAX_PAGES; shown++) {
       const next = tree.root
         .findAll(node => node.props.testID === PAGED_LIST_ID)
@@ -219,10 +221,12 @@ it('renders every screen and finds no e-ink rule break (#80)', async () => {
       await page.setContent(toHtml(turned, scale), {waitUntil: 'load'});
       await page.screenshot({path: path.join(OUT, `${screen.name}-p${shown}.png`)});
       const later = await page.evaluate<Measured>(MEASURE);
+      usage.push(...(later.pagedPages ?? []).slice(0, 1));
       report[screen.name].push(
         ...[...breaksOf(later, metrics), ...nativeBreaks(later, NATIVE), ...layoutBreaks(later, metrics)].map(line => `page ${shown}: ${line}`),
       );
     }
+    report[screen.name].push(...emptyPageBreaks(usage));
     await act(async () => {
       tree.unmount();
       settle();

@@ -119,6 +119,28 @@ export function measurePage() {
       list: boxOf(el.closest('[data-kind="radio-list"]').getBoundingClientRect()),
     }));
 
+  // Each paged list's room for its parts, what they use of it, and how tall its first part and the
+  // first row in it are, so a page left mostly empty is found (#594). The box holds the parts' view,
+  // then the pager when more pages follow.
+  const pagedPages = [...document.querySelectorAll('[data-kind="paged-list"]')]
+    .filter(shown)
+    .map(el => {
+      const box = boxOf(el.getBoundingClientRect());
+      const parts = [...(el.firstElementChild?.children ?? [])];
+      const pager = el.children.length > 1 ? boxOf(el.children[1].getBoundingClientRect()) : undefined;
+      const first = parts[0] ? boxOf(parts[0].getBoundingClientRect()) : undefined;
+      const firstRow = parts[0]?.querySelector(ROW);
+      const lastBottom = parts.reduce((low, part) => Math.max(low, boxOf(part.getBoundingClientRect()).bottom), box.top);
+      return {
+        name: nameOf(el),
+        room: (pager ? pager.top : box.bottom) - box.top,
+        used: lastBottom - box.top,
+        // The first part down to the end of its first row: what must fit for the part to start here.
+        start: first ? (firstRow ? boxOf(firstRow.getBoundingClientRect()).bottom : first.bottom) - first.top : 0,
+        paged: Boolean(pager),
+      };
+    });
+
   // A text's contrast against the colour painted behind it, opacity included (#575).
   const rgba = (value) => {
     const n = (value.match(/-?[\d.]+/g) || []).map(Number);
@@ -224,5 +246,5 @@ export function measurePage() {
         contrast: el.closest('[aria-disabled="true"]') ? undefined : contrastOf(el),
       };
     });
-  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows, captions, radioLists, scrolled, media, looseImages, rings};
+  return {screen: boxOf(root.getBoundingClientRect()), targets, texts, scrolls, bars, rows, captions, radioLists, scrolled, media, looseImages, rings, pagedPages};
 }

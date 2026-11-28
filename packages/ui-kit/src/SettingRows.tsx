@@ -172,24 +172,9 @@ export const RADIO_LIST_ID = 'radio-list';
  * One value out of several; each radio speaks «<title>: <value>». The list ends further from the
  * screen's edge than other rows, as the native list of radio rows does (#299).
  */
-export function ChoiceList<V>({
-  title,
-  choices,
-  value,
-  onChange,
-  note,
-  paged,
-}: ChoiceListProps<V>): React.JSX.Element {
-  const rows = choices.map(choice => (
-    <ListRow
-      key={choice.label}
-      title={choice.label}
-      // The whole row chooses, its label too, not only the radio at its end (#554).
-      onPress={() => onChange(choice.value)}
-      control={{role: 'radio', label: `${title}: ${choice.label}`, checked: choice.value === value}}
-      trailing={<Radio checked={choice.value === value} />}
-    />
-  ));
+export function ChoiceList<V>(props: ChoiceListProps<V>): React.JSX.Element {
+  const {title, note, paged} = props;
+  const rows = choiceRows(props);
   return (
     <View nativeID={RADIO_LIST_ID} style={[styles.radioList, paged && styles.pagedList]}>
       {paged ? (
@@ -201,6 +186,32 @@ export function ChoiceList<V>({
           {rows}
         </RowGroup>
       )}
+    </View>
+  );
+}
+
+/**
+ * The rows of a `ChoiceList`, one radio row per value. A `PagedColumn` takes them from here to page
+ * a list among the screen's other parts row by row, instead of placing it whole (#594).
+ */
+export function choiceRows<V>({title, choices, value, onChange}: ChoiceListProps<V>): React.JSX.Element[] {
+  return choices.map(choice => (
+    <ListRow
+      key={choice.label}
+      title={choice.label}
+      // The whole row chooses, its label too, not only the radio at its end (#554).
+      onPress={() => onChange(choice.value)}
+      control={{role: 'radio', label: `${title}: ${choice.label}`, checked: choice.value === value}}
+      trailing={<Radio checked={choice.value === value} />}
+    />
+  ));
+}
+
+/** The box a list of radio rows sits in, which a `PagedColumn` draws round a `ChoiceList`'s rows too (#299, #594). */
+export function RadioListBox({children}: {children: React.ReactNode}): React.JSX.Element {
+  return (
+    <View nativeID={RADIO_LIST_ID} style={styles.radioList}>
+      {children}
     </View>
   );
 }

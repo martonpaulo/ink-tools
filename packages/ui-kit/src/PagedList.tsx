@@ -18,7 +18,7 @@ import React, {useRef, useState} from 'react';
 import {LayoutChangeEvent, StyleSheet, View} from 'react-native';
 import {metrics} from './metrics';
 import {Pager} from './Pager';
-import {RowGroup, RowGroupProps} from './SettingRows';
+import {ChoiceList, ChoiceListProps, choiceRows, RadioListBox, RowGroup, RowGroupProps} from './SettingRows';
 
 /** The `nativeID` of a paged list or column, which the render rules find it by (#548). */
 export const PAGED_LIST_ID = 'paged-list';
@@ -64,13 +64,15 @@ export function paginate(units: readonly Unit[], room: number, pager: number): P
   return pages;
 }
 
-type Group = {key: string; props: RowGroupProps};
+/** A `radio` group is a `ChoiceList`'s rows, drawn in the radio list's box. */
+type Group = {key: string; props: RowGroupProps; radio?: boolean};
 type Item = {key: string; node: React.ReactNode; group?: Group};
 
 /**
  * The units of `children` with their keys: a fragment's parts are parts of their own, as a group
  * a setting shows or hides is written as a fragment; a `RowGroup` with rows gives one unit per
- * row; `false`, `null` and `undefined` leave.
+ * row, and a `ChoiceList` the same, so a screen's intro and the first values of a list share a
+ * page instead of the list going whole to the next one (#594); `false`, `null` and `undefined` leave.
  */
 export function partsOf(children: React.ReactNode, prefix = ''): Item[] {
   return React.Children.toArray(children).flatMap((child, index): Item[] => {
@@ -80,6 +82,11 @@ export function partsOf(children: React.ReactNode, prefix = ''): Item[] {
     }
     if (child.type === React.Fragment) {
       return partsOf((child.props as {children?: React.ReactNode}).children, `${key}/`);
+    }
+    if (child.type === ChoiceList && !(child.props as ChoiceListProps<unknown>).paged) {
+      const choice = child.props as ChoiceListProps<unknown>;
+      const group = {key, props: {caption: choice.title, note: choice.note}, radio: true};
+      return choiceRows(choice).map(row => ({key: `${key}/${row.key}`, node: row, group}));
     }
     if (child.type === RowGroup) {
       const props = child.props as RowGroupProps;
@@ -137,23 +144,26 @@ function drawn(items: readonly Item[], all: readonly Item[], measure: (key: stri
       i += 1;
       continue;
     }
-    const {key, props} = item.group;
+    const {key, props, radio} = item.group;
     let end = i;
     while (end < items.length && items[end].group?.key === key) {
       end += 1;
     }
     const rows = items.slice(i, end);
     const whole = rows.length === all.filter(other => other.group?.key === key).length;
+    const group = (
+      <RowGroup caption={props.caption} note={props.note}>
+        {rows.map(row => (
+          <View key={row.key} onLayout={measure(row.key)}>
+            {row.node}
+          </View>
+        ))}
+      </RowGroup>
+    );
     out.push(
       // A whole group reports its drawn height, from which its caption and note are known.
       <View key={`${key}@${rows[0].key}`} onLayout={whole ? measure(wholeOf(key)) : undefined}>
-        <RowGroup caption={props.caption} note={props.note}>
-          {rows.map(row => (
-            <View key={row.key} onLayout={measure(row.key)}>
-              {row.node}
-            </View>
-          ))}
-        </RowGroup>
+        {radio ? <RadioListBox>{group}</RadioListBox> : group}
       </View>,
     );
     i = end;

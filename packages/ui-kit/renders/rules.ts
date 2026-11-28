@@ -72,6 +72,11 @@ export type Measured = {
   media?: {name: string; box: Box; frame: Box}[];
   /** Each image sized by `aspectRatio`, which the device lays out at the leading edge (#576). */
   looseImages?: {name: string; box: Box}[];
+  /**
+   * Each visible paged list's page: the room it has for its parts, what they use, the height from
+   * its first part's top to the end of its first row, and whether a pager follows (#594).
+   */
+  pagedPages?: {name: string; room: number; used: number; start: number; paged: boolean}[];
   /** Each radio's ring, with the box of its list of radio rows (#546). */
   rings?: {name: string; box: Box; list: Box}[];
 };
@@ -98,6 +103,24 @@ const overlap = (a: Box, b: Box) =>
   Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > TOLERANCE;
 
 const sameBox = (a: Box, b: Box) => !outside(a, b) && !outside(b, a);
+
+/**
+ * The pages of one paged list, in order, that leave over half their room empty although the next
+ * page's first part, down to its first row, would have fitted on them (#594): the intro left alone
+ * on a page of white while the options start on the next. `page` names the screen's page, from 1.
+ */
+export function emptyPageBreaks(pages: NonNullable<Measured['pagedPages']>[number][]): string[] {
+  const found: string[] = [];
+  pages.slice(0, -1).forEach((page, index) => {
+    const next = pages[index + 1];
+    if (page.used < page.room / 2 && next.start <= page.room - page.used + TOLERANCE) {
+      found.push(
+        `page ${index + 1} of ${page.name} uses ${Math.round(page.used)} of ${Math.round(page.room)} units and the next part, ${Math.round(next.start)} high, would fit on it: page with ui-kit's PagedColumn so it starts there (#594)`,
+      );
+    }
+  });
+  return found;
+}
 
 /**
  * The scroll breaks of a screen measured with every scroll view at its end (#279): the last

@@ -6,7 +6,7 @@
 import React from 'react';
 import renderer, {act, ReactTestInstance, ReactTestRenderer} from 'react-test-renderer';
 import {Text} from 'react-native';
-import {ListRow, metrics, PagedColumn, PagedList, RowGroup} from '../src';
+import {ChoiceList, ListRow, metrics, PagedColumn, PagedList, RowGroup} from '../src';
 import {fitSize} from '../src/MediaFrame';
 import {paginate, partsOf} from '../src/PagedList';
 
@@ -137,6 +137,40 @@ describe('PagedColumn', () => {
     await layOut(tree, node => (node.props.testID === 'paged-list' ? 300 : 200));
     expect(texts(tree)).toEqual(expect.arrayContaining(['One', 'Row 1']));
     expect(texts(tree)).not.toContain('Row 2');
+  });
+});
+
+describe('PagedColumn with a ChoiceList after an intro (#594)', () => {
+  const VALUES = Array.from({length: 7}, (_, i) => `Value ${i + 1}`);
+  const screen = () => (
+    <PagedColumn>
+      <RowGroup caption="Intro" note="About the page" />
+      <ChoiceList title="Size" choices={VALUES.map(value => ({value, label: value}))} value="Value 1" onChange={noop} />
+    </PagedColumn>
+  );
+
+  it('lets the first values share the page with the intro, not leave the page to the intro alone', async () => {
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = renderer.create(screen());
+    });
+    // The intro is 150 high; the list is 50 of caption and line and 100 a row: room for three rows.
+    const room = 150 + 50 + 3 * 100 + metrics.touchTarget + 5;
+    await layOut(tree, node =>
+      node.props.testID === 'paged-list'
+        ? room
+        : node.props.children?.type === ListRow
+          ? 100
+          : node.props.children?.type === RowGroup && node.props.children.props.caption === 'Intro'
+            ? 150
+            : 50 + 100 * VALUES.length,
+    );
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Intro', 'Size', 'Value 1']));
+    const next = tree.root.find(node => node.props.accessibilityLabel === 'Next page' && node.props.onPress);
+    await act(async () => next.props.onPress());
+    // The caption goes on the next page with the rest of the values.
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Size', 'Value 4']));
+    expect(texts(tree)).not.toContain('Intro');
   });
 });
 

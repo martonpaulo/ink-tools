@@ -5,7 +5,7 @@
  * (#546), and no text falls under the contrast floor (#575). Fixtures in layout units, so each rule
  * is shown to fail on the break it names and to pass the shape that keeps it.
  */
-import {layoutBreaks, Measured} from '../renders/rules';
+import {emptyPageBreaks, layoutBreaks, Measured} from '../renders/rules';
 
 const LIMITS = {textContrast: 7};
 const box = (left: number, top: number, right: number, bottom: number) => ({left, top, right, bottom});
@@ -128,5 +128,23 @@ describe('layoutBreaks', () => {
     expect(layoutBreaks(screen, LIMITS)).toEqual([
       'button «Show Solution» wraps its label to 2 lines: widen the button or shorten the label (#543)',
     ]);
+  });
+});
+
+describe('emptyPageBreaks (#594)', () => {
+  const at = (used: number, start: number, room = 800) => ({name: 'paged list', room, used, start, paged: true});
+
+  it('fails a page that uses under half its room when the next part would fit on it', () => {
+    // The intro alone on a landscape page: 120 of 800 used, the options' first row starts at 260.
+    expect(emptyPageBreaks([at(120, 0), at(790, 260)])).toEqual([
+      expect.stringMatching(/^page 1 of paged list uses 120 of 800 units and the next part, 260 high, would fit on it.*\(#594\)$/),
+    ]);
+  });
+
+  it('passes a page that is over half used, a next part that would not fit, and the last page', () => {
+    expect(emptyPageBreaks([at(500, 0), at(790, 100)])).toEqual([]);
+    expect(emptyPageBreaks([at(120, 0), at(790, 700)])).toEqual([]);
+    expect(emptyPageBreaks([at(790, 0), at(100, 100)])).toEqual([]);
+    expect(emptyPageBreaks([at(100, 0)])).toEqual([]);
   });
 });
