@@ -6,9 +6,49 @@
  * The lists are large (about 270 kB each), so `index.ts` does not export them: a caller imports
  * `words-data.ts`, which bundles all five, or one `words/<lang>.json` itself.
  */
+import { fontLacks } from './page/font';
 
 export const WORD_LANGUAGES = ['en', 'pt', 'es', 'de', 'fr'] as const;
 export type WordLanguage = (typeof WORD_LANGUAGES)[number];
+
+/** Each language's name in a word game's language choice (#398). */
+export const WORD_LANGUAGE_NAMES: Readonly<Record<WordLanguage, string>> = {
+  en: 'English',
+  pt: 'Portuguese',
+  es: 'Spanish',
+  de: 'German',
+  fr: 'French',
+};
+
+/** One language a word game offers, and why it cannot be played when it cannot (#398). */
+export interface WordLanguageOffer {
+  language: WordLanguage;
+  name: string;
+  /** Why the language cannot be played: no word list, or letters the page font lacks. */
+  unavailable?: string;
+}
+
+/**
+ * Every word language, each with the reason it cannot be played, if any: no list in `lists`, or
+ * grid letters the page font cannot draw (#398, #484).
+ * shortcut: the languages are WORD_LANGUAGES and the lists the bundled ones; My languages (#502)
+ * and the installed language packs (#503) replace both once they land.
+ */
+export function wordLanguageOffers(lists: Partial<Record<WordLanguage, Pick<WordList, 'alphabet'>>>): WordLanguageOffer[] {
+  return WORD_LANGUAGES.map(language => {
+    const name = WORD_LANGUAGE_NAMES[language];
+    const list = lists[language];
+    if (!list) return { language, name, unavailable: 'No word list is installed' };
+    const lacks = fontLacks(list.alphabet);
+    return lacks.length > 0 ? { language, name, unavailable: `The page font lacks ${lacks.join(' ')}` } : { language, name };
+  });
+}
+
+/** The language a word game's size token names, `EN` or `13PT`, or null when it names none. */
+export function languageOfToken(size: string): WordLanguage | null {
+  const found = size.match(/[A-Z]+$/i)?.[0].toLowerCase();
+  return WORD_LANGUAGES.find(language => language === found) ?? null;
+}
 
 export type ThemeTier = 'easy' | 'medium' | 'hard';
 

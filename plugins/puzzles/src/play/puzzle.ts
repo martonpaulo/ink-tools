@@ -29,16 +29,21 @@ export type PuzzleOption = {
 export const offered = (option: PuzzleOption, earlier: Choices): readonly Choice<string>[] =>
   typeof option.choices === 'function' ? option.choices(earlier) : option.choices;
 
+/** Whether `option` offers `value` after `earlier` as a choice that can be picked (#398). */
+const picks = (option: PuzzleOption, earlier: Choices, value: string | undefined): boolean =>
+  offered(option, earlier).some(choice => choice.value === value && choice.unavailable === undefined);
+
 /**
  * `choices` with each option, in order, on a value it offers after the earlier ones: a value it no
- * longer offers, such as a band the new size lacks, falls to its first (#390).
+ * longer offers, such as a band the new size lacks, or one that cannot be picked, such as a
+ * language with no word list, falls to its first one that can (#390, #398).
  */
 export function settle(options: readonly PuzzleOption[], choices: Choices): Choices {
   const out: Record<string, string> = {};
   for (const option of options) {
     const list = offered(option, out);
     const value = choices[option.id];
-    out[option.id] = list.some(choice => choice.value === value) ? value : list[0].value;
+    out[option.id] = picks(option, out, value) ? value : (list.find(choice => choice.unavailable === undefined) ?? list[0]).value;
   }
   return out;
 }
@@ -51,7 +56,7 @@ export function recalled(options: readonly PuzzleOption[], kept: Choices | null)
   const out: Record<string, string> = {};
   for (const option of options) {
     const value = kept?.[option.id];
-    out[option.id] = value !== undefined && offered(option, out).some(choice => choice.value === value) ? value : option.initial;
+    out[option.id] = value !== undefined && picks(option, out, value) ? value : option.initial;
   }
   return settle(options, out);
 }

@@ -10,6 +10,7 @@ import {BINAIRO} from './games/binairo';
 import {BOARDS} from './games/boards';
 import {BRIDGES} from './games/bridges';
 import {CALCUDOKU} from './games/calcudoku';
+import {FILL_IN} from './games/fillIn';
 import {FUTOSHIKI} from './games/futoshiki';
 import {HITORI} from './games/hitori';
 import {JIGSAW} from './games/jigsaw';
@@ -41,4 +42,4 @@ export type Game = {
   View: React.ComponentType<GameViewProps>;
 };
 
-export const GAMES: readonly Game[] = [MAZE, JIGSAW, SUDOKU, KILLER, CALCUDOKU, FUTOSHIKI, KAKURO, SLITHERLINK, BRIDGES, NONOGRAM, STAR_BATTLE, BINAIRO, HITORI, ...BOARDS].map(game => puzzleEntry(game));
+export const GAMES: readonly Game[] = [MAZE, JIGSAW, SUDOKU, KILLER, CALCUDOKU, FUTOSHIKI, KAKURO, SLITHERLINK, BRIDGES, NONOGRAM, STAR_BATTLE, BINAIRO, HITORI, FILL_IN, ...BOARDS].map(game => puzzleEntry(game));

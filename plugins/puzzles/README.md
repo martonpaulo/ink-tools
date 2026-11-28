@@ -14,11 +14,13 @@ the current one, its grid drawn as the page's background, solved with the pen
 - **Puzzles** on the note toolbar opens the Puzzles view: the list of games, with Close.
 - Opening a game first checks that Puzzles may read and write files, which every game needs, and
   shows «Allow» when it may not.
-- **Maze**, **Jigsaw Sudoku**, **Sudoku**, **Killer Sudoku**, **Calcudoku**, **Futoshiki**, **Kakuro**, **Slitherlink**, **Bridges**, **Nonogram**, **Star Battle**, **Binairo**, **Hitori**: pick the choices, and «Add Page» puts a new puzzle after the current
+- **Maze**, **Jigsaw Sudoku**, **Sudoku**, **Killer Sudoku**, **Calcudoku**, **Futoshiki**, **Kakuro**, **Slitherlink**, **Bridges**, **Nonogram**, **Star Battle**, **Binairo**, **Hitori**, **Fill-in**: pick the choices, and «Add Page» puts a new puzzle after the current
   page. On a puzzle's page, «Check» circles the mistakes in your ink and «Show Solution» shows the
   answer, both only in the Puzzles view, so your note never gets the answer.
 - **Dots and Boxes**, **Gomoku**, **Ultimate Tic-Tac-Toe**: «Add Page» puts an empty board with a
   score area after the current page, for two players who take turns with the pen.
+- A word game, **Fill-in**, offers each language Puzzles has a word list for; a language it cannot
+  play shows greyed out, with the reason.
 
 Versions follow SemVer with a numbered beta: `0.1.0-beta.1` reads `0.1.0 beta 1` on the tablet
 ([#155](https://github.com/martonpaulo/ink-tools/issues/155)).

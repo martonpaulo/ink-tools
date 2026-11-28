@@ -1,6 +1,8 @@
 /** The strings every game view shares (#386); each game keeps its own beside it. English only (#93). */
 export const playCopy = {
   difficulty: 'Difficulty',
+  /** A word game's language choice (#398). */
+  language: 'Language',
   /** A game of several grid sizes: the choice's title and each size's label. */
   size: 'Size',
   sizeLabel: (size: number) => playCopy.gridLabel(size, size),

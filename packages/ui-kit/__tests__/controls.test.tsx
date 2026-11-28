@@ -392,6 +392,28 @@ describe('the native controls (#273)', () => {
     expect(onChange.mock.calls).toEqual([['tight'], ['wide']]);
   });
 
+  it('greys out a choice that cannot be picked, with its reason under it, and never picks it (#398)', () => {
+    const onChange = jest.fn();
+    const tree = render(
+      <ChoiceList
+        title="Language"
+        choices={[
+          {value: 'en', label: 'English'},
+          {value: 'xx', label: 'Other', unavailable: 'No word list is installed'},
+        ]}
+        value="en"
+        onChange={onChange}
+      />,
+    );
+    expect(texts(tree)).toEqual(['Language', 'English', 'Other', 'No word list is installed']);
+    const row = hostByLabel(tree, 'Language: Other');
+    expect(row.props.accessibilityState).toEqual({checked: false, disabled: true});
+    expect(row.props.accessibilityHint).toBe('No word list is installed');
+    // The Pressable itself is disabled, so the host never calls its press.
+    expect(tree.root.findAll(n => n.props.accessibilityLabel === 'Language: Other' && n.props.disabled === true).length).toBeGreaterThan(0);
+    expect(hostByLabel(tree, 'Language: English').props.accessibilityState).toEqual({checked: true});
+  });
+
   it('chooses a value by a press anywhere on its row, its label too, and speaks each choice once (#554)', () => {
     const onChange = jest.fn();
     const tree = render(

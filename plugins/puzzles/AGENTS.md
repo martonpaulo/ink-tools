@@ -8,8 +8,8 @@ here is a symlink to this file.
 **The shell and its first games, built, not yet on the device** ([#453](https://github.com/martonpaulo/ink-tools/issues/453),
 [#386](https://github.com/martonpaulo/ink-tools/issues/386), [#397](https://github.com/martonpaulo/ink-tools/issues/397),
 [#402](https://github.com/martonpaulo/ink-tools/issues/402), [#390](https://github.com/martonpaulo/ink-tools/issues/390),
-[#383](https://github.com/martonpaulo/ink-tools/issues/383), [#387](https://github.com/martonpaulo/ink-tools/issues/387), [#388](https://github.com/martonpaulo/ink-tools/issues/388), [#389](https://github.com/martonpaulo/ink-tools/issues/389), [#391](https://github.com/martonpaulo/ink-tools/issues/391), [#396](https://github.com/martonpaulo/ink-tools/issues/396), [#384](https://github.com/martonpaulo/ink-tools/issues/384), [#392](https://github.com/martonpaulo/ink-tools/issues/392), [#393](https://github.com/martonpaulo/ink-tools/issues/393), [#394](https://github.com/martonpaulo/ink-tools/issues/394)): the plugin, its toolbar button, its full view,
-the maze, the jigsaw sudoku, the sudoku, the killer sudoku, calcudoku, futoshiki, kakuro, slitherlink, bridges, the nonogram, Star Battle, binairo, hitori and the pass-and-play boards.
+[#383](https://github.com/martonpaulo/ink-tools/issues/383), [#387](https://github.com/martonpaulo/ink-tools/issues/387), [#388](https://github.com/martonpaulo/ink-tools/issues/388), [#389](https://github.com/martonpaulo/ink-tools/issues/389), [#391](https://github.com/martonpaulo/ink-tools/issues/391), [#396](https://github.com/martonpaulo/ink-tools/issues/396), [#384](https://github.com/martonpaulo/ink-tools/issues/384), [#392](https://github.com/martonpaulo/ink-tools/issues/392), [#393](https://github.com/martonpaulo/ink-tools/issues/393), [#394](https://github.com/martonpaulo/ink-tools/issues/394), [#398](https://github.com/martonpaulo/ink-tools/issues/398)): the plugin, its toolbar button, its full view,
+the maze, the jigsaw sudoku, the sudoku, the killer sudoku, calcudoku, futoshiki, kakuro, slitherlink, bridges, the nonogram, Star Battle, binairo, hitori, the fill-in and the pass-and-play boards.
 Each game is a sub-issue of
 [#376](https://github.com/martonpaulo/ink-tools/issues/376). On the tablet the plugin is called
 **Puzzles**; `puzzles` is its folder, gate, workflow and tag prefix, and `Puzzles` its `pluginKey`
@@ -73,10 +73,13 @@ instead ([#542](https://github.com/martonpaulo/ink-tools/issues/542)).
    `onBack` and `onClose` and shows ui-kit's `TitleBar` with Close. Its Jest test drives the view
    through `testing/gameView.tsx`'s fake pages.
 3. A word game's languages come from `resolveLanguages()` over My languages
-   ([#502](https://github.com/martonpaulo/ink-tools/issues/502)) once it lands; until then from a
-   default the game declares, never a list written in the plugin. A language with no pack, or with
-   letters the page font lacks, shows as unavailable with its reason
-   ([#484](https://github.com/martonpaulo/ink-tools/issues/484)): a new kind of `Requirement`.
+   ([#502](https://github.com/martonpaulo/ink-tools/issues/502)) once it lands; until then from
+   puzzle-core's `wordLanguageOffers` over the bundled lists, through `src/play/languages.ts`'s
+   `languageOption`, never a list written in the plugin. A language with no list, or with letters
+   the page font lacks, is a greyed-out choice with its reason (ui-kit's `Choice.unavailable`),
+   which the view never picks ([#484](https://github.com/martonpaulo/ink-tools/issues/484),
+   [#398](https://github.com/martonpaulo/ink-tools/issues/398)). The lists come from
+   `@ink-tools/puzzle-core/src/words-data`, which `index.ts` leaves out for its size.
 4. Its screens join `packages/ui-kit/renders/screens.tsx`.
 
 ## Permissions

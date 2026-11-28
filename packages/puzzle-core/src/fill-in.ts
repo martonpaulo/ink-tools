@@ -10,9 +10,9 @@
  * word in place to start from.
  */
 
-import { type Difficulty, type PuzzleId } from './code';
+import { parsePuzzleCode, type Difficulty, type PuzzleId } from './code';
 import { childSeed, createRandom, type Random } from './random';
-import { gridPattern, type WordList } from './words';
+import { gridPattern, languageOfToken, type WordLanguage, type WordList } from './words';
 
 export type FillInDirection = 'across' | 'down';
 
@@ -311,6 +311,19 @@ function listOrder(a: string, b: string): number {
  * A fill-in from the seed, in the list's language, at the band's size. Throws on a band fill-in
  * does not offer, or when no grid of the band comes out of the attempts.
  */
+/**
+ * The fill-in `code` names, the same as when it was made, from its language's list in `lists`
+ * (#398). Throws on a code of another game, or of a language `lists` lacks.
+ */
+export function fillInFromCode(code: string, lists: Partial<Record<WordLanguage, WordList>>): FillIn {
+  const id = parsePuzzleCode(code);
+  const language = id.game === 'fill-in' && /^[A-Z]+$/.test(id.size) ? languageOfToken(id.size) : null;
+  if (!language) throw new RangeError(`«${code}» is not a fill-in code`);
+  const list = lists[language];
+  if (!list) throw new RangeError(`«${code}» needs the ${language} word list, which is not installed`);
+  return generateFillIn(id.seed, id.difficulty, list);
+}
+
 export function generateFillIn(seed: string, difficulty: Difficulty, list: WordList): FillIn {
   const band = FILL_IN_BANDS[difficulty];
   if (!band) throw new RangeError(`a fill-in offers ${Object.keys(FILL_IN_BANDS).join(', ')}, not ${difficulty}`);

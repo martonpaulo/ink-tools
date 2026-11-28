@@ -64,12 +64,14 @@ import {NONOGRAM} from '../../../plugins/puzzles/src/games/nonogram';
 import {STAR_BATTLE} from '../../../plugins/puzzles/src/games/starBattle';
 import {BINAIRO} from '../../../plugins/puzzles/src/games/binairo';
 import {HITORI} from '../../../plugins/puzzles/src/games/hitori';
+import {FILL_IN, fillInCopy} from '../../../plugins/puzzles/src/games/fillIn';
+import {WORD_LISTS} from '@ink-tools/puzzle-core/src/words-data';
 import {BOARDS} from '../../../plugins/puzzles/src/games/boards';
 import {GAMES as PUZZLES_LIST} from '../../../plugins/puzzles/src/games';
 import type {PuzzleGame} from '../../../plugins/puzzles/src/play/puzzle';
 import {GameView as PuzzlesGameView} from '../../../plugins/puzzles/src/play/GameView';
 import type {PagePorts as PuzzlesPages} from '../../../plugins/puzzles/src/play/pages';
-import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
+import {calcudokuFromCode, cellCenter, drawCalcudokuPage, drawFutoshikiPage, drawKakuroPage, drawKillerPage, futoshikiFromCode, kakuroAnswers, kakuroFromCode, edgeEnds, slitherlinkEdgeKeys, slitherlinkFromCode, slitherlinkLoop, drawSlitherlinkPage, bridgesAnswers, bridgesFromCode, drawBridgesPage, linkLine, VIEW_LINK_GAP, layoutNonogramPage, nonogramFromCode, layoutStarBattle, starBattleFromCode, BINAIRO_OPEN, binairoFromCode, layoutBinairoPage, hitoriFromCode, hitoriLayout, fillInExpected, fillInFromCode, layoutFillInPage, jigsawExpected, jigsawFromCode, jigsawLayout, killerFromCode, mazeCellCentre, mazeFromCode, mazeLayout, sudokuExpected, sudokuFromCode, sudokuLayout, type Grid, type InkStroke} from '@ink-tools/puzzle-core';
 
 export type ScreenRender = {
   name: string;
@@ -469,6 +471,19 @@ const hitoriInk = () => {
   return [...shaded.slice(0, -1), white[1]].map(hatch).concat([ring]);
 };
 const puzzlesHitori = (code: string | null, steps: string[] = []) => puzzlesGame(HITORI, hitoriInk, code, steps);
+/** The hardest English fill-in (#398): all but six letters written, the eighth one wrong. */
+const FILL_IN_CODE = 'FI-EN-H-1';
+const fillInInk = () => {
+  const puzzle = fillInFromCode(FILL_IN_CODE, WORD_LISTS);
+  const {grid} = layoutFillInPage(puzzle, {orientation: 'portrait', hand: 'right'}, fillInCopy.heading).page;
+  const open = [...fillInExpected(puzzle)];
+  return open.slice(0, -6).map(([cell, letter], i) => {
+    const [x, y] = cellCenter(grid, cell % grid.columns, Math.floor(cell / grid.columns));
+    const written = i === 7 ? (letter === 'E' ? 'A' : 'E') : letter;
+    return {points: [{x, y: y - grid.cell / 4}, {x, y: y + grid.cell / 4}], element: {digit: written}};
+  });
+};
+const puzzlesFillIn = (code: string | null, steps: string[] = []) => puzzlesGame(FILL_IN, fillInInk, code, steps);
 
 const SYNC = {running: false, onSyncNow: noop};
 /** Account Sync's Settings with these settings, runs and sign-ins, as App draws it (#411). */
@@ -543,6 +558,10 @@ export const SCREENS: ScreenRender[] = [
   {name: 'puzzles-hitori-page', render: () => puzzlesHitori(HITORI_CODE)},
   {name: 'puzzles-hitori-check', render: () => puzzlesHitori(HITORI_CODE, ['Check'])},
   {name: 'puzzles-hitori-solution', render: () => puzzlesHitori(HITORI_CODE, ['Show Solution'])},
+  {name: 'puzzles-fill-in', render: () => puzzlesFillIn(null)},
+  {name: 'puzzles-fill-in-page', render: () => puzzlesFillIn(FILL_IN_CODE)},
+  {name: 'puzzles-fill-in-check', render: () => puzzlesFillIn(FILL_IN_CODE, ['Check'])},
+  {name: 'puzzles-fill-in-solution', render: () => puzzlesFillIn(FILL_IN_CODE, ['Show Solution'])},
   {name: 'puzzles-board', render: () => puzzlesGame(BOARDS[1], () => [], null)},
   {name: 'smart-pen-settings', render: () => mount(<SmartPenSettings close={() => {}} load={async () => DEFAULT_PEN_SETTINGS} save={async () => {}} apply={async () => {}} />)},
   {name: 'smart-pen-error', render: () => mount(<ErrorView problem={{what: smartPenTextCopy['toast.convertFailed'], reason: smartPenTextCopy['error.again']}} onClose={noop} />)},

@@ -147,7 +147,11 @@ export function ActionRow({title, subtitle, action, secondAction}: ActionRowProp
   );
 }
 
-export type Choice<V> = {value: V; label: string};
+/**
+ * One value of a `ChoiceList`. With `unavailable`, the reason it cannot be picked, such as «No word
+ * list is installed»: its row shows greyed out with the reason under it and does not act (#398).
+ */
+export type Choice<V> = {value: V; label: string; unavailable?: string};
 
 export type ChoiceListProps<V> = {
   /** The setting's name, the caption over its values. */
@@ -176,16 +180,20 @@ export function ChoiceList<V>({
   return (
     <View nativeID={RADIO_LIST_ID} style={styles.radioList}>
       <RowGroup caption={title} note={note}>
-        {choices.map(choice => (
-          <ListRow
-            key={choice.label}
-            title={choice.label}
-            // The whole row chooses, its label too, not only the radio at its end (#554).
-            onPress={() => onChange(choice.value)}
-            control={{role: 'radio', label: `${title}: ${choice.label}`, checked: choice.value === value}}
-            trailing={<Radio checked={choice.value === value} />}
-          />
-        ))}
+        {choices.map(choice => {
+          const disabled = choice.unavailable !== undefined;
+          return (
+            <ListRow
+              key={choice.label}
+              title={choice.label}
+              subtitle={choice.unavailable}
+              // The whole row chooses, its label too, not only the radio at its end (#554).
+              onPress={() => onChange(choice.value)}
+              control={{role: 'radio', label: `${title}: ${choice.label}`, checked: choice.value === value, ...(disabled ? {disabled} : {})}}
+              trailing={<Radio checked={choice.value === value} disabled={disabled} />}
+            />
+          );
+        })}
       </RowGroup>
     </View>
   );

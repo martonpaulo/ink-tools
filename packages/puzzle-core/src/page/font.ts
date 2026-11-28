@@ -41,6 +41,11 @@ export function pageText(text: string): string {
     .join('');
 }
 
+/** The letters of `text` the page font cannot draw in both its weights, each once, in order (#398). */
+export function fontLacks(text: string): string[] {
+  return [...new Set(text)].filter(char => !(FONT_GLYPHS[FONT_WEIGHTS.regular][char] && FONT_GLYPHS[FONT_WEIGHTS.bold][char]));
+}
+
 /** The width of `text` in pixels at `size`. */
 export function measureText(text: string, size: number, weight: FontWeight): number {
   let units = 0;

@@ -21,7 +21,11 @@ exports.metro = part => ({
   },
 });
 
-/** The Jest moduleNameMapper part: the package, to its source. */
+/**
+ * The Jest moduleNameMapper part: the package, to its source, and one of its modules that
+ * `index.ts` leaves out, as the word lists (`src/words-data`, #398), by its path.
+ */
 exports.jestModuleNameMapper = {
   [`^${NAME}$`]: path.join(__dirname, 'src'),
+  [`^${NAME}/src/(.*)$`]: path.join(__dirname, 'src/$1'),
 };

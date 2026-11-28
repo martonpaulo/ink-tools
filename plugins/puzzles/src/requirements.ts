@@ -3,8 +3,8 @@
  * game fails (#453, the declared-dependency rule of #245): the permissions `PluginConfig.json`
  * declares, their one owner, and each game's own `requires` in `games.ts`, checked when a game
  * opens. A missing one shows as ui-kit's Needs, with the one fix; a check that fails, as its Error.
- * shortcut: a permission is the only kind; the language pack and the page font's letters join
- * `Requirement` with the first word game (#454, #484, #502), as no shell code needs them.
+ * A permission is the only kind: a word game's language with no list, or with letters the page
+ * font lacks, is a greyed-out choice of the game, not a requirement of it (#398, `src/play/languages.ts`).
  */
 import {isGranted, type Result} from '@ink-tools/sn-adapter/official';
 import type {Problem} from '@ink-tools/ui-kit';
