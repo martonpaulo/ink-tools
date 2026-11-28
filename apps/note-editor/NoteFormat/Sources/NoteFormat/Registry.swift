@@ -23,6 +23,7 @@ public enum Registry {
     public static let items: [Item] = [
         Item(id: "notefile.format-versions", level: 2, impact: "user", owner: "note-editor", probe: nil, unprobed: "#293 adds a parse of a fixture note per firmware", active: "note-editor NoteFile.swift", off: nil),
         Item(id: "notefile.writer-byte-edit", level: 5, impact: "user", owner: "note-editor", probe: nil, unprobed: "a written note is checked by opening it on the tablet", active: "note-editor NoteWriter.swift", off: nil),
+        Item(id: "storage.helper-channel", level: 2, impact: "tests", owner: "ink-tools-probe", probe: "inkctl helper", unprobed: nil, active: "ink-tools-probe src/helper.ts", off: nil),
     ]
 
     /// The .note format and the versions the reader accepts (notefile.format-versions).
@@ -44,5 +45,15 @@ public enum Registry {
     public enum NotefileWriterByteEdit {
         public static let tailMarker: String = "tail"
         public static let pageKeyPrefixes: [String] = ["TITLE_", "KEYWORD_", "LINKO_", "LINKI_"]
+    }
+
+    /// Ink Tools Probe's helper channel: command.json in its folder of the hidden .data/plugin/, the «Run Command» button that runs it, SNPROBE log lines and the page.png render (storage.helper-channel).
+    public enum StorageHelperChannel {
+        public static let folder: String = "/storage/emulated/0/.data/plugin/inktools-probe"
+        public static let commandFile: String = "command.json"
+        public static let answerMark: String = "SNPROBE answer"
+        public static let unknownId: String = "unknown"
+        public static let renderFile: String = "page.png"
+        public static let commandButton: String = "Run Command"
     }
 }

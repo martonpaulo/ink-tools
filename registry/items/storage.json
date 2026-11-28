@@ -68,7 +68,8 @@
       "owner": "ink-tools-probe",
       "readers": [
         "ink-tools-probe",
-        "inkctl"
+        "inkctl",
+        "note-editor"
       ],
       "reason": "the hidden .data/plugin/ is where a plugin and the shell both reach a file that Supernote Cloud does not sync; in MyStyle/Probe each command was uploaded (#148)",
       "evidence": {

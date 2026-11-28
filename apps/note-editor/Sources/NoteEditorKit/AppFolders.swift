@@ -23,6 +23,33 @@ public enum AppFolders {
     public static func fromTablet(in support: URL) -> URL {
         support.appending(path: "\(identifier)/From Tablet", directoryHint: .isDirectory)
     }
+
+    /// The disk the files under `folders` take, for Settings › Tablet (#485, #496): zero for a
+    /// folder that does not exist, as nothing is kept there yet, and `nil` when a folder could not
+    /// be read, never a size that leaves part of it out.
+    public static func bytes(of folders: [URL], files: FileManager = .default) -> Int64? {
+        var total: Int64 = 0
+        var unreadable = false
+        for folder in folders where files.fileExists(atPath: folder.path(percentEncoded: false)) {
+            let keys: [URLResourceKey] = [.totalFileAllocatedSizeKey, .isRegularFileKey]
+            guard
+                let items = files.enumerator(
+                    at: folder, includingPropertiesForKeys: keys, options: [],
+                    errorHandler: { _, _ in
+                        unreadable = true
+                        return true
+                    })
+            else { return nil }
+            for case let item as URL in items {
+                guard let values = try? item.resourceValues(forKeys: Set(keys)) else {
+                    unreadable = true
+                    continue
+                }
+                if values.isRegularFile == true { total += Int64(values.totalFileAllocatedSize ?? 0) }
+            }
+        }
+        return unreadable ? nil : total
+    }
 }
 
 /// Moves what a build under the app's first name, Ink Notebook Editor, kept to the new names, once
