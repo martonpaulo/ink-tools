@@ -7,6 +7,11 @@ public final class ButtonPlaceTest {
   /** About the 3 mm gap kept from every edge (Tokens.SPACE_MM, #415). */
   private static final int INSET = 35;
   /** The Manta and the Nomad (docs/supernote.md › Screen and units), each portrait and landscape. */
+  /** The note toolbar band's thickness on the Manta, at any of its four places (docs/supernote.md). */
+  private static final int MANTA_BAND = 116;
+  /** Where the left and right bands end, measured from the top (docs/supernote.md, #577, #587). */
+  private static final int MANTA_SIDE_BAND_END_PORTRAIT = 1843;
+  private static final int MANTA_SIDE_BAND_END_LANDSCAPE = 1557;
   private static final int[][] SCREENS = {{1920, 2560}, {2560, 1920}, {1404, 1872}, {1872, 1404}};
   private static final float[] FRACTIONS = {0f, 0.25f, 0.5f, 1f, -0.5f, 1.5f, Float.NaN};
 
@@ -23,8 +28,6 @@ public final class ButtonPlaceTest {
       }
       check(ButtonPlace.pixels(ButtonPlace.DEFAULT_X, screen[0], SIZE, INSET) == screen[0] - SIZE - INSET,
           "the default sits one inset from the trailing edge on " + screen[0] + "x" + screen[1]);
-      check(ButtonPlace.pixels(ButtonPlace.defaultY(screen[1], SIZE, INSET), screen[1], SIZE, INSET) == ButtonPlace.TOP_PX,
-          "the default sits " + ButtonPlace.TOP_PX + " px down on " + screen[0] + "x" + screen[1]);
     }
 
     check(ButtonPlace.fraction(INSET, 1404, SIZE, INSET) == 0f, "one inset from the leading edge is 0");
@@ -74,8 +77,8 @@ public final class ButtonPlaceTest {
       a = ButtonPlace.snap(Float.NaN, Float.NaN, w, h, SIZE, INSET);
       check(a[0] == 0f || a[1] == 0f, "an unreadable place rests on an edge" + on);
       // The default place is already against the trailing edge.
-      a = ButtonPlace.snap(ButtonPlace.DEFAULT_X, ButtonPlace.defaultY(h, SIZE, INSET), w, h, SIZE, INSET);
-      check(a[0] == 1f && ButtonPlace.pixels(a[1], h, SIZE, INSET) == ButtonPlace.TOP_PX, "the default is unchanged" + on);
+      a = ButtonPlace.snap(ButtonPlace.DEFAULT_X, ButtonPlace.DEFAULT_Y, w, h, SIZE, INSET);
+      check(a[0] == 1f && a[1] == ButtonPlace.DEFAULT_Y, "the default is unchanged" + on);
       // A screen turn: a saved edge place stays on an edge on the turned screen.
       float[] turned = ButtonPlace.snap(a[0], a[1], h, w, SIZE, INSET);
       check(turned[0] == 1f, "a right-edge place stays right after the screen turns" + on);
@@ -83,9 +86,27 @@ public final class ButtonPlaceTest {
       turned = ButtonPlace.snap(a[0], a[1], h, w, SIZE, INSET);
       check(turned[1] == 1f && turned[0] == 0.3f, "a bottom-edge place stays at the bottom after a turn" + on);
     }
+    clearOfToolbar(1920, 2560, MANTA_SIDE_BAND_END_PORTRAIT);
+    clearOfToolbar(2560, 1920, MANTA_SIDE_BAND_END_LANDSCAPE);
     // A place nearer the long side's edge wins by pixels, not by fraction.
     float[] a = ButtonPlace.snap(0.5f, 0.1f, 1404, 1872, SIZE, INSET);
     check(a[1] == 0f && a[0] == 0.5f, "the nearest edge is measured in pixels");
+  }
+
+  /**
+   * The default place covers no part of the note toolbar's four places on a Manta screen of
+   * `width` x `height` (#587): the left and right bands run from the top to `sideEnd`, the top and
+   * bottom bands span the width.
+   */
+  static void clearOfToolbar(int width, int height, int sideEnd) {
+    String on = " on " + width + "x" + height;
+    int x = ButtonPlace.pixels(ButtonPlace.DEFAULT_X, width, SIZE, INSET);
+    int y = ButtonPlace.pixels(ButtonPlace.DEFAULT_Y, height, SIZE, INSET);
+    boolean besideSideBands = y >= sideEnd;
+    check(besideSideBands || x >= MANTA_BAND, "the default misses the left band" + on);
+    check(besideSideBands || x + SIZE <= width - MANTA_BAND, "the default misses the right band" + on);
+    check(y >= MANTA_BAND, "the default misses the top band" + on);
+    check(y + SIZE <= height - MANTA_BAND, "the default misses the bottom band" + on);
   }
 
   static void check(boolean condition, String what) {

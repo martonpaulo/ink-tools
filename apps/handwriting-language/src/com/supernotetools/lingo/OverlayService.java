@@ -31,7 +31,7 @@ import java.util.List;
 
 /**
  * Surface A: a small button over other apps (`TYPE_APPLICATION_OVERLAY`, SYSTEM_ALERT_WINDOW),
- * at the top trailing corner until the owner drags it elsewhere (#244). It shows the active
+ * low on the trailing edge, clear of the note toolbar (#587), until the owner drags it elsewhere (#244). It shows the active
  * language's short code; one tap moves to the next, a long press opens the settings screen, a
  * drag moves it (ButtonGesture tells them apart, ButtonPlace keeps it on screen). ButtonRule says
  * when it shows, from what WritingWatcher reads (#195). A foreground service, so the system keeps
@@ -176,12 +176,12 @@ public final class OverlayService extends Service {
     }
   }
 
-  /** Places the window at the saved fractions, or the default top trailing corner. */
+  /** Places the window at the saved fractions, or the default place low on the trailing edge. */
   private void moveToSaved() {
     Rect screen = windows.getCurrentWindowMetrics().getBounds();
     float[] place = new Prefs(this).place();
     float x = place != null ? place[0] : ButtonPlace.DEFAULT_X;
-    float y = place != null ? place[1] : ButtonPlace.defaultY(screen.height(), params.height, inset);
+    float y = place != null ? place[1] : ButtonPlace.DEFAULT_Y;
     float[] snapped = ButtonPlace.snap(x, y, screen.width(), screen.height(), params.width, inset);
     moveTo(ButtonPlace.pixels(snapped[0], screen.width(), params.width, inset),
         ButtonPlace.pixels(snapped[1], screen.height(), params.height, inset));

@@ -10,13 +10,16 @@ package com.supernotetools.lingo;
 final class ButtonPlace {
   private ButtonPlace() {}
 
-  /**
-   * The default place's distance from the top, where lane 4's test button sat
-   * (docs/research/2026-11-handwriting-language.md § 10).
-   */
-  static final int TOP_PX = 600;
   /** The default place's horizontal fraction: the trailing (right) edge. */
   static final float DEFAULT_X = 1f;
+  /**
+   * The default place's vertical fraction: on the trailing edge between the end of the note
+   * toolbar's side band and the bottom band, so the button covers no toolbar control wherever the
+   * toolbar sits (#587). On the Manta that is y 2206 of 2560 in portrait (the side band ends at
+   * 1843, the bottom band starts at 2444) and y 1620 of 1920 in landscape (1557 and 1804,
+   * docs/supernote.md › Screen and units). A fraction, not pixels, so a screen turn keeps it clear.
+   */
+  static final float DEFAULT_Y = 0.916f;
 
   /** The fraction of the free range that `px` is at; 0 when the button and its insets fill the screen. */
   static float fraction(float px, int screen, int size, int inset) {
@@ -63,11 +66,6 @@ final class ButtonPlace {
       return new float[] {x, 1f};
     }
     return new float[] {x, 0f};
-  }
-
-  /** The default place's vertical fraction on a screen of `height`. */
-  static float defaultY(int height, int size, int inset) {
-    return fraction(TOP_PX, height, size, inset);
   }
 
   /** The range the button's leading edge moves in; negative when the screen is too small. */
