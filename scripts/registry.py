@@ -19,7 +19,9 @@ version, the header of sn-adapter's descriptor and the ratchet's ceiling per lev
 Then it writes `packages/sn-adapter/src/internals/descriptor.json`, the shape `chooseDescriptor`
 reads, from the three provider items, one reader per runtime (`registry_readers.py`: TypeScript,
 Java, Python and Swift), and the Java adapter's failure value, `InternalFailure.java`, beside each
-Java reader that reports a failed internal. Without `--write` it compares each written file with the
+Java reader that reports a failed internal, and `docs/compatibility.md`, the compatibility table,
+from the firmware check results a device round commits in `registry/watch/<fingerprint>.json`
+(#293; each checked against `$defs.watch`; with no result the page is not written). Without `--write` it compares each written file with the
 disk and fails on a stale or hand-edited one. Prints one `path: problem` line per finding.
 Exit 0 with none, 1 with findings, 2 on a bad root.
 """
@@ -36,6 +38,11 @@ SCHEMA = "registry/schema.json"
 META = "registry/registry.json"
 ITEMS = "registry/items"
 DESCRIPTOR = "packages/sn-adapter/src/internals/descriptor.json"
+WATCH = "registry/watch"  # one committed `inkctl firmware check` result per environment fingerprint (#293)
+COMPATIBILITY = "docs/compatibility.md"
+FINGERPRINT_SHOWN = 8  # the fingerprint's leading hex digits a table column names
+ITEM_COLUMNS = ("Item", "Level", "Owner")  # the compatibility table's columns before one per result
+WATCH_ISSUE = "https://github.com/martonpaulo/ink-tools/issues/293"
 # The provider modules of descriptor.json, in its order: each is the descriptor of `<area>.provider`.
 DESCRIPTOR_AREAS = ("calendar", "todo", "digest")
 DESCRIPTOR_OWNER = "sn-adapter"
@@ -218,9 +225,89 @@ def descriptor(meta, items):
     return json.dumps(body, indent=2, ensure_ascii=False) + "\n"
 
 
+def load_watch(root):
+    """The committed firmware check results under root, by firmware then fingerprint; raises Invalid."""
+    problems = []
+    folder = root / WATCH
+    files = sorted(folder.glob("*.json")) if folder.is_dir() else []
+    if not files:
+        return []
+    schema = read_json(root / SCHEMA, problems)
+    if problems:
+        raise Invalid(problems)
+    defs = schema["$defs"]
+    results = []
+    for path in files:
+        rel = "%s/%s" % (WATCH, path.name)
+        result = read_json(path, problems)
+        if result is None:
+            continue
+        found = schema_errors(result, defs["watch"], defs, rel)
+        problems.extend(found)
+        if found:
+            continue
+        if result["fingerprint"] != path.stem:
+            problems.append("%s: its fingerprint is %s, not its file name" % (rel, result["fingerprint"]))
+        ids = [entry["id"] for entry in result["items"]]
+        twice = sorted({item_id for item_id in ids if ids.count(item_id) > 1})
+        if twice:
+            problems.append("%s: %s listed twice" % (rel, ", ".join(twice)))
+        results.append(result)
+    if problems:
+        raise Invalid(problems)
+    return sorted(results, key=lambda result: (result["firmware"], result["fingerprint"]))
+
+
+def cell(text):
+    """text safe inside one Markdown table cell."""
+    return text.replace("|", "\\|").replace("\n", " ")
+
+
+def compatibility(items, results):
+    """The text of docs/compatibility.md: one row per item, one column per committed result."""
+    by_result = [{entry["id"]: entry for entry in result["items"]} for result in results]
+    known = [item["id"] for item in items]
+    extra = sorted({item_id for found in by_result for item_id in found} - set(known))
+    owners = {item["id"]: (str(item["level"]), item["owner"]) for item in items}
+    lines = [
+        "# Compatibility",
+        "",
+        "Which Supernote internals each checked firmware still offers: one row per item of the",
+        "[registry](../registry/), one column per `inkctl firmware check` result a device round committed",
+        "in `registry/watch/` ([#293](%s))." % WATCH_ISSUE,
+        "`%s` writes this page; do not edit it by hand." % WRITE_STEP,
+        "",
+        "Statuses: `ok` (the probe found the item), `broken` (the probe found it changed or gone),",
+        "`unprobed` (no safe probe, or its kill switch is off), `not checked` (the item is not in that result).",
+        "",
+        "## Results",
+        "",
+    ]
+    for index, result in enumerate(results, 1):
+        counts = {status: sum(entry["status"] == status for entry in result["items"]) for status in ("ok", "broken", "unprobed")}
+        lines.append("%d. `%s`, fingerprint `%s`, registry %s: %d ok, %d broken, %d unprobed." % (
+            index, cell(result["firmware"]), result["fingerprint"][:FINGERPRINT_SHOWN], result["registry"],
+            counts["ok"], counts["broken"], counts["unprobed"]))
+    lines += ["", "## Items", ""]
+    header = list(ITEM_COLUMNS) + ["Result %d" % index for index in range(1, len(results) + 1)]
+    lines.append("| " + " | ".join(header) + " |")
+    lines.append("| " + " | ".join([":---"] * len(header)) + " |")
+    for item_id in known + extra:
+        level, owner = owners.get(item_id, ("", "not in the registry"))
+        cells = [found[item_id]["status"] if item_id in found else "not checked" for found in by_result]
+        lines.append("| " + " | ".join(["`%s`" % item_id, level, owner] + cells) + " |")
+    broken = [(index, entry) for index, result in enumerate(results, 1) for entry in result["items"] if entry["status"] == "broken"]
+    if broken:
+        lines += ["", "## What changed", ""]
+        lines += ["- Result %d, `%s`: %s" % (index, entry["id"], cell(entry["detail"]) or "no detail recorded") for index, entry in broken]
+    return "\n".join(lines) + "\n"
+
+
 def outputs(meta, items, root):
-    """{path relative to the root: text} for every file the registry writes."""
+    """{path relative to the root: text, or None for a file that must not exist} for every file the registry writes."""
     written = {DESCRIPTOR: descriptor(meta, items)}
+    results = load_watch(root)
+    written[COMPATIBILITY] = compatibility(items, results) if results else None
     for reader in registry_readers.READERS:
         current = None
         if reader.block:
@@ -257,6 +344,14 @@ def main(argv=None):
         path = root / rel
         current = path.read_text(encoding="utf-8") if path.exists() else None
         if current == text:
+            continue
+        if text is None:
+            if args.write:
+                path.unlink()
+                print("%s: removed, as no result in %s writes it" % (rel, WATCH))
+            else:
+                stale.append(rel)
+                print("%s: no result in %s writes it; run %s" % (rel, WATCH, WRITE_STEP))
             continue
         if args.write:
             path.parent.mkdir(parents=True, exist_ok=True)
