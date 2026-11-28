@@ -1174,6 +1174,12 @@ Measured on notes the owner's tablet wrote on 2026-11-25 (firmware
 - Device Link's helper reads a request file of at most 64 KB; a larger one is never run, and
   `inkctl` refuses it before the push. 540 strokes with their points make about 440 KB
   [measured, Manta, 2026-11-27, [#337](https://github.com/martonpaulo/ink-tools/issues/337)].
+- With no note open (the Files list on screen), Device Link's helper ran no request: `inkctl note
+  current` got no answer in its 60 s and no `current` line reached the plugin's log. With a note
+  open, the same call answered in about 2 s, the action itself in 5 to 28 ms [measured, Device
+  Link from `main` `3ff67e73`, Manta, tablet row 155, 2026-11-28,
+  [#320](https://github.com/martonpaulo/ink-tools/issues/320)]. So `inkctl` answers «no note
+  open» from the screen's activity before it sends a request.
 - A text box and a picture a plugin inserts are drawn into the main layer's bitmap, so a reader of
   the bitmaps shows them with no element decoding [measured].
 - `PluginFileAPI.generateNotePng` at `times: 1` on white matches `NoteFormat`'s drawing of the same
