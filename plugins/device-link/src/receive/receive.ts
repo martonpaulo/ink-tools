@@ -309,7 +309,7 @@ async function placeOverPages(
     // The host refuses a delete in shared storage without FILE:DELETE, and the copy then stayed
     // beside the note with no line saying so (tablet row 141, #593).
     const removed = await native.remove(copied);
-    host.log(removed ? 'receive: the saved copy of the text is removed' : `receive: the saved copy of the text could not be removed: ${copied}`);
+    host.log(removed.ok && removed.value ? 'receive: the saved copy of the text is removed' : `receive: the saved copy of the text could not be removed: ${copied}`);
   }
   return copy.receivedTextPages(pieces.length);
 }
