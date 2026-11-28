@@ -14,7 +14,7 @@
 const {execFileSync} = require('node:child_process');
 const crypto = require('node:crypto');
 const {jdkBin, jdkTool} = require('../../../packages/native-build/host-tools.cjs');
-const {NATIVE_ACCESS, failOnMissingJdk, app, javaSources, tokensSource, tools} = require('./build.cjs');
+const {NATIVE_ACCESS, failOnMissingJdk, app, featuresSource, floatingButton, javaSources, tokensSource, tools} = require('./build.cjs');
 const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -92,7 +92,7 @@ function renders() {
     const stubs = tools().androidJar;
     run(jdkTool('javac'), [
       '-encoding', 'UTF-8', '-Xlint:-options', '-d', classes, '-cp', `${libs}/*:${stubs}`,
-      ...javaSources(path.join(root, 'src')), tokensSource(work), path.join(root, 'renders', 'ScreenRenders.java'),
+      ...javaSources(path.join(root, 'src')), tokensSource(work), featuresSource(work, floatingButton()), path.join(root, 'renders', 'ScreenRenders.java'),
     ]);
     fs.mkdirSync(out, {recursive: true});
     run(jdkTool('java'), [

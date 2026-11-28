@@ -11,9 +11,15 @@ handwriting recognition language for every app. Its internal name is «Lingo» (
 [#160](https://github.com/martonpaulo/supernote-tools/issues/160)); it was «Dialect» until `0.1.0-beta.1`. The tablet shows the feature name «Handwriting
 Language» and «Handwriting Language Settings» ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)). The folder, gate, workflow
 and tag prefix say `handwriting-language` ([#194](https://github.com/martonpaulo/ink-tools/issues/194)).
-Two surfaces ship in one build:
+Two surfaces exist; only B ships: **the floating button (A) is off** (owner, 2026-11-28,
+[#617](https://github.com/martonpaulo/ink-tools/issues/617): it is not pretty). Its code and behaviour stay in `src/`, but the default
+build leaves out `OverlayService`, `WritingWatcher` and `BootReceiver`, the overlay, foreground-service and boot
+permissions, and the watcher's configuration, and `SettingsActivity` shows no button group or permission prompt for
+it (the compile-time `Features.FLOATING_BUTTON`, which `scripts/build.cjs` writes). To turn it back on, build with
+`node scripts/build.cjs --floating-button` (or `LINGO_FLOATING_BUTTON=1`, which `scripts/renders.cjs` reads too);
+`build.cjs --test` checks both manifests. Everything below about A and the watcher describes that build.
 
-- **A, the floating button** (`OverlayService`): a box that shows the active language (`PT`, `EN`,
+- **A, the floating button, off** (`OverlayService`): a box that shows the active language (`PT`, `EN`,
   `ES`); one tap moves to the next, a long press opens the app's screen, a drag moves it
   ([#244](https://github.com/martonpaulo/ink-tools/issues/244)). It starts at the top trailing
   corner. A drag ends against the nearest screen edge, fully on screen, `space` from it ([#415](https://github.com/martonpaulo/ink-tools/issues/415)), keeping its place along
@@ -50,7 +56,7 @@ Two surfaces ship in one build:
 
 ## Target surface
 
-The owner's choice after trying both on the tablet ([#151](https://github.com/martonpaulo/supernote-tools/issues/151), [#157](https://github.com/martonpaulo/supernote-tools/issues/157)), built in
+Off while the floating button is ([#617](https://github.com/martonpaulo/ink-tools/issues/617)). The owner's choice after trying both on the tablet ([#151](https://github.com/martonpaulo/supernote-tools/issues/151), [#157](https://github.com/martonpaulo/supernote-tools/issues/157)), built in
 [#195](https://github.com/martonpaulo/ink-tools/issues/195) and waiting for its device check:
 
 - The floating button shows only where the owner writes: while the handwriting keyboard is open,

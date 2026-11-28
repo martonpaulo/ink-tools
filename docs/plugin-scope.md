@@ -101,13 +101,14 @@ folder that names the active language is outside the plugin sandbox ([#151](http
 [the study](research/2026-11-handwriting-language.md)). The name Lingo moved here from the
 translation plugin, which is removed ([#161](https://github.com/martonpaulo/ink-tools/issues/161)); the app was called Dialect before ([#160](https://github.com/martonpaulo/ink-tools/issues/160)).
 
-- **The floating button, shown only where you write** (owner, [#151](https://github.com/martonpaulo/ink-tools/issues/151), after trying both
-  surfaces on the tablet): a small button that shows the active language (`PT`, `EN`, `ES`) and
+- **The floating button, shown only where you write, is off** (owner, [#617](https://github.com/martonpaulo/ink-tools/issues/617), 2026-11-28: it is not pretty; the code stays and
+  `node apps/handwriting-language/scripts/build.cjs --floating-button` builds it back in). It was the owner's choice
+  after trying both surfaces on the tablet ([#151](https://github.com/martonpaulo/ink-tools/issues/151)): a small button that shows the active language (`PT`, `EN`, `ES`) and
   moves to the next one, visible while the handwriting keyboard is open or a handwriting screen
   (Note, Digest, To-Do, Email) is in front; one setting keeps it always visible or always hidden.
-  The app's sidebar entry also switches, with nothing on screen.
+  While it is off, the app's sidebar entry and screen switch the language.
 - **No language line in the other tools**: the plugins that recognise ink do not show the active
-  language, since the floating button already does.
+  language; the app's screen shows it.
 - **Installed languages only**: the cycle holds the tablet's installed language packs, by default
   `pt_BR`, `en_US`, `es_ES`; «Lingo settings» chooses which are in it.
 - **Esperanto is out of scope**: it is not among the tablet's languages, and reaching it would need

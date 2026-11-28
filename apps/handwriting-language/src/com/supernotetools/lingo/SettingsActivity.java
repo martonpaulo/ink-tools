@@ -90,18 +90,22 @@ public final class SettingsActivity extends Activity {
   protected void onResume() {
     super.onResume();
     // The floating button hides while this screen is in front, so it covers none of its controls.
-    OverlayService.ownScreen(true);
+    if (Features.FLOATING_BUTTON) {
+      OverlayService.ownScreen(true);
+    }
     render();
   }
 
   @Override
   protected void onPause() {
-    OverlayService.ownScreen(false);
+    if (Features.FLOATING_BUTTON) {
+      OverlayService.ownScreen(false);
+    }
     super.onPause();
   }
 
   private void readExtras(Intent intent) {
-    if (intent.hasExtra(EXTRA_BUTTON)) {
+    if (Features.FLOATING_BUTTON && intent.hasExtra(EXTRA_BUTTON)) {
       setButton(ButtonRule.mode(intent.getStringExtra(EXTRA_BUTTON)));
     }
   }
@@ -117,7 +121,6 @@ public final class SettingsActivity extends Activity {
     modeRows.clear();
     languageRows.clear();
     boolean files = Environment.isExternalStorageManager();
-    boolean overlay = Settings.canDrawOverlays(this);
 
     List<String> installed = null;
     String active = null;
@@ -149,31 +152,8 @@ public final class SettingsActivity extends Activity {
     errorAt(Place.SWITCH, Copy.SWITCH_FAILED);
 
     Prefs prefs = new Prefs(this);
-    ButtonRule.Mode chosenMode = prefs.button();
-    List<View> modes = new ArrayList<>();
-    for (ButtonRule.Mode mode : ButtonRule.Mode.values()) {
-      LinearLayout row = Ink.radioRow(this, Copy.buttonMode(mode), Copy.buttonModeDetail(mode), mode == chosenMode);
-      row.setOnClickListener(view -> chooseMode(mode));
-      modeRows.put(mode, row);
-      modes.add(row);
-    }
-    // Resetting where the button sits is an action of its group, not a lone button (owner, #275).
-    boolean shown = overlay && chosenMode != ButtonRule.Mode.HIDDEN;
-    LinearLayout reset = Ink.actionRow(this, Copy.RESET_PLACE, shown);
-    reset.setOnClickListener(view -> {
-      new Prefs(this).clearPlace();
-      OverlayService.moveHome();
-    });
-    modes.add(reset);
-    addGroup(Ink.group(this, Copy.BUTTON_SECTION, modes, Copy.BUTTON_HELP));
-    if (!overlay) {
-      missing(Place.OVERLAY, Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, Copy.OVERLAY_SETTING, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-    }
-    if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
-      // Android 11 has no screen for one service, so the list opens and the steps say what to tap;
-      // the system adds the service to the enabled ones and keeps the others (#489).
-      missing(Place.WATCHER, Copy.WATCHER_OFF, Copy.WATCHER_STEPS, Copy.OPEN_WATCHER_SETTINGS, Copy.WATCHER_SETTING,
-          new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+    if (Features.FLOATING_BUTTON) {
+      renderButton(prefs);
     }
 
     List<View> languages = new ArrayList<>();
@@ -201,6 +181,37 @@ public final class SettingsActivity extends Activity {
       add(Ink.text(this, Copy.VERSION + " " + version, Ink.Role.HINT));
     } catch (PackageManager.NameNotFoundException impossible) {
       throw new IllegalStateException(impossible);
+    }
+  }
+
+  /** The floating button's group and its permissions; only a build with the button (#617) shows them. */
+  private void renderButton(Prefs prefs) {
+    boolean overlay = Settings.canDrawOverlays(this);
+    ButtonRule.Mode chosenMode = prefs.button();
+    List<View> modes = new ArrayList<>();
+    for (ButtonRule.Mode mode : ButtonRule.Mode.values()) {
+      LinearLayout row = Ink.radioRow(this, Copy.buttonMode(mode), Copy.buttonModeDetail(mode), mode == chosenMode);
+      row.setOnClickListener(view -> chooseMode(mode));
+      modeRows.put(mode, row);
+      modes.add(row);
+    }
+    // Resetting where the button sits is an action of its group, not a lone button (owner, #275).
+    boolean shown = overlay && chosenMode != ButtonRule.Mode.HIDDEN;
+    LinearLayout reset = Ink.actionRow(this, Copy.RESET_PLACE, shown);
+    reset.setOnClickListener(view -> {
+      new Prefs(this).clearPlace();
+      OverlayService.moveHome();
+    });
+    modes.add(reset);
+    addGroup(Ink.group(this, Copy.BUTTON_SECTION, modes, Copy.BUTTON_HELP));
+    if (!overlay) {
+      missing(Place.OVERLAY, Copy.OVERLAY_OFF, Copy.OPEN_OVERLAY_PERMISSION, Copy.OVERLAY_SETTING, Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+    }
+    if (chosenMode == ButtonRule.Mode.WRITING && !watcherOn()) {
+      // Android 11 has no screen for one service, so the list opens and the steps say what to tap;
+      // the system adds the service to the enabled ones and keeps the others (#489).
+      missing(Place.WATCHER, Copy.WATCHER_OFF, Copy.WATCHER_STEPS, Copy.OPEN_WATCHER_SETTINGS, Copy.WATCHER_SETTING,
+          new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
     }
   }
 
@@ -252,6 +263,9 @@ public final class SettingsActivity extends Activity {
 
   private void setButton(ButtonRule.Mode mode) {
     new Prefs(this).setButton(mode);
+    if (!Features.FLOATING_BUTTON) {
+      return;
+    }
     if (mode == ButtonRule.Mode.HIDDEN) {
       OverlayService.stop(this);
     } else {
@@ -263,7 +277,7 @@ public final class SettingsActivity extends Activity {
   /** Whether the system lists WritingWatcher as enabled, which the Accessibility screen sets. */
   private boolean watcherOn() {
     String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-    if (enabled == null) {
+    if (!Features.FLOATING_BUTTON || enabled == null) {
       return false;
     }
     ComponentName watcher = new ComponentName(this, WritingWatcher.class);
@@ -303,7 +317,7 @@ public final class SettingsActivity extends Activity {
       Ink.setSwitch(languageRows.get(code), chosen.contains(code));
     }
     // The button's label depends on the cycle (CN and TW when both Chinese codes are in it).
-    if (prefs.button() != ButtonRule.Mode.HIDDEN) {
+    if (Features.FLOATING_BUTTON && prefs.button() != ButtonRule.Mode.HIDDEN) {
       sendBroadcast(new Intent(Registry.HandwritingChangedBroadcast.ACTION).setPackage(getPackageName()));
     }
   }

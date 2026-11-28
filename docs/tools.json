@@ -135,13 +135,13 @@
       "link": "apps/handwriting-language/",
       "features": [
         {"name": "Switch Language", "text": "switch the handwriting recognition language of the whole tablet with one tap."},
-        {"name": "Floating button", "text": "a small button where you write, shown only while there is text or ink input."}
+        {"name": "Floating button (off)", "text": "a small button where you write; it is left out of the build for now, and a build flag brings it back."}
       ],
       "map": {
         "sources": [],
         "logic": ["the language cycle"],
         "supernote": "java",
-        "tablet": ["the handwriting language", "the floating button"],
+        "tablet": ["the handwriting language"],
         "registry": ["handwriting-language"]
       }
     },

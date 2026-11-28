@@ -333,7 +333,7 @@ measures are `packages/picture-search`.
 ## The tablet apps
 
 - **Lingo** (`apps/handwriting-language/`) — a sideloaded Android app, not a plugin, that switches the
-  handwriting recognition language of the whole tablet from a floating button or its sidebar entry
+  handwriting recognition language of the whole tablet from its sidebar entry (the floating button is off, [#617](https://github.com/martonpaulo/ink-tools/issues/617))
   ([#157](https://github.com/martonpaulo/ink-tools/issues/157), [#160](https://github.com/martonpaulo/ink-tools/issues/160)). It is plain Java with no plugin host, so it does not use `sn-adapter` or
   `ink-core`; its pure cycle and file switch are unit-tested on the JVM.
 - **Ink Tools Helper** (`apps/ink-tools-helper/`) — a sideloaded helper app with no screen that binds

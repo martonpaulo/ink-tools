@@ -1,8 +1,7 @@
 # Handwriting Language
 
 A sideloaded Android app for the Supernote that switches the handwriting recognition language of
-the whole tablet with one tap: from a small floating button where you write, or from its entry in
-the sidebar. It works with the languages already installed on the tablet. Lingo is its
+the whole tablet with one tap, from its entry in the sidebar. It works with the languages already installed on the tablet. Lingo is its
 internal name ([#176](https://github.com/martonpaulo/supernote-tools/issues/176)).
 
 Status: test build for device rounds ([#157](https://github.com/martonpaulo/supernote-tools/issues/157)); its version is `app.json`'s `version`. It was called Dialect until
@@ -17,15 +16,18 @@ With no computer, once a `handwriting-language-v…` prerelease is on the
 2. On a phone, download the release's `lingo-app-….apk`, then send it to the tablet with Device Link,
    or upload it in the phone's browser to the address the tablet's Browse & Access shows.
 3. On the tablet, open the file and tap Install.
-4. Open Handwriting Language from the sidebar. Each missing permission shows a button that opens its
-   system screen: All files access, Display over other apps, and Accessibility for writing detection.
+4. Open Handwriting Language from the sidebar. A missing All files access permission shows a button that
+   opens its system screen.
 
 A build from source signed by another key needs Handwriting Language uninstalled first.
 
-The floating button shows while the handwriting keyboard is open or a note, Digest, To-Do or Email
-is in front; drag it anywhere. Tap «Handwriting Language» in the sidebar, or long-press the
-button, to open the app: it shows the active language with «Switch to Next Language», where the button
-shows (only where you write, always, or hidden) and the languages in the cycle.
+Tap «Handwriting Language» in the sidebar to open the app: it shows the active language with «Switch to
+Next Language» and the languages in the cycle.
+
+The floating button is off ([#617](https://github.com/martonpaulo/ink-tools/issues/617), owner, 2026-11-28): the build leaves out its
+code (`OverlayService`, `WritingWatcher`, `BootReceiver`), so the app asks for no overlay or accessibility
+permission. The code stays in `src/`. To turn it back on, build with
+`node scripts/build.cjs --floating-button` (or `LINGO_FLOATING_BUTTON=1`) and grant the two permissions as below.
 
 How it works and how to change it: [`AGENTS.md`](AGENTS.md).
 
@@ -35,6 +37,7 @@ How it works and how to change it: [`AGENTS.md`](AGENTS.md).
 For development, with a computer and ADB:
 
 ```sh
+# The default build has neither of the two permissions below; they are for a `--floating-button` build.
 adb uninstall com.supernotetools.dialect   # only when the old Dialect build is installed
 node scripts/build.cjs
 adb install build/outputs/lingo-app-0.1.0-beta.14.apk

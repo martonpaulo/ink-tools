@@ -6,6 +6,9 @@
  *
  *   node scripts/build.cjs           build build/outputs/lingo-app-<version>.apk, signed and verified
  *   node scripts/build.cjs --test    run the JVM tests (needs only a JDK)
+ *
+ * The floating button is off in the build (#617): add `--floating-button`, or set LINGO_FLOATING_BUTTON=1,
+ * to build it back in (OverlayService, WritingWatcher, BootReceiver, their permissions and manifest entries).
  */
 const fs = require('node:fs');
 const os = require('node:os');
@@ -24,6 +27,10 @@ const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
 /** Android 11, the tablet's release; MANAGE_EXTERNAL_STORAGE starts here. */
 const MIN_API = '30';
 const TARGET_API = '30';
+/** The classes the floating button needs, left out of the APK while it is off (#617). */
+const BUTTON_CLASSES = ['OverlayService', 'WritingWatcher', 'BootReceiver'];
+/** The class of the build's one switch, written before javac like Tokens. */
+const FEATURES_CLASS = 'Features';
 /** The classes with no Android import, which the JVM tests compile. */
 const PURE = ['ButtonGesture', 'ButtonPlace', 'ButtonRule', 'LanguageCycle', 'LanguageFiles', 'FileFailure', 'InternalFailure', 'Copy', 'Registry'];
 const TESTS = ['ButtonGestureTest', 'CopyTest', 'ButtonPlaceTest', 'ButtonRuleTest', 'LanguageCycleTest', 'LanguageFilesTest', 'FileFailureTest', 'RegistryTest'];
@@ -88,34 +95,21 @@ function javaSources(folder) {
     );
 }
 
-/** The manifest, written from app.json so the versions cannot drift. */
-function manifest(file, {versionCode, versionName: name}) {
-  fs.writeFileSync(
-    file,
-    `<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="${ANDROID_NS}"
-    package="${PACKAGE}"
-    android:versionCode="${versionCode}"
-    android:versionName="${name}">
-  <uses-sdk android:minSdkVersion="${MIN_API}" android:targetSdkVersion="${TARGET_API}" />
-  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+/** Whether this build includes the floating button (#617): `--floating-button` or LINGO_FLOATING_BUTTON=1. Off by default. */
+function floatingButton() {
+  return process.argv.includes('--floating-button') || process.env.LINGO_FLOATING_BUTTON === '1';
+}
+
+/** The manifest text, from app.json so the versions cannot drift; the button's parts only when `button` is on (#617). */
+function manifestText({versionCode, versionName: name}, button) {
+  const permissions = button
+    ? `  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-  <application android:label="Handwriting Language" android:icon="@drawable/ic_launcher"
-      android:allowBackup="false" android:hasCode="true">
-    <activity android:name=".SettingsActivity" android:label="Handwriting Language" android:exported="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar" android:launchMode="singleTask">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-      </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
-        <category android:name="android.intent.category.DEFAULT" />
-      </intent-filter>
-    </activity>
-    <service android:name=".OverlayService" android:exported="false" />
+`
+    : '';
+  const components = button
+    ? `    <service android:name=".OverlayService" android:exported="false" />
     <service android:name=".WritingWatcher" android:label="Handwriting Language" android:exported="true"
         android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
       <intent-filter>
@@ -129,10 +123,31 @@ function manifest(file, {versionCode, versionName: name}) {
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
       </intent-filter>
     </receiver>
-  </application>
+`
+    : '';
+  return `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="${ANDROID_NS}"
+    package="${PACKAGE}"
+    android:versionCode="${versionCode}"
+    android:versionName="${name}">
+  <uses-sdk android:minSdkVersion="${MIN_API}" android:targetSdkVersion="${TARGET_API}" />
+  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+${permissions}  <application android:label="Handwriting Language" android:icon="@drawable/ic_launcher"
+      android:allowBackup="false" android:hasCode="true">
+    <activity android:name=".SettingsActivity" android:label="Handwriting Language" android:exported="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar" android:launchMode="singleTask">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+    </activity>
+${components}  </application>
 </manifest>
-`,
-  );
+`;
 }
 
 /**
@@ -141,7 +156,18 @@ function manifest(file, {versionCode, versionName: name}) {
  * flagRetrieveInteractiveWindows) can be declared only in that XML, never from code; the views
  * stay in code.
  */
-function resources(work, aapt2) {
+function resources(work, aapt2, button) {
+  const compiled = path.join(work, 'compiled');
+  fs.mkdirSync(compiled);
+  if (button) {
+    watcherConfig(work, aapt2, compiled);
+  }
+  run(aapt2, ['compile', '-o', compiled, path.join(root, 'res', 'drawable', 'ic_launcher.xml')]);
+  return fs.readdirSync(compiled).map(name => path.join(compiled, name));
+}
+
+/** WritingWatcher's configuration, compiled into `compiled`; only a build with the floating button has it. */
+function watcherConfig(work, aapt2, compiled) {
   const folder = path.join(work, 'res', 'xml');
   fs.mkdirSync(folder, {recursive: true});
   const file = path.join(folder, 'writing_watcher.xml');
@@ -156,11 +182,7 @@ function resources(work, aapt2) {
     android:notificationTimeout="0" />
 `,
   );
-  const compiled = path.join(work, 'compiled');
-  fs.mkdirSync(compiled);
   run(aapt2, ['compile', '-o', compiled, file]);
-  run(aapt2, ['compile', '-o', compiled, path.join(root, 'res', 'drawable', 'ic_launcher.xml')]);
-  return fs.readdirSync(compiled).map(name => path.join(compiled, name));
 }
 
 /**
@@ -200,6 +222,7 @@ const KEY = {keystoreEnv: STABLE_KEYSTORE_ENV, stableAlias: STABLE_KEY_ALIAS, de
 function buildApk() {
   const t = tools();
   const info = app();
+  const button = floatingButton();
   const work = path.join(build, 'work');
   fs.rmSync(work, {recursive: true, force: true});
   const classes = path.join(work, 'classes');
@@ -207,8 +230,11 @@ function buildApk() {
   run(jdkTool('javac'), [
     // -Werror: a new javac warning fails the build, as in the plugins (#32).
     '--release', '8', '-encoding', 'UTF-8', '-Xlint:-options', '-Werror',
-    '-cp', t.androidJar, '-d', classes, ...javaSources(path.join(root, 'src')), tokensSource(work),
+    '-cp', t.androidJar, '-d', classes, ...javaSources(path.join(root, 'src')), tokensSource(work), featuresSource(work, button),
   ]);
+  if (!button) {
+    pruneButton(classes);
+  }
   const jar = path.join(work, 'classes.jar');
   run(jdkTool('jar'), ['cf', jar, '-C', classes, '.']);
   const dex = path.join(work, 'dex');
@@ -218,12 +244,12 @@ function buildApk() {
     '--lib', t.androidJar, '--output', dex, jar,
   ]);
   const manifestFile = path.join(work, 'AndroidManifest.xml');
-  manifest(manifestFile, info);
+  fs.writeFileSync(manifestFile, manifestText(info, button));
   const unsigned = path.join(work, 'unsigned.apk');
   run(t.aapt2, [
     'link', '--manifest', manifestFile, '-I', t.androidJar,
     '--min-sdk-version', MIN_API, '--target-sdk-version', TARGET_API, '-o', unsigned,
-    ...resources(work, t.aapt2),
+    ...resources(work, t.aapt2, button),
   ]);
   run('zip', ['-q', '-j', unsigned, path.join(dex, 'classes.dex')]);
   const aligned = path.join(work, 'aligned.apk');
@@ -245,6 +271,27 @@ function buildApk() {
   fs.rmSync(work, {recursive: true, force: true});
   console.log(`lingo-app: ${path.relative(root, apk)} ${fs.statSync(apk).size} bytes, ${info.versionName} (${info.versionCode})`);
   return apk;
+}
+
+/** Write `Features.java`, the build's one switch, under `work`; its path. Off, the compiler drops every guarded use of the button. */
+function featuresSource(work, button) {
+  const file = path.join(work, 'gen', ...PACKAGE.split('.'), `${FEATURES_CLASS}.java`);
+  fs.mkdirSync(path.dirname(file), {recursive: true});
+  fs.writeFileSync(
+    file,
+    `package ${PACKAGE};\n\n/** Written by scripts/build.cjs (#617); never edit. */\nfinal class ${FEATURES_CLASS} {\n  static final boolean FLOATING_BUTTON = ${button};\n\n  private ${FEATURES_CLASS}() {}\n}\n`,
+  );
+  return file;
+}
+
+/** Remove the floating button's classes from `classes`, so the APK holds none of them. */
+function pruneButton(classes) {
+  const folder = path.join(classes, ...PACKAGE.split('.'));
+  for (const name of fs.readdirSync(folder)) {
+    if (BUTTON_CLASSES.some(cls => name === `${cls}.class` || name.startsWith(`${cls}$`))) {
+      fs.rmSync(path.join(folder, name));
+    }
+  }
 }
 
 /** Write `Tokens.java` under `work`, and with `propertiesFile` the values its test reads; its path. */
@@ -275,6 +322,7 @@ function test() {
     run(jdkTool('java'), ['-cp', classes, 'com.supernotetools.lingo.WatcherCommandTest', root]);
     require('./look-check.cjs').test(path.join(work, 'look'));
     testBadging();
+    testManifest();
   } finally {
     fs.rmSync(work, {recursive: true, force: true});
   }
@@ -299,8 +347,30 @@ function testBadging() {
   console.log('badging rule ok');
 }
 
+/** The manifest with and without the floating button (#617): off, no overlay permission, accessibility service or OverlayService. */
+function testManifest() {
+  const info = {versionCode: 1, versionName: '0.0.0'};
+  const off = manifestText(info, false);
+  const on = manifestText(info, true);
+  const parts = ['SYSTEM_ALERT_WINDOW', 'FOREGROUND_SERVICE', 'RECEIVE_BOOT_COMPLETED', 'OverlayService', 'WritingWatcher', 'BootReceiver', 'AccessibilityService', 'BIND_ACCESSIBILITY_SERVICE'];
+  for (const part of parts) {
+    if (off.includes(part)) {
+      throw new Error(`manifest: the default build holds ${part}`);
+    }
+    if (!on.includes(part)) {
+      throw new Error(`manifest: the floating-button build lacks ${part}`);
+    }
+  }
+  for (const manifestFile of [off, on]) {
+    if (!manifestFile.includes('MANAGE_EXTERNAL_STORAGE') || !manifestFile.includes('.SettingsActivity')) {
+      throw new Error('manifest: the files permission or the launcher screen is missing');
+    }
+  }
+  console.log('manifest rule ok');
+}
+
 // Before the main block: scripts/look-check.cjs, which the test below loads, reads these.
-module.exports = {NATIVE_ACCESS, app, failOnMissingJdk, badgingProblems, buildApk, javaSources, test, tokensSource, tools};
+module.exports = {NATIVE_ACCESS, app, failOnMissingJdk, badgingProblems, buildApk, featuresSource, floatingButton, javaSources, manifestText, test, tokensSource, tools};
 
 /** A missing JDK is one line saying what to install, not a stack trace (#78); any other error is thrown on. */
 function failOnMissingJdk(error) {
