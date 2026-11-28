@@ -125,6 +125,21 @@ import Testing
         #expect(editor.refusal == nil)
     }
 
+    /// Found on the Manta (2026-11-28): an «open on the tablet» refusal stayed hidden under an
+    /// older «no answer» bar. A refusal of a send made after the bar showed takes its place (#316).
+    @Test func aNewerRefusalReplacesTheBarsOlderMessage() async throws {
+        let editor = try editor()
+        tablet.failEdit = .failed("device-link gave no answer in 60 s")
+        #expect(editor.moveElements(ElementMove(page: 0, elements: try selection(), dx: 10, dy: 10)))
+        await settle(editor)
+        #expect(editor.refusal?.contains("no answer in 60 s") == true)
+        tablet.failEdit = nil
+        tablet.openNote = WritePathTests.note
+        editor.movePage(from: 2, to: 3)
+        await settle(editor)
+        #expect(editor.refusal == WriteFailure.openOnTablet.message)
+    }
+
     /// A send already on its way when the bar showed says nothing of the bar's cause (#316 audit).
     @Test func aRefusalStaysOverASendMadeBeforeIt() async throws {
         let editor = try editor()
