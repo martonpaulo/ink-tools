@@ -24,6 +24,12 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
 - [Small filled button](#small-filled-button)
 - [Selection border](#selection-border)
 - [Code block](#code-block)
+- [Rename dialog](#rename-dialog)
+- [Note menu](#note-menu)
+- [Eraser menu](#eraser-menu)
+- [Lasso toolbar](#lasso-toolbar)
+- [Toast](#toast)
+- [Keyboard](#keyboard)
 - [Component table](#component-table)
 - [How the native widgets draw](#how-the-native-widgets-draw)
 - [Not measured yet](#not-measured-yet)
@@ -45,7 +51,8 @@ measured, the variants where two native screens disagree, and the one Ink Tools 
   (`black` `#000000`, `gray` `#999999`, `dark` `#666666`).
 - Screens read: Settings › Display & Input › Language & Region, Keyboard, Handwriting
   Recognition Language, Wi-Fi, Security & Privacy, Date & Time, Apps › Plugins; a note's
-  sidebar › Page menu; Page › Manage Pages.
+  sidebar › Page menu; Page › Manage Pages; and, on 2026-11-26, a note's Rename dialog, the note
+  menu, the eraser menu, the lasso toolbar, a toast and the handwriting keyboard.
 - A crop is named by its screen and its rectangle `x, y, width, height` in screen pixels, so a
   fresh screenshot gives it again. No native image is kept in the repository (the Clarify of
   [#272](https://github.com/martonpaulo/ink-tools/issues/272)): the controls are redrawn.
@@ -232,6 +239,86 @@ The native screens show no raw text, so the code block has no native model
 (`border`) and the minimum text size, and takes the system monospaced face, `monospace`. Which face
 the tablet draws for it is [to measure] in the next device round.
 
+## Rename dialog
+
+Read 2026-11-26 from a note's menu › Rename, on the Manta, from `inkctl snapshot` bounds and a
+full-screen capture. Crop of the dialog: `320, 513, 1280, 658`.
+
+- The box: 1280 x 658 px, a 1 px ink border, small rounded corners. The Loading dialog has square
+  corners ([How the native widgets draw](#how-the-native-widgets-draw)).
+- The title band: from y 513 to about 690, closed by a 1 px ink line. The title «Rename»
+  (`tv_rename_title`, `873, 570, 172, 63`) is bold and centred.
+- The field (`et_rename`, `400, 784, 1118, 102`): a 1 px ink border, with a clear ⊗ at its
+  trailing end.
+- A 1 px line above the button row.
+- Cancel (`ll_rename_cancel`, target `995, 979, 231, 193`): drawn as an outlined box of 231 x 85
+  px (`995, 1032, 231, 85`). OK (`ll_rename_confirm`, target `1287, 979, 231, 193`): the same size,
+  filled ink with paper text. 61 px between the two.
+
+Where two screens disagree: the confirm dialog's buttons are 198 x 84 px
+([Component table](#component-table)), the rename dialog's 231 x 85 px. No Ink Tools component
+draws a text-input dialog yet, so none is adopted; the tokens are
+[#272](https://github.com/martonpaulo/ink-tools/issues/272)'s next Task.
+
+## Note menu
+
+Read 2026-11-26 from the sidebar › notes: the menu the Files list shows for a note. Crop:
+`171, 665, 666, 1035`.
+
+- The title «Note» (`466, 665, 76, 47`) above the list.
+- The list (`menu`, `171, 755, 666, 945`): 666 px wide; rows 139 to 141 px high (Rename,
+  `324, 755, 448, 139`).
+- In each row: a 63 x 63 px icon at x 234 (63 px in from the box), the label from x 324.
+- A group caption row, «Quick Access», only 64 px high (`324, 1216, 448, 64`).
+- Its sub-rows carry an «Add» button of 126 x 65 px (`650, 1316, 126, 65`), with a 1 px line
+  under them (`304, 1419, 473, 1`).
+- A pointer of 42 x 19 px (`pointToView`) toward the sidebar button.
+
+The Page menu ([Component table](#component-table), Menu popup) has the same 141 px items; the
+note menu adds the short caption row and the pointer.
+
+## Eraser menu
+
+Read 2026-11-26 from a tap on the selected eraser. Crop: `171, 709, 675, 786`.
+
+- The popup (`eraserSelectView`): 675 x 786 px.
+- The title band (`rl_eraser_title`, `171, 709, 675, 133`): 133 px, the title «Regular Eraser»
+  centred (`392, 752, 233, 47`).
+- Four size rows, 144 to 145 px high, from x 232 to 785 (61 px in from the box), each a 512 x
+  102 px image of the stroke.
+- A 1 px separator (`232, 1023, 553, 1`).
+- A pointer of 42 x 19 px (`134, 770, 42, 19`).
+
+## Lasso toolbar
+
+Read 2026-11-26 from a lasso selection in a note. Crop: `193, 222, 936, 114`.
+
+- Eight buttons of 116 x 114 px each, from Copy (`193, 222, 116, 114`) to More
+  (`1013, 222, 116, 114`).
+- Each icon 63 x 63 px, centred (26 px in from the sides, 25 px from the top).
+- A 2 px gap between groups: after Cut (x 541, Title at 543) and after Link (x 893, Delete at
+  895).
+- The toolbar box: a 1 px border, small rounded corners.
+
+## Toast
+
+Read 2026-11-26 from «Real-Time Text on» (Real-Time Conversion). Crop: `811, 2423, 297, 92`.
+
+- A pill of 297 x 92 px with fully rounded ends, filled grey 240 (`#F0F0F0`), no border.
+- Dark text about 25 px high, centred on x 960.
+- It sits just above the page bar, which starts at y 2444.
+
+## Keyboard
+
+Read 2026-11-26 from the handwriting keyboard that Rename opens. The keyboard's window is not in
+the screen tree, so every value comes from the capture. Crop: `0, 1745, 1920, 815`.
+
+- Its bar: between two 1 px ink lines at y 1745 and 1862 (117 px).
+- At the leading side: a globe, space and a return glyph.
+- In the centre: «Handwriting» in bold over the language name.
+- At the trailing side: ←, →, delete and a closing chevron.
+- Under the bar, the writing area, paper, to the bottom of the screen.
+
 ## Component table
 
 From the sweep of 2026-11-25: a `screencap` and an `inkctl snapshot --all` of each screen (a plain
@@ -288,7 +375,6 @@ Measured from the vendor UI library in `com.ratta.settings` (`supernoteuilib`, f
 
 ## Not measured yet
 
-Still to read ([#272](https://github.com/martonpaulo/ink-tools/issues/272)): the rename dialog and
-Files' «⋯» menu, toasts, the keyboard and its open state, the lasso toolbar and its list, the
-eraser menu, the Home screen, and each new component's exact pixel sizes, which the table above
+Still to read ([#272](https://github.com/martonpaulo/ink-tools/issues/272)): the Home screen, the
+lasso toolbar's More list, and each new component's exact pixel sizes, which the table above
 gives only as element bounds.
