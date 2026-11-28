@@ -1,5 +1,7 @@
 /** Classic sudoku in the Puzzles view (#383): a size, a band that size offers, «Check» and «Show Solution». */
-import {ScrollView} from 'react-native';
+import {Image} from 'react-native';
+import {act} from 'react-test-renderer';
+import {MEDIA_FRAME_ID, PAGED_LIST_ID} from '@ink-tools/ui-kit';
 import {pressables, shownTexts} from '@ink-tools/ui-kit/problemTest';
 import {
   drawSudokuPage,
@@ -45,14 +47,14 @@ describe('the sudoku game (#383)', () => {
     const [add] = pressables(tree.root, playCopy['new.add']);
     let inScroll = false;
     for (let node = add.parent; node; node = node.parent) {
-      inScroll = inScroll || node.type === ScrollView;
+      inScroll = inScroll || node.props?.testID === PAGED_LIST_ID;
     }
     expect(inScroll).toBe(false);
   });
 
   test('a page with no sudoku says so out of the scrolled choices, so the longest list never cuts it', async () => {
     const tree = await mount(SUDOKU, fakePages().pages);
-    const [list] = tree.root.findAllByType(ScrollView);
+    const list = tree.root.findByProps({testID: PAGED_LIST_ID});
     expect(shownTexts(tree.root)).toContain(playCopy['here.none'](sudokuCopy.title));
     expect(shownTexts(list)).not.toContain(playCopy['here.none'](sudokuCopy.title));
   });
@@ -88,5 +90,18 @@ describe('the sudoku game (#383)', () => {
     await press(tree, playCopy['here.answer']);
     expect(shownTexts(tree.root)).toContain(playCopy['answer.note']);
     expect(calls).toEqual(['clear', 'here', 'codeOf', 'here', 'codeOf']);
+  });
+
+  // Photo 57: the Solution picture stood at the start edge, since a flexed image with an aspectRatio is
+  // sized to its height. ui-kit's MediaFrame sizes it from its own box, centred on both axes (#576).
+  test('the Solution picture is shown in a MediaFrame, fitted at the page\'s proportions (#576)', async () => {
+    const {pages} = fakePages({code: CODE});
+    const tree = await mount(SUDOKU, pages);
+    await press(tree, playCopy['here.answer']);
+    const frame = tree.root.findByProps({testID: MEDIA_FRAME_ID});
+    act(() => frame.props.onLayout({nativeEvent: {layout: {width: 1000, height: 1000}}}));
+    const picture = tree.root.findByType(Image);
+    expect(picture.props.resizeMode).toBe('contain');
+    expect(picture.props.style).toEqual({width: 750, height: 1000});
   });
 });

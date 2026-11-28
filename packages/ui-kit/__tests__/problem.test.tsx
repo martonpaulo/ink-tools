@@ -4,6 +4,7 @@ import {Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
 import {catchBackKey} from '../src/backKeyTest';
 import {Button} from '../src/Button';
+import {BACK_LABEL} from '../src/controlsCopy';
 import {CLOSE_TEXT, reasonOf, RETRY_TEXT} from '../src/problem';
 import {ErrorView, LoadingView, Needs} from '../src/ProblemView';
 import {TitleBar} from '../src/TitleBar';
@@ -102,6 +103,26 @@ describe('ErrorView (#255)', () => {
     expect(back.press()).toBe(true);
     expect(onClose).toHaveBeenCalledTimes(1);
     back.restore();
+  });
+});
+
+describe('ErrorView with a screen to go back to (#543)', () => {
+  it('draws ‹ beside ×, and ‹ and the Back key both go back, never close', () => {
+    const back = catchBackKey();
+    const [onBack, onClose] = [jest.fn(), jest.fn()];
+    const tree = render(<ErrorView problem={{what: 'Sample action failed'}} onBack={onBack} onClose={onClose} />);
+    act(() => button(tree, BACK_LABEL)!.props.onPress());
+    expect(back.press()).toBe(true);
+    expect(onBack).toHaveBeenCalledTimes(2);
+    expect(onClose).not.toHaveBeenCalled();
+    act(() => button(tree, CLOSE_TEXT)!.props.onPress());
+    expect(onClose).toHaveBeenCalledTimes(1);
+    back.restore();
+  });
+
+  it('draws no ‹ without onBack', () => {
+    const tree = render(<ErrorView problem={{what: 'Sample action failed'}} onClose={jest.fn()} />);
+    expect(button(tree, BACK_LABEL)).toBeUndefined();
   });
 });
 

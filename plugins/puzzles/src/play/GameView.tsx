@@ -9,14 +9,16 @@
  * The view opens on the game's last choices, kept by each «Add Page» (#569).
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {Image, ScrollView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {
   ActionRow,
   Button,
   ChoiceList,
   ErrorView,
   LoadingView,
+  MediaFrame,
   metrics,
+  PagedColumn,
   RowGroup,
   shared,
   TitleBar,
@@ -242,7 +244,7 @@ export function GameView({
     case 'working':
       return <LoadingView title={game.title} onClose={onClose} />;
     case 'error':
-      return <ErrorView problem={screen.problem} onRetry={screen.retry} onClose={onClose} />;
+      return <ErrorView problem={screen.problem} onRetry={screen.retry} onBack={onBack} onClose={onClose} />;
     case 'verdict': {
       const {verdict} = screen;
       const found = verdict.solved
@@ -327,9 +329,9 @@ function Ready({
   return (
     <View style={shared.screen}>
       <TitleBar title={game.title} onBack={onBack} onClose={onClose} />
-      {/* A board with no choices has nothing to scroll: its «New page» part starts under the bar. */}
+      {/* Nothing scrolls: the parts page with ui-kit's Pager, in the room the fixed button below leaves (#548, #578). */}
       {(game.open || hasChoices) && (
-        <ScrollView style={styles.choices}>
+        <PagedColumn>
           {board && thisPage}
           {hasChoices && newPage}
           {game.options.map(option => (
@@ -342,7 +344,7 @@ function Ready({
               onChange={value => onChoose(option.id, value)}
             />
           ))}
-        </ScrollView>
+        </PagedColumn>
       )}
       {!hasChoices && newPage}
       {/* Fixed under the choices, so a long list never pushes the view's main action off screen (#383). */}
@@ -369,21 +371,12 @@ function Picture({
     <View style={shared.screen}>
       <TitleBar title={title} onBack={onBack} onClose={onClose} />
       <RowGroup note={note} />
-      <Image
-        source={{uri}}
-        style={[styles.fill, {aspectRatio: raster.width / raster.height}]}
-        resizeMode="contain"
-        fadeDuration={0}
-        accessibilityLabel={note}
-      />
+      <MediaFrame uri={uri} width={raster.width} height={raster.height} accessibilityLabel={note} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: {flex: 1},
-  /** As tall as the choices, and no taller than the room the fixed «New page» part leaves (#383). */
-  choices: {flexGrow: 0, flexShrink: 1},
   /** The gap a RowGroup leaves under itself, so the next caption sits as far from the button. */
   section: {marginBottom: metrics.sectionGap},
 });

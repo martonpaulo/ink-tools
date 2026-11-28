@@ -1,4 +1,5 @@
 /** The Puzzles view's states (#453): the game list, and Loading, Needs and Error when a game opens. */
+import {BACK_LABEL} from '@ink-tools/ui-kit/controlsCopy';
 import React from 'react';
 import {Text} from 'react-native';
 import renderer, {act, ReactTestRenderer} from 'react-test-renderer';
@@ -105,6 +106,15 @@ test('a check the host cannot answer shows Error with Retry, and Retry checks ag
   ports.has = async permission => ({ok: true, value: granted.has(permission)});
   await press(tree, RETRY_TEXT);
   expect(shownTexts(tree.root)).toContain('Playing');
+});
+
+test('the Error of a failed check has ‹, which returns to the game list (#543)', async () => {
+  const tree = await mount({ports: fakePorts(new Set([READ, WRITE]), {failing: true}), games: [game()]});
+  await press(tree, GAME_LABEL);
+  expect(state(tree, 'error-view')).toHaveLength(1);
+  await press(tree, BACK_LABEL);
+  expect(state(tree, 'error-view')).toHaveLength(0);
+  expect(shownTexts(tree.root)).toContain(copy['games.caption']);
 });
 
 test('while the check runs, the view shows Loading with Close', async () => {

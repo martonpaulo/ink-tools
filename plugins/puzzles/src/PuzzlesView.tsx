@@ -5,7 +5,7 @@
  * state with its fix; a check the host could not answer, the Error state with Retry (#245).
  */
 import React, {useCallback, useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {View} from 'react-native';
 import {
   closePluginView,
   hasPermission,
@@ -18,6 +18,7 @@ import {
   ListRow,
   LoadingView,
   Needs,
+  PagedList,
   RowGroup,
   shared,
   TitleBar,
@@ -104,7 +105,7 @@ export function PuzzlesView({
     case 'needs':
       return <Needs problem={screen.problem} onClose={close} />;
     case 'error':
-      return <ErrorView problem={CHECK_FAILED} onRetry={screen.retry} onClose={close} />;
+      return <ErrorView problem={CHECK_FAILED} onRetry={screen.retry} onBack={list} onClose={close} />;
     case 'game': {
       const {View: GameView} = screen.game;
       return <GameView onBack={list} onClose={close} />;
@@ -129,27 +130,17 @@ function GameList({
   return (
     <View style={shared.screen}>
       <TitleBar title={copy.title} onClose={close} />
-      <ScrollView style={styles.rows}>
-        {games.length === 0 ? (
-          <RowGroup note={copy['games.none']} />
-        ) : (
-          <RowGroup caption={copy['games.caption']}>
-            {games.map(game => (
-              <ListRow
-                key={game.id}
-                title={game.title}
-                subtitle={game.subtitle}
-                trailing={<Chevron />}
-                onPress={() => open(game)}
-              />
-            ))}
-          </RowGroup>
-        )}
-      </ScrollView>
+      {games.length === 0 ? (
+        <RowGroup note={copy['games.none']} />
+      ) : (
+        // Nothing scrolls: the games page with ui-kit's Pager (#548).
+        <PagedList caption={copy['games.caption']}>
+          {games.map(game => (
+            <ListRow key={game.id} title={game.title} subtitle={game.subtitle} trailing={<Chevron />} onPress={() => open(game)} />
+          ))}
+        </PagedList>
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  rows: {flex: 1},
-});

@@ -20,6 +20,8 @@ export type NeedsProps = {problem: Problem; onClose: () => void};
 export type ErrorViewProps = NeedsProps & {
   /** Runs the failed action again; no Retry button without it. */
   onRetry?: () => void;
+  /** Returns to the screen the failure came from, as ‹ and the Back key; without it, Back closes (#543). */
+  onBack?: () => void;
 };
 
 /** What a check found missing, why the tool needs it, and the one fix. */
@@ -31,6 +33,7 @@ export function Needs({problem, onClose}: NeedsProps): React.JSX.Element {
 export function ErrorView({
   problem,
   onRetry,
+  onBack,
   onClose,
 }: ErrorViewProps): React.JSX.Element {
   return (
@@ -38,6 +41,7 @@ export function ErrorView({
       problem={problem}
       onClose={onClose}
       onRetry={onRetry}
+      onBack={onBack}
       testID="error-view"
       alert
     />
@@ -70,11 +74,12 @@ function ProblemView({
   problem,
   onClose,
   onRetry,
+  onBack,
   testID,
   alert = false,
 }: ErrorViewProps & {testID: string; alert?: boolean}) {
-  // Back does what Close does (#204).
-  useBackKey(onClose);
+  // Back does what Close does (#204), unless the failure has a screen to go back to (#543).
+  useBackKey(onBack ?? onClose);
   const fix = problem.fix;
   return (
     <View
@@ -82,7 +87,7 @@ function ProblemView({
       testID={testID}
       accessibilityRole={alert ? 'alert' : undefined}
       accessibilityLiveRegion={alert ? 'assertive' : undefined}>
-      <TitleBar title={problem.what} onClose={onClose} />
+      <TitleBar title={problem.what} onBack={onBack} onClose={onClose} />
       {problem.reason !== undefined && (
         <Text style={shared.hint} testID="problem-reason">
           {problem.reason}

@@ -10,7 +10,7 @@
  *
  * One hierarchy, after the native catalog (#411): `primary`, the one main action of a screen, the
  * small filled black button such as «Scan»; `secondary`, an outlined button that keeps its label's
- * width; `row`, the action at a settings row's trailing edge, `rowButtonWidth` wide so the actions
+ * width; `row`, the action at a settings row's trailing edge, at least `rowButtonWidth` wide so the actions
  * of every row share a column (`ActionRow`); `destructive`, the outlined button that spans the
  * screen's width at the end of a page, as the native «Uninstall». Only a destructive button spans
  * the width; the renders fail any other that does, and a row action outside a row (#411).
@@ -90,7 +90,8 @@ const styles = StyleSheet.create({
   primary: {alignSelf: 'flex-start', minWidth: metrics.smallButtonWidth},
   secondary: {alignSelf: 'flex-start'},
   // A row's action keeps the touch target, not the taller control height, so it sits inside the native row (#272).
-  row: {width: metrics.rowButtonWidth, minHeight: metrics.touchTarget},
+  // It is `rowButtonWidth` at least and never shrinks, so a longer label such as «Show Solution» widens its button instead of wrapping to two lines.
+  row: {minWidth: metrics.rowButtonWidth, flexShrink: 0, minHeight: metrics.touchTarget},
   destructive: {alignSelf: 'stretch'},
   filled: {backgroundColor: metrics.ink},
   /** A label that wraps stays centred in its box, as a one-line label is (#386). */

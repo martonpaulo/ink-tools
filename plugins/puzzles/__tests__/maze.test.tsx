@@ -102,6 +102,14 @@ describe('the maze game (#386)', () => {
     await press(tree, RETRY_TEXT);
     expect(calls.filter(call => call === 'here')).toHaveLength(2);
   });
+
+  test('the Error of a game has ‹, which goes back to the game list, not out of Puzzles (#543)', async () => {
+    const {pages} = fakePages({failHere: true});
+    const onBack = jest.fn();
+    const tree = await mount(pages, onBack);
+    await press(tree, BACK_LABEL);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
 });
 
 test('a page that cannot go in shows its own Error, which does not blame the note', async () => {

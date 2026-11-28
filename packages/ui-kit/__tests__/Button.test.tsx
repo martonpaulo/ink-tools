@@ -120,7 +120,8 @@ describe('the button hierarchy (#411)', () => {
     expect(boxStyle(render({kind: 'destructive'})).alignSelf).toBe('stretch');
     expect(boxStyle(render({kind: 'secondary'})).alignSelf).toBe('flex-start');
     expect(boxStyle(render({kind: 'primary'})).alignSelf).toBe('flex-start');
-    expect(boxStyle(render({kind: 'row'})).width).toBe(metrics.rowButtonWidth);
+    expect(boxStyle(render({kind: 'row'})).minWidth).toBe(metrics.rowButtonWidth);
+    expect(boxStyle(render({kind: 'row'})).flexShrink).toBe(0);
     expect(render().root.findByType(Pressable).props.nativeID).toBe('button-secondary');
     expect(render({kind: 'row'}).root.findByType(Pressable).props.nativeID).toBe('button-row');
   });
