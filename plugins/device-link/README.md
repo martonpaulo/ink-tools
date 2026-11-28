@@ -23,6 +23,13 @@ from them straight into the open note.
 - Send a scanned PDF the same way: a new note appears in the Note folder, named after the time
   (`Scan 2026-11-16 0905`), with one page per PDF page as the page's background, so you write on
   it. Up to 50 pages and 30 MB ([#143](https://github.com/martonpaulo/supernote-tools/issues/143)).
+- Send a whole `.note` file the same way: it goes into the Note folder under its own name. A note
+  of that name already there is kept, and the received one is saved as `Plan 2`, `Plan 3`…; the
+  note open on the screen is refused, with the reason. Up to 30 MB
+  ([#504](https://github.com/martonpaulo/ink-tools/issues/504)).
+- «Send Note» in the note's sidebar: the open note's own `.note` file, whole, saved first
+  ([#504](https://github.com/martonpaulo/ink-tools/issues/504)). Both note directions are declared
+  with what each needs in `src/capabilities.json`.
 
 ## Send from the iPhone with one Shortcut
 

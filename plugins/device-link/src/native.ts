@@ -72,6 +72,8 @@ export type RelayNative = {
   ): Promise<boolean>;
   stopReceive(): Promise<boolean>;
   exists(path: string): Promise<boolean>;
+  /** Moves a received file to `target`; false when `target` exists or the move failed (#504). */
+  move(source: string, target: string): Promise<boolean>;
   /** One PNG path per page; rejects `BROKEN` or `PAGES` (#143). */
   renderPdf(
     pdfPath: string,
@@ -124,6 +126,7 @@ export function relay(modules: Record<string, unknown> = NativeModules): Relay {
     answer: call('answer'),
     stopReceive: call('stopReceive'),
     exists: call('exists'),
+    move: call('move'),
     renderPdf: call('renderPdf'),
   } as Relay;
 }

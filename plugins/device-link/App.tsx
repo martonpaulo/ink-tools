@@ -50,6 +50,8 @@ import {
   stopReceiving,
 } from './src/receive/session';
 
+/** The pick view's title for each send (#307, #504). */
+const PICK_TITLES = {page: copy.sendPage, selection: copy.sendSelection, note: copy.sendNote};
 /** sn-adapter's Back key module, as `RelayPackage.java` registers it (#300). */
 export const BACK_MODULE = 'DeviceLinkBack';
 
@@ -202,7 +204,7 @@ export default function App({
     const deps = pickDeps(close, toast, native);
     return (
       <PickView
-        title={picking.capture === 'page' ? copy.sendPage : copy.sendSelection}
+        title={PICK_TITLES[picking.capture]}
         devices={picking.devices}
         onPick={device => pickDevice(deps, device)}
         onClose={() => cancelPick(deps)}

@@ -26,6 +26,7 @@ import {
   Result,
   THROWN_CODE,
   timerWait,
+  saveBeforeExport,
 } from '@ink-tools/sn-adapter/official';
 import {OccupiedRead, readLassoQuery} from '@ink-tools/ink-core';
 import {relay, Relay} from './native';
@@ -44,6 +45,7 @@ import {
   tempDir,
 } from './send/sendPng';
 import {sendText} from './send/sendText';
+import {sendNote} from './send/sendNote';
 import {TextDeps} from './send/textSession';
 import {Capture, PickDeps} from './send/pickSession';
 import {working} from './working';
@@ -71,6 +73,7 @@ export const SEND_PAGE_ID = 100;
 export const SEND_SELECTION_ID = 101;
 export const RECEIVE_ID = 102;
 export const SEND_TEXT_ID = 103;
+export const SEND_NOTE_ID = 107;
 
 export type {Capture} from './send/pickSession';
 
@@ -182,6 +185,13 @@ export async function sendPicked(
     native,
     device,
     async (self, delivered) => {
+      if (capture === 'note') {
+        // Saved first, as Send Page is (#296): the strokes drawn just before the press are in the file.
+        await saveBeforeExport(sendLog);
+        const note = await getCurrentFilePath();
+        const relocate = findAgain(native, self, pluginDir);
+        return sendNote(native, self, {device, relocate, delivered}, note.ok ? note.value : null);
+      }
       const sent = await sendCapture(
         native,
         self,

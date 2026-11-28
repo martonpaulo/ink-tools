@@ -24,6 +24,21 @@ public final class TextFilesTest {
       }
       check(TextFiles.delete(file) && !file.exists(), "a delete removes the file");
       check(TextFiles.delete(file), "a missing file counts as deleted");
+      // A received note moves into its folder, and never over a note already there (#504).
+      File received = new File(folder, "received-1.note");
+      Files.write(received.toPath(), new byte[] {1, 2, 3});
+      File placed = new File(new File(folder, "Note"), "Plan.note");
+      check(TextFiles.move(received, placed), "a received note moves to a free path");
+      check(placed.isFile() && !received.exists(), "the note is moved, not copied");
+      Files.write(received.toPath(), new byte[] {4});
+      check(!TextFiles.move(received, placed), "a move never replaces a note");
+      check(Files.readAllBytes(placed.toPath()).length == 3, "the note there is kept whole");
+      check(received.isFile(), "a refused move keeps the received file");
+      check(!TextFiles.move(new File(folder, "missing.note"), new File(folder, "x.note")),
+          "a missing source does not move");
+      received.delete();
+      placed.delete();
+      placed.getParentFile().delete();
       File guarded =
           new File(folder, "guarded") {
             private static final long serialVersionUID = 1L;

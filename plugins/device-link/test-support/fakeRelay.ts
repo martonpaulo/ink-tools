@@ -60,6 +60,7 @@ export function fakeRelay(
       return true;
     }),
     exists: jest.fn(async () => false),
+    move: jest.fn(async () => true),
     renderPdf: jest.fn(async (_pdf: string, outDir: string) => [
       `${outDir}/page-1.png`,
       `${outDir}/page-2.png`,

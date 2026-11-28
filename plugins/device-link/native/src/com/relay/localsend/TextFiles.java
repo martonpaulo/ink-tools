@@ -71,4 +71,59 @@ public final class TextFiles {
       throw new IOException("cannot replace the file");
     }
   }
+
+  /**
+   * Moves a received file to `target`, which must not exist (#504): renamed when both share a
+   * volume, else copied beside the target, synced, renamed into place, and the source deleted.
+   * False when the target exists or the move fails; a failed move leaves no part file and never
+   * throws, for the reason `delete` gives.
+   */
+  public static boolean move(File source, File target) {
+    try {
+      if (target.exists() || !source.isFile()) {
+        return false;
+      }
+      File folder = target.getAbsoluteFile().getParentFile();
+      if (folder != null && !folder.isDirectory() && !folder.mkdirs()) {
+        return false;
+      }
+      if (source.renameTo(target)) {
+        return true;
+      }
+      File part = new File(folder, target.getName() + ".part");
+      try {
+        copy(source, part);
+      } catch (IOException failed) {
+        delete(part);
+        return false;
+      }
+      if (target.exists() || !part.renameTo(target)) {
+        delete(part);
+        return false;
+      }
+      delete(source);
+      return true;
+    } catch (SecurityException refused) {
+      return false;
+    }
+  }
+
+  private static void copy(File source, File target) throws IOException {
+    InputStream in = new FileInputStream(source);
+    try {
+      FileOutputStream out = new FileOutputStream(target);
+      try {
+        byte[] buffer = new byte[MAX_BYTES];
+        int read;
+        while ((read = in.read(buffer)) > 0) {
+          out.write(buffer, 0, read);
+        }
+        out.getFD().sync();
+      } finally {
+        out.close();
+      }
+    } finally {
+      in.close();
+    }
+  }
 }

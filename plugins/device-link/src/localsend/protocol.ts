@@ -309,10 +309,31 @@ export const PDF_TYPE = 'application/pdf';
  */
 export const EDITOR_FILE_TYPE = 'application/vnd.inktools.note-editor+json';
 
+/** A whole note's file name ends `.note` (#504); LocalSend offers it with any `fileType`. */
+const NOTE_FILE_NAME = /\.note$/i;
+/** The longest note name kept from an offer, in characters; a longer one is cut. */
+const NOTE_NAME_CHARACTERS = 96;
+
+/**
+ * The note's name from the sender's file name, with no folder and no character a file name on
+ * the tablet cannot hold; null when nothing is left (#504).
+ */
+export function noteName(fileName: string): string | null {
+  const base = fileName.slice(Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\')) + 1);
+  const name = Array.from(base.replace(NOTE_FILE_NAME, ''))
+    .filter(char => char.charCodeAt(0) >= 0x20 && !'<>:"|?*'.includes(char))
+    .join('')
+    .trim()
+    .slice(0, NOTE_NAME_CHARACTERS)
+    .trim();
+  return name.length === 0 || /^\.+$/.test(name) ? null : name;
+}
+
 /** What an offer brings, or why it is refused. */
 export type Taken =
   | {kind: 'text'; text: string}
   | {kind: 'editor'; message: string; info: unknown}
+  | {kind: 'note'; fileId: string; name: string}
   | {kind: 'image'; fileId: string; extension: 'png' | 'jpg'}
   | {kind: 'pdf'; fileId: string}
   | {kind: 'refuse'; reason: 'type' | 'size' | 'shape'};
@@ -322,13 +343,13 @@ export type Decision = {
   status: number;
   body: string;
   fileId: string | null;
-  extension: 'png' | 'jpg' | 'pdf' | null;
+  extension: 'png' | 'jpg' | 'pdf' | 'note' | null;
   taken: Taken;
 };
 
 /**
  * Reads one prepare-upload body: one text message (`text/plain` with its `preview`), one image
- * `insertImage` takes, or one PDF that becomes a note (#143). Anything else, two files included, is refused (Plan › Review focus).
+ * `insertImage` takes, one PDF that becomes a note (#143), or one whole `.note` (#504). Anything else, two files included, is refused (Plan › Review focus).
  */
 export function readOffer(text: string): Taken {
   const body = parseJson(text);
@@ -349,6 +370,10 @@ export function readOffer(text: string): Taken {
       ? {kind: 'editor', message: file.preview, info: body.info}
       : {kind: 'refuse', reason: 'shape'};
   }
+  const fileName = typeof file.fileName === 'string' ? file.fileName : '';
+  if (NOTE_FILE_NAME.test(fileName)) {
+    return readNoteOffer(fileId, fileName, file.size);
+  }
   if (fileType.startsWith('text/')) {
     return typeof file.preview === 'string' && file.preview.trim().length > 0
       ? {kind: 'text', text: file.preview}
@@ -358,17 +383,25 @@ export function readOffer(text: string): Taken {
   if (extension === undefined) {
     return {kind: 'refuse', reason: 'type'};
   }
-  if (
-    typeof file.size !== 'number' ||
-    !Number.isInteger(file.size) ||
-    file.size < 1 ||
-    file.size > MAX_FILE_BYTES
-  ) {
+  if (!fileSize(file.size)) {
     return {kind: 'refuse', reason: 'size'};
   }
   return extension === 'pdf'
     ? {kind: 'pdf', fileId}
     : {kind: 'image', fileId, extension};
+}
+
+function fileSize(size: unknown): boolean {
+  return typeof size === 'number' && Number.isInteger(size) && size >= 1 && size <= MAX_FILE_BYTES;
+}
+
+/** A whole `.note` (#504): taken as a file, saved under the decided extension, never its name. */
+function readNoteOffer(fileId: string, fileName: string, size: unknown): Taken {
+  const name = noteName(fileName);
+  if (name === null) {
+    return {kind: 'refuse', reason: 'shape'};
+  }
+  return fileSize(size) ? {kind: 'note', fileId, name} : {kind: 'refuse', reason: 'size'};
 }
 
 /**
@@ -389,11 +422,12 @@ export function decideOffer(
       return {status: 0, body: '', fileId: null, extension: null, taken};
     case 'image':
     case 'pdf':
+    case 'note':
       return {
         status: 200,
         body: JSON.stringify({sessionId, files: {[taken.fileId]: token}}),
         fileId: taken.fileId,
-        extension: taken.kind === 'pdf' ? 'pdf' : taken.extension,
+        extension: taken.kind === 'image' ? taken.extension : taken.kind,
         taken,
       };
     case 'refuse':

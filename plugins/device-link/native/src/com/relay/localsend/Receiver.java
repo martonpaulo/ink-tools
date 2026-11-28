@@ -493,9 +493,9 @@ public final class Receiver {
     }
   }
 
-  /** The saved file's extension, from the decision alone, never the sender's name (#143). */
+  /** The saved file's extension, from the decision alone, never the sender's name (#143, #504). */
   static String extensionOf(String decided) {
-    if ("png".equals(decided) || "pdf".equals(decided)) {
+    if ("png".equals(decided) || "pdf".equals(decided) || "note".equals(decided)) {
       return decided;
     }
     return "jpg";

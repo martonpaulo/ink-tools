@@ -197,6 +197,15 @@ public final class RelayModule extends ReactContextBaseJavaModule {
     promise.resolve(TextFiles.delete(new File(path)));
   }
 
+  /**
+   * Moves a received file to `target` (#504); resolves `false` when `target` already exists or
+   * the move failed, so a note is never replaced.
+   */
+  @ReactMethod
+  public void move(final String source, final String target, final Promise promise) {
+    promise.resolve(TextFiles.move(new File(source), new File(target)));
+  }
+
   /** Resolves `true` when a file or folder is at `path`; a note's free name is chosen with it. */
   @ReactMethod
   public void exists(final String path, final Promise promise) {

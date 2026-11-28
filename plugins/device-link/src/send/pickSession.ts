@@ -6,8 +6,8 @@
 import {Device} from '../localsend/protocol';
 import type {Outcome} from './sendPng';
 
-/** What a send captures: the open page or the lasso selection. */
-export type Capture = 'page' | 'selection';
+/** What a send captures: the open page, the lasso selection, or the whole open note (#504). */
+export type Capture = 'page' | 'selection' | 'note';
 
 export type PickState =
   | {phase: 'idle'}

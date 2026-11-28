@@ -2,7 +2,8 @@
  * One receive (#49): the tablet is a LocalSend receiver for its window, and each item lands in the
  * open note, floating and selected, for the person to move (#289). Text becomes a text box; a PNG or JPEG goes
  * through `insertImage`, which the host shows as its own floating selection, and is then lassoed
- * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`).
+ * by its rect (#196); a PDF becomes a new note (#143, `pdfNote.ts`); a whole note goes into
+ * `Note/` (#504, `noteFile.ts`).
  */
 import {freeRect, inkUnderRect, isFree, OccupiedRead, PLACE_GAP} from '@ink-tools/ink-core';
 import {fail, Result, TextBoxInput, TIMEOUT_CODE} from '@ink-tools/sn-adapter/official';
@@ -20,6 +21,7 @@ import {
 import {Relay} from '../native';
 import {refusedProblem} from '../permissions';
 import {tempDir} from '../send/sendPng';
+import {openNotePath, placeNote} from './noteFile';
 import {NoteFiles, pdfToNote} from './pdfNote';
 import {addPending, loadPending, PendingItem, savePending} from './pending';
 import {handleRemote} from './remote';
@@ -382,6 +384,21 @@ export async function receiveOne(
     landed(item.kind === 'text' ? await placeText(host, item.text) : await placeImage(native, host, item.path));
   };
   await placePending(native, host, dir.value, landed);
+  /** The name each accepted note offer brought, by its session, until its file arrives (#504). */
+  const noteNames = new Map<string, string>();
+  const placeReceivedNote = async (path: string) => {
+    const session = path.slice(path.lastIndexOf('/received-') + '/received-'.length, -'.note'.length);
+    const name = noteNames.get(session);
+    noteNames.delete(session);
+    if (name === undefined) {
+      await native.remove(path);
+      landed(copy.refusedOffer);
+      return;
+    }
+    // The page key only after the bounded page read: with no note open, a read may never answer.
+    const key = (await host.pageSize()).ok ? await host.pageKey() : null;
+    landed(await placeNote(native, path, name, openNotePath(key?.ok ? key.value : null)));
+  };
   try {
     const deadline = windowMs === null ? Number.POSITIVE_INFINITY : now() + windowMs;
     for (let left = deadline - now(); left > 0; left = deadline - now()) {
@@ -400,7 +417,9 @@ export async function receiveOne(
         return last ?? copy.receiveStopped;
       }
       if (arrival.kind === 'file') {
-        if (arrival.path.endsWith('.pdf')) {
+        if (arrival.path.endsWith('.note')) {
+          await placeReceivedNote(arrival.path);
+        } else if (arrival.path.endsWith('.pdf')) {
           landed(await pdfToNote(native, host, arrival.path));
         } else {
           await placeOrKeep({kind: 'image', path: arrival.path});
@@ -428,6 +447,9 @@ export async function receiveOne(
           decision.fileId,
           decision.extension,
         );
+        if (decision.taken.kind === 'note') {
+          noteNames.set(arrival.sessionId, decision.taken.name);
+        }
         if (decision.taken.kind === 'text') {
           await placeOrKeep({kind: 'text', text: decision.taken.text});
           continue;

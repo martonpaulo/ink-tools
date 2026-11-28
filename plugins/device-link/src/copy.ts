@@ -31,7 +31,7 @@ export const copy = {
   notLocal: (alias: string) => `${alias} is not on this network`,
   receive: 'Receive',
   ready: (alias: string) => `Ready to receive as ${alias}`,
-  readyHint: 'Send a text, a picture or a PDF from LocalSend on the iPhone or the Mac.',
+  readyHint: 'Send a text, a picture, a PDF or a note from LocalSend on the iPhone or the Mac.',
   starting: 'Starting…',
   stop: 'Stop',
   receivedText: 'Text added to the note',
@@ -43,14 +43,41 @@ export const copy = {
   nothingArrived: 'Nothing arrived',
   receiveStopped: 'Receiving stopped',
   receiveFailed: 'Could not start receiving',
-  notAnImage: 'Send a JPEG, a PNG or a PDF',
-  refusedOffer: 'Device Link takes one text, one picture or one PDF',
+  notAnImage: 'Send a JPEG, a PNG, a PDF or a note',
+  refusedOffer: 'Device Link takes one text, one picture, one PDF or one note',
   tooLarge: 'The file is over 30 MB',
   receivedPdf: (name: string, pages: number) =>
     `${name} made with ${pages} ${pages === 1 ? 'page' : 'pages'}`,
   pdfBroken: 'Could not read the PDF',
   pdfTooManyPages: (max: number) => `The PDF has more than ${max} pages`,
   pdfNoNote: 'Could not make the note',
+  /** A whole note received (#504). */
+  receivedNote: (name: string) => `${name} saved in Note`,
+  receivedNoteKept: (name: string, saved: string) =>
+    `${name} is already in Note: kept both, the received one as ${saved}`,
+  noteOpen: (name: string) => `${name} is open on the screen: close it, then send it again`,
+  noteNotSaved: (name: string) => `Could not save ${name} in Note`,
+  sendNote: 'Send Note',
+  noNoteFile: 'Could not read the note',
+  /** Each requirement `capabilities.json` names (#504): what is missing, then the one step that fixes it. */
+  requirements: {
+    sameNetwork: {
+      what: 'The tablet and the Mac are not on the same Wi-Fi',
+      step: 'Join the same Wi-Fi network on both.',
+    },
+    localSendOnMac: {
+      what: 'LocalSend is not open on the Mac',
+      step: 'Open LocalSend on the Mac.',
+    },
+    receiveOn: {
+      what: 'Device Link is not receiving',
+      step: 'Press Receive in the note sidebar, or turn on Receive in the background.',
+    },
+    noteOpen: {
+      what: 'No note is open',
+      step: 'Open the note to send.',
+    },
+  } as Record<string, {what: string; step: string}>,
   noNote: 'Open a note first',
   /** A background receive with no note open (#289): the item waits for the next open note. */
   keptForNote: 'Received: it goes into the next note you write in',

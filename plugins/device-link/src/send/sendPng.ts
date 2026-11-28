@@ -250,7 +250,8 @@ export async function sendFile(
   }
   const info = await native.fileInfo(path);
   if (!info.ok) {
-    return copy.noImage;
+    // Only a PNG is made for the send; any other file is the person's own note (#493, #504).
+    return fileType === 'image/png' ? copy.noImage : copy.noNoteFile;
   }
   return withRelocation(
     device,

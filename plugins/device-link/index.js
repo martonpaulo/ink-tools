@@ -30,6 +30,7 @@ import {
   SEND_PAGE_ID,
   SEND_SELECTION_ID,
   SEND_TEXT_ID,
+  SEND_NOTE_ID,
   textDeps,
 } from './src/run';
 import {startTextSend} from './src/send/textSession';
@@ -83,6 +84,15 @@ registerButton(BUTTON_TYPE_LASSO, ['NOTE'], {
   editDataTypes: [EDIT_DATA_STROKES],
   showType: SHOW_FULL_VIEW,
 }).then(result => report('send text button', result));
+
+// The whole open note goes to the Mac (#504).
+// shortcut: Send Page's icon stands in until a note icon is drawn; draw one before a release.
+registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
+  id: SEND_NOTE_ID,
+  name: copy.sendNote,
+  icon: Image.resolveAssetSource(require('./assets/send-page.png')).uri,
+  showType: SHOW_NO_VIEW,
+}).then(result => report('send note button', result));
 
 registerButton(BUTTON_TYPE_SIDEBAR, ['NOTE'], {
   id: RECEIVE_ID,
@@ -150,6 +160,10 @@ report(
   startButtonQueue(id => {
     if (id === SEND_PAGE_ID) {
       send('page');
+      return true;
+    }
+    if (id === SEND_NOTE_ID) {
+      send('note');
       return true;
     }
     if (id === SEND_SELECTION_ID) {

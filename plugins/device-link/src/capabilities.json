@@ -1,0 +1,17 @@
+{
+  "route": "deviceLink",
+  "capabilities": [
+    {
+      "id": "receiveNote",
+      "operation": "sendWholeNote",
+      "direction": "toTablet",
+      "requires": ["sameNetwork", "localSendOnMac", "receiveOn"]
+    },
+    {
+      "id": "sendNote",
+      "operation": "sendWholeNote",
+      "direction": "toMac",
+      "requires": ["sameNetwork", "localSendOnMac", "noteOpen"]
+    }
+  ]
+}

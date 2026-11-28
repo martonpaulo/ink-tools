@@ -139,6 +139,7 @@ public final class ReceiverTest {
     check("pdf".equals(Receiver.extensionOf("pdf")), "a PDF is saved as .pdf");
     check("png".equals(Receiver.extensionOf("png")), "a PNG is saved as .png");
     check("jpg".equals(Receiver.extensionOf("jpg")), "a JPEG is saved as .jpg");
+    check("note".equals(Receiver.extensionOf("note")), "a whole note is saved as .note (#504)");
     check("jpg".equals(Receiver.extensionOf("../x")), "any other answer is never a path part");
   }
 
