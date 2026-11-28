@@ -1,8 +1,12 @@
 /** The strings every game view shares (#386); each game keeps its own beside it. English only (#93). */
 export const playCopy = {
-  difficulty: 'Difficulty',
+  /**
+   * The choices' titles say they are the new page's, so «Size» and «Difficulty» beside «This page» never
+   * read as describing the page on screen, whose row names its own size and band (#545).
+   */
+  difficulty: 'New page difficulty',
   /** A game of several grid sizes: the choice's title and each size's label. */
-  size: 'Size',
+  size: 'New page size',
   sizeLabel: (size: number) => playCopy.gridLabel(size, size),
   /** A grid's columns and rows, for a puzzle whose page names both. */
   gridLabel: (width: number, height: number) => `${width} x ${height}`,
