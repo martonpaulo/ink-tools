@@ -146,6 +146,13 @@
  "twins": {
   "rules": [
    {
+    "rule": "The shared Close and Retry button words of the Needs and Error states: ui-kit's, copied into the Handwriting Language app",
+    "owner": "packages/ui-kit/src/problem.ts",
+    "other": "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java",
+    "pattern": "(?:CLOSE|RETRY)(?:_TEXT)? = ['\\\"](?:Close|Retry)['\\\"]",
+    "golden": "packages/ui-kit/src/problem.ts"
+   },
+   {
     "rule": "A plugin package's config file: PluginConfig.json, read from the .snplg",
     "owner": "cli/inkctl/src/inkctl",
     "other": "scripts/device_build.py",
@@ -613,10 +620,9 @@
    "counts": {
     "apps/handwriting-language/scripts/build.cjs": 3,
     "apps/handwriting-language/src/com/supernotetools/lingo/ButtonPlace.java": 1,
-    "apps/handwriting-language/src/com/supernotetools/lingo/Copy.java": 1,
+    "apps/ink-tools-helper/scripts/build.cjs": 4,
     "apps/note-editor/NoteFormat/Sources/NoteFormat/NoteWriter.swift": 1,
     "apps/note-editor/Sources/NoteEditorKit/Tablet.swift": 1,
-    "apps/ink-tools-helper/scripts/build.cjs": 4,
     "cli/inkctl/src/inkctl": 12,
     "packages/ink-core/src/conversion/convert.ts": 1,
     "packages/ink-core/src/conversion/shapes.ts": 2,
@@ -645,7 +651,6 @@
     "packages/sn-adapter/src/official/page.ts": 1,
     "packages/sn-adapter/src/official/pen.ts": 1,
     "packages/sn-adapter/src/official/storage.ts": 1,
-    "packages/ui-kit/src/problem.ts": 1,
     "plugins/account-sync/src/settingsStore.ts": 1,
     "plugins/device-link/native/src/com/relay/localsend/Receiver.java": 1,
     "plugins/device-link/src/receive/receive.ts": 3,
